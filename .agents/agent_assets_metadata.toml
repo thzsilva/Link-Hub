@@ -1,0 +1,26 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "DGnV4yGsLwP_dryNoSBYN"
+uri = "file://artifacts/void/public/images/artist-1.png"
+type = "image"
+title = "underground dj artist avatar"
+
+[[generated]]
+id = "iRm_dDA1R8jhjNtW4pARS"
+uri = "file://artifacts/void/public/images/artist-2.png"
+type = "image"
+title = "punk visual artist avatar"
+
+[[generated]]
+id = "JHGF4HD0_j1oAA7iOJVFQ"
+uri = "file://artifacts/void/public/images/artist-3.png"
+type = "image"
+title = "experimental designer avatar"
+
+[[generated]]
+id = "DKTR4bgu9kU-5SqWU57Nf"
+uri = "file://artifacts/void/public/images/hero-bg.png"
+type = "image"
+title = "abstract dark texture"

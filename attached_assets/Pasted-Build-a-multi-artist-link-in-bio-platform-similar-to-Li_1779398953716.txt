@@ -1,0 +1,244 @@
+Build a multi-artist link-in-bio platform (similar to Linktree/Kome.io) called "VOID" — fully customizable, with a sleek black and white aesthetic. Each artist gets their own public profile page with stylized cards.
+
+## TECH STACK
+- Frontend: Next.js 14 (App Router) + TypeScript
+- Styling: Tailwind CSS + custom CSS variables
+- Backend: Next.js API Routes
+- Database: Supabase (PostgreSQL)
+- Auth: Supabase Auth (email/password + magic link)
+- Dev command: `npm run dev` (must work on port 3000)
+
+## SUPABASE DATABASE SCHEMA
+
+Create the following tables:
+
+### 1. profiles
+create table profiles (
+ id uuid references auth.users on delete cascade primary key,
+ username text unique not null,
+ display_name text,
+ bio text,
+ avatar_url text,
+ header_image_url text,
+ theme jsonb default '{"accent": "#ffffff", "bg": "#000000", "card_style": "glass"}',
+ is_active boolean default true,
+ created_at timestamptz default now(),
+ updated_at timestamptz default now()
+);
+
+### 2. links (the cards)
+create table links (
+ id uuid default gen_random_uuid() primary key,
+ profile_id uuid references profiles(id) on delete cascade not null,
+ title text not null,
+ url text not null,
+ description text,
+ icon text,
+ thumbnail_url text,
+ card_type text default 'default' check (card_type in ('default', 'featured', 'music', 'video', 'social')),
+ position integer default 0,
+ is_visible boolean default true,
+ click_count integer default 0,
+ created_at timestamptz default now()
+);
+
+### 3. social_links
+create table social_links (
+ id uuid default gen_random_uuid() primary key,
+ profile_id uuid references profiles(id) on delete cascade not null,
+ platform text not null check (platform in ('instagram', 'twitter', 'tiktok', 'youtube', 'spotify', 'soundcloud', 'bandcamp', 'twitch', 'discord', 'website')),
+ url text not null,
+ position integer default 0
+);
+
+### 4. analytics
+create table analytics (
+ id uuid default gen_random_uuid() primary key,
+ profile_id uuid references profiles(id) on delete cascade not null,
+ link_id uuid references links(id) on delete cascade,
+ event_type text not null check (event_type in ('page_view', 'link_click')),
+ referrer text,
+ user_agent text,
+ created_at timestamptz default now()
+);
+
+### 5. admin_users
+create table admin_users (
+ id uuid references auth.users on delete cascade primary key,
+ is_super_admin boolean default false,
+ created_at timestamptz default now()
+);
+
+### 6. photos (artist photo gallery)
+create table photos (
+ id uuid default gen_random_uuid() primary key,
+ profile_id uuid references profiles(id) on delete cascade not null,
+ url text not null,
+ caption text,
+ cover boolean default false,
+ position integer default 0,
+ created_at timestamptz default now()
+);
+
+Enable Row Level Security (RLS) on all tables with these policies:
+- Profiles are publicly readable, but only the owner can update
+- Links are publicly readable (if is_visible=true), only owner can CRUD
+- Analytics: anyone can insert, only owner can read their own
+- Photos are publicly readable, only owner can CRUD
+- Admin users can read/write everything
+
+## PAGES & ROUTES
+
+### Public Pages
+- `/` — Landing page with hero, features showcase, and CTA to sign up
+- `/[username]` — Public artist profile page (the link-in-bio page), includes photo gallery section
+- `/[username]/photos` — Full photo gallery page for the artist
+- `/login` — Login / Sign up page
+
+### Protected Pages (requires auth)
+- `/dashboard` — Artist's admin panel
+- `/dashboard/links` — Manage cards/links (add, edit, delete, reorder)
+- `/dashboard/photos` — Manage photo gallery (upload, reorder, delete, set cover, add caption)
+- `/dashboard/appearance` — Customize profile appearance
+- `/dashboard/analytics` — View click stats
+
+## DESIGN SYSTEM
+
+### Color Palette (CSS Variables)
+--bg-primary: #000000
+--bg-secondary: #0a0a0a
+--bg-card: #111111
+--border: #222222
+--border-hover: #444444
+--text-primary: #ffffff
+--text-secondary: #888888
+--text-muted: #444444
+--accent: #ffffff
+--accent-dim: rgba(255,255,255,0.1)
+
+### Typography
+- Display/Headers: "Bebas Neue" or "DM Serif Display" (Google Fonts)
+- Body: "DM Sans" or "Geist" (Google Fonts)
+- Monospace accents: "JetBrains Mono"
+
+### Card Styles (3 variants, selectable per artist)
+1. Glass — backdrop-blur, border: 1px solid rgba(255,255,255,0.08), subtle gradient
+2. Brutalist — thick white border (2px), sharp corners, hover fills white with black text
+3. Minimal — no border, just background #111, bottom-border accent on hover
+
+### Animations
+- Cards: fade-in stagger on page load (CSS animation-delay)
+- Hover: subtle translateY(-2px) + border color change
+- Page transitions: opacity fade
+- Photo gallery: smooth lightbox open/close
+
+## FEATURE SPECIFICATIONS
+
+### Public Profile Page (`/[username]`)
+- Full-screen dark background
+- Artist avatar (circle, with glowing border effect)
+- Display name (large, bold font)
+- Bio text
+- Social icons row (Instagram, Twitter, etc.)
+- Link cards grid (responsive: 1 col mobile, can be 1 or 2 col based on theme)
+- Each card shows: icon/thumbnail + title + optional description
+- Click tracking: POST to /api/analytics on each card click
+- Custom accent color support (from profile theme)
+- Photo gallery preview section below the cards: shows up to 6 photos in a masonry or grid layout with a "View all photos" button linking to `/[username]/photos`
+
+### Full Photo Gallery Page (`/[username]/photos`)
+- Masonry or asymmetric grid layout (black background)
+- Each photo has a subtle hover overlay with caption
+- Clicking a photo opens a full-screen lightbox with navigation arrows
+- Lightbox shows caption, close button, prev/next
+- "Back to profile" link at top
+
+### Dashboard - Photo Manager (`/dashboard/photos`)
+- Upload photos via drag-and-drop or file picker (store in Supabase Storage bucket "photos")
+- Show uploaded photos in a grid with reorder support (drag-and-drop with @dnd-kit/core)
+- Per photo: edit caption, toggle cover photo, delete with confirmation
+- Cover photo is shown prominently on the profile page header
+- Max file size: 10MB per photo, accepted formats: jpg, png, webp
+- Show current storage usage
+
+### Dashboard - Links Manager (`/dashboard/links`)
+- Drag-and-drop reorder (use @dnd-kit/core)
+- Add card modal with fields: Title, URL, Description, Card Type, Icon (emoji or URL), Thumbnail URL, Visibility toggle
+- Edit inline or via modal
+- Delete with confirmation
+- Toggle visibility per card (eye icon)
+- Card type selector: Default, Featured (larger), Music, Video, Social
+
+### Dashboard - Appearance (`/dashboard/appearance`)
+- Live preview panel showing profile
+- Upload avatar (store in Supabase Storage bucket "avatars")
+- Upload header/banner image (store in Supabase Storage bucket "headers")
+- Card style selector (glass / brutalist / minimal)
+- Accent color picker
+- Username change with availability check
+- Display name and bio editor
+
+### Dashboard - Analytics (`/dashboard/analytics`)
+- Total page views (last 30 days)
+- Total clicks
+- Top performing cards by click count
+- Simple bar chart (use recharts) showing daily views
+
+### Admin Panel (`/admin`, super admins only)
+- List all registered artists/profiles
+- Toggle active/inactive status per artist
+- View any artist's profile stats
+- Delete artist account
+
+## API ROUTES
+
+POST   /api/auth/register          — create user + profile
+GET    /api/profile/[username]     — fetch public profile + links + photo preview
+PUT    /api/profile                — update profile (auth required)
+GET    /api/links                  — get all links for authed user
+POST   /api/links                  — create link
+PUT    /api/links/[id]             — update link
+DELETE /api/links/[id]             — delete link
+PUT    /api/links/reorder          — update positions array
+GET    /api/photos/[username]      — get all photos for a profile (public)
+GET    /api/photos                 — get authed user's photos
+POST   /api/photos                 — upload photo metadata after Supabase Storage upload
+PUT    /api/photos/[id]            — update caption, cover, position
+DELETE /api/photos/[id]            — delete photo (also remove from Storage)
+PUT    /api/photos/reorder         — update positions array
+POST   /api/analytics              — track event (page view or click)
+GET    /api/analytics              — get stats for authed user
+GET    /api/admin/artists          — list all profiles (admin only)
+PUT    /api/admin/artists/[id]     — toggle active status (admin only)
+
+## SUPABASE STORAGE BUCKETS
+Create three public buckets:
+- avatars — for profile pictures
+- headers — for banner/header images
+- photos — for artist gallery photos
+
+All buckets should allow public read access. Only authenticated users can upload to their own folders (folder path = user id).
+
+## ENV VARIABLES NEEDED
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+
+## IMPORTANT IMPLEMENTATION NOTES
+
+1. Use Supabase JS client v2 (@supabase/supabase-js)
+2. Use Supabase Auth helpers for Next.js (@supabase/ssr)
+3. Middleware at middleware.ts to protect /dashboard and /admin routes
+4. The npm run dev command must start the app on port 3000
+5. All cards must be accessible (proper aria labels, keyboard navigation)
+6. Mobile-first responsive design — the public profile and photo gallery must look amazing on mobile
+7. No placeholder/lorem ipsum — use realistic artist-themed example data for the landing page
+8. The landing page should showcase example profiles with the black/white card aesthetic and a photo gallery preview
+9. Registration flow: email → confirm → set username → redirected to dashboard
+10. Username validation: lowercase, alphanumeric + hyphens, 3-30 chars, check uniqueness against Supabase before allowing
+11. Photo uploads: upload file directly to Supabase Storage from the client, then save the public URL + metadata via API route
+12. Lightbox must be keyboard accessible (arrow keys to navigate, Escape to close)
+13. Photo gallery on profile page should only appear if the artist has at least 1 photo uploaded
+
+Start by scaffolding the Next.js project, installing all dependencies, setting up Supabase client and storage buckets, creating the full database schema SQL file, then building pages in this order: landing → login/register → public profile with gallery → full photo gallery page → dashboard (links, photos, appearance, analytics).

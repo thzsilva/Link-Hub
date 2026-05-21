@@ -1,15 +1,26 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: VOID - Multi-artist link-in-bio platform API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: profile
+    description: Artist profile operations
+  - name: links
+    description: Link card operations
+  - name: photos
+    description: Photo gallery operations
+  - name: analytics
+    description: Analytics and stats
+  - name: admin
+    description: Admin operations
+  - name: Storage
+    description: Object storage upload and serving endpoints.
 paths:
   /healthz:
     get:
@@ -24,6 +35,510 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /me:
+    get:
+      operationId: getMe
+      tags: [profile]
+      summary: Get current authenticated user profile
+      responses:
+        "200":
+          description: Current user profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+        "401":
+          description: Unauthorized
+    put:
+      operationId: updateProfile
+      tags: [profile]
+      summary: Update authenticated user profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProfileUpdate"
+      responses:
+        "200":
+          description: Updated profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+        "401":
+          description: Unauthorized
+
+  /me/username-check:
+    get:
+      operationId: checkUsernameAvailability
+      tags: [profile]
+      summary: Check if a username is available
+      parameters:
+        - name: username
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Availability result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UsernameCheckResult"
+
+  /profile/{username}:
+    get:
+      operationId: getPublicProfile
+      tags: [profile]
+      summary: Get public artist profile with links and photos
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Public artist profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicProfile"
+        "404":
+          description: Profile not found
+
+  /links:
+    get:
+      operationId: getMyLinks
+      tags: [links]
+      summary: Get all links for the authenticated user
+      responses:
+        "200":
+          description: User links
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Link"
+        "401":
+          description: Unauthorized
+    post:
+      operationId: createLink
+      tags: [links]
+      summary: Create a new link card
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LinkInput"
+      responses:
+        "201":
+          description: Created link
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Link"
+        "401":
+          description: Unauthorized
+
+  /links/reorder:
+    put:
+      operationId: reorderLinks
+      tags: [links]
+      summary: Reorder links by updating positions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReorderInput"
+      responses:
+        "200":
+          description: Reordered successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkResponse"
+        "401":
+          description: Unauthorized
+
+  /links/{id}:
+    put:
+      operationId: updateLink
+      tags: [links]
+      summary: Update a link card
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LinkUpdate"
+      responses:
+        "200":
+          description: Updated link
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Link"
+        "401":
+          description: Unauthorized
+        "404":
+          description: Link not found
+    delete:
+      operationId: deleteLink
+      tags: [links]
+      summary: Delete a link card
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkResponse"
+        "401":
+          description: Unauthorized
+        "404":
+          description: Link not found
+
+  /photos/public/{username}:
+    get:
+      operationId: getPublicPhotos
+      tags: [photos]
+      summary: Get all public photos for an artist
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Artist photos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Photo"
+        "404":
+          description: Profile not found
+
+  /photos:
+    get:
+      operationId: getMyPhotos
+      tags: [photos]
+      summary: Get all photos for the authenticated user
+      responses:
+        "200":
+          description: User photos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Photo"
+        "401":
+          description: Unauthorized
+    post:
+      operationId: createPhoto
+      tags: [photos]
+      summary: Save photo metadata after upload
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PhotoInput"
+      responses:
+        "201":
+          description: Created photo record
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Photo"
+        "401":
+          description: Unauthorized
+
+  /photos/reorder:
+    put:
+      operationId: reorderPhotos
+      tags: [photos]
+      summary: Reorder photos by updating positions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReorderInput"
+      responses:
+        "200":
+          description: Reordered successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkResponse"
+        "401":
+          description: Unauthorized
+
+  /photos/{id}:
+    put:
+      operationId: updatePhoto
+      tags: [photos]
+      summary: Update photo metadata
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PhotoUpdate"
+      responses:
+        "200":
+          description: Updated photo
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Photo"
+        "401":
+          description: Unauthorized
+        "404":
+          description: Photo not found
+    delete:
+      operationId: deletePhoto
+      tags: [photos]
+      summary: Delete a photo
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkResponse"
+        "401":
+          description: Unauthorized
+        "404":
+          description: Photo not found
+
+  /analytics:
+    post:
+      operationId: trackEvent
+      tags: [analytics]
+      summary: Track a page view or link click event
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnalyticsEventInput"
+      responses:
+        "200":
+          description: Event tracked
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkResponse"
+    get:
+      operationId: getAnalytics
+      tags: [analytics]
+      summary: Get analytics stats for the authenticated user
+      responses:
+        "200":
+          description: Analytics stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalyticsStats"
+        "401":
+          description: Unauthorized
+
+  /dashboard/stats:
+    get:
+      operationId: getDashboardStats
+      tags: [analytics]
+      summary: Get dashboard summary stats for authenticated user
+      responses:
+        "200":
+          description: Dashboard statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+        "401":
+          description: Unauthorized
+
+  /admin/artists:
+    get:
+      operationId: getAdminArtists
+      tags: [admin]
+      summary: List all registered artists (admin only)
+      responses:
+        "200":
+          description: Artist profiles list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Profile"
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+
+  /admin/artists/{id}:
+    put:
+      operationId: updateAdminArtist
+      tags: [admin]
+      summary: Toggle active status for an artist (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminArtistUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+
+  /storage/uploads/request-url:
+    post:
+      tags: [Storage]
+      operationId: requestUploadUrl
+      summary: Request a presigned URL for file upload
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UploadUrlRequest'
+      responses:
+        '200':
+          description: Presigned upload URL generated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadUrlResponse'
+        '400':
+          description: Missing or invalid required fields.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Failed to generate upload URL.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+
+  /storage/public-objects/{filePath}:
+    get:
+      tags: [Storage]
+      operationId: getPublicObject
+      summary: Serve a public asset from PUBLIC_OBJECT_SEARCH_PATHS
+      parameters:
+        - name: filePath
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Relative file path within the public search paths.
+      responses:
+        '200':
+          description: Object content streamed with correct Content-Type.
+          content:
+            '*/*':
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: File not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Failed to serve public object.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+
+  /storage/objects/{objectPath}:
+    get:
+      tags: [Storage]
+      operationId: getStorageObject
+      summary: Serve an object entity from PRIVATE_OBJECT_DIR
+      parameters:
+        - name: objectPath
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Object path within the private object dir.
+      responses:
+        '200':
+          description: Object content streamed with correct Content-Type.
+          content:
+            '*/*':
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Object not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Failed to serve object.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +549,325 @@ components:
       required:
         - status
 
+    Profile:
+      type: object
+      required: [id, clerkUserId, username, isActive, createdAt]
+      properties:
+        id:
+          type: string
+        clerkUserId:
+          type: string
+        username:
+          type: string
+        displayName:
+          type: ["string", "null"]
+        bio:
+          type: ["string", "null"]
+        avatarUrl:
+          type: ["string", "null"]
+        headerImageUrl:
+          type: ["string", "null"]
+        accentColor:
+          type: ["string", "null"]
+        bgColor:
+          type: ["string", "null"]
+        cardStyle:
+          type: ["string", "null"]
+        isSuperAdmin:
+          type: ["boolean", "null"]
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+
+    ProfileUpdate:
+      type: object
+      properties:
+        username:
+          type: string
+        displayName:
+          type: string
+        bio:
+          type: string
+        avatarUrl:
+          type: string
+        headerImageUrl:
+          type: string
+        accentColor:
+          type: string
+        bgColor:
+          type: string
+        cardStyle:
+          type: string
+
+    PublicProfile:
+      type: object
+      required: [profile, links, photos]
+      properties:
+        profile:
+          $ref: "#/components/schemas/Profile"
+        links:
+          type: array
+          items:
+            $ref: "#/components/schemas/Link"
+        photos:
+          type: array
+          items:
+            $ref: "#/components/schemas/Photo"
+        socialLinks:
+          type: array
+          items:
+            $ref: "#/components/schemas/SocialLink"
+
+    UsernameCheckResult:
+      type: object
+      required: [available]
+      properties:
+        available:
+          type: boolean
+
+    Link:
+      type: object
+      required: [id, profileId, title, url, position, isVisible, clickCount, createdAt]
+      properties:
+        id:
+          type: string
+        profileId:
+          type: string
+        title:
+          type: string
+        url:
+          type: string
+        description:
+          type: ["string", "null"]
+        icon:
+          type: ["string", "null"]
+        thumbnailUrl:
+          type: ["string", "null"]
+        cardType:
+          type: string
+        position:
+          type: integer
+        isVisible:
+          type: boolean
+        clickCount:
+          type: integer
+        createdAt:
+          type: string
+
+    LinkInput:
+      type: object
+      required: [title, url]
+      properties:
+        title:
+          type: string
+        url:
+          type: string
+        description:
+          type: string
+        icon:
+          type: string
+        thumbnailUrl:
+          type: string
+        cardType:
+          type: string
+        isVisible:
+          type: boolean
+
+    LinkUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        url:
+          type: string
+        description:
+          type: string
+        icon:
+          type: string
+        thumbnailUrl:
+          type: string
+        cardType:
+          type: string
+        isVisible:
+          type: boolean
+        position:
+          type: integer
+
+    Photo:
+      type: object
+      required: [id, profileId, url, isCover, position, createdAt]
+      properties:
+        id:
+          type: string
+        profileId:
+          type: string
+        url:
+          type: string
+        caption:
+          type: ["string", "null"]
+        isCover:
+          type: boolean
+        position:
+          type: integer
+        createdAt:
+          type: string
+
+    PhotoInput:
+      type: object
+      required: [url]
+      properties:
+        url:
+          type: string
+        caption:
+          type: string
+        isCover:
+          type: boolean
+
+    PhotoUpdate:
+      type: object
+      properties:
+        caption:
+          type: string
+        isCover:
+          type: boolean
+        position:
+          type: integer
+
+    SocialLink:
+      type: object
+      required: [id, profileId, platform, url, position]
+      properties:
+        id:
+          type: string
+        profileId:
+          type: string
+        platform:
+          type: string
+        url:
+          type: string
+        position:
+          type: integer
+
+    ReorderInput:
+      type: object
+      required: [ids]
+      properties:
+        ids:
+          type: array
+          items:
+            type: string
+
+    AnalyticsEventInput:
+      type: object
+      required: [profileId, eventType]
+      properties:
+        profileId:
+          type: string
+        linkId:
+          type: ["string", "null"]
+        eventType:
+          type: string
+        referrer:
+          type: ["string", "null"]
+
+    AnalyticsStats:
+      type: object
+      required: [totalPageViews, totalClicks, dailyViews, topLinks]
+      properties:
+        totalPageViews:
+          type: integer
+        totalClicks:
+          type: integer
+        dailyViews:
+          type: array
+          items:
+            $ref: "#/components/schemas/DailyView"
+        topLinks:
+          type: array
+          items:
+            $ref: "#/components/schemas/LinkClickStat"
+
+    DailyView:
+      type: object
+      required: [date, count]
+      properties:
+        date:
+          type: string
+        count:
+          type: integer
+
+    LinkClickStat:
+      type: object
+      required: [linkId, title, clickCount]
+      properties:
+        linkId:
+          type: string
+        title:
+          type: string
+        clickCount:
+          type: integer
+
+    DashboardStats:
+      type: object
+      required: [totalLinks, totalPhotos, totalPageViews, totalClicks, recentActivity]
+      properties:
+        totalLinks:
+          type: integer
+        totalPhotos:
+          type: integer
+        totalPageViews:
+          type: integer
+        totalClicks:
+          type: integer
+        recentActivity:
+          type: array
+          items:
+            $ref: "#/components/schemas/DailyView"
+
+    AdminArtistUpdate:
+      type: object
+      required: [isActive]
+      properties:
+        isActive:
+          type: boolean
+
+    OkResponse:
+      type: object
+      required: [ok]
+      properties:
+        ok:
+          type: boolean
+
+    UploadUrlRequest:
+      type: object
+      required: [name, size, contentType]
+      properties:
+        name:
+          type: string
+          minLength: 1
+        size:
+          type: integer
+          minimum: 1
+        contentType:
+          type: string
+          minLength: 1
+
+    UploadUrlResponse:
+      type: object
+      required: [uploadURL, objectPath]
+      properties:
+        uploadURL:
+          type: string
+          format: uri
+        objectPath:
+          type: string
+        metadata:
+          $ref: '#/components/schemas/UploadUrlRequest'
+
+    ErrorEnvelope:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
