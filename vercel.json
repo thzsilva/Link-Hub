@@ -1,7 +1,6 @@
 {
   "version": 2,
-  "name": "linkhub-frontend",
-  "buildCommand": "npm run build -w=artifacts/void",
-  "installCommand": "npm install",
-  "outputDirectory": "artifacts/void/dist"
+  "buildCommand": "npm run build -w=artifacts/api-server",
+  "installCommand": "npm install --legacy-peer-deps",
+  "outputDirectory": "artifacts/api-server/dist"
 }

@@ -77,7 +77,11 @@
       "Bash(vercel whoami *)",
       "Bash(vercel deploy *)",
       "Bash(tee /tmp/frontend_deploy.log)",
-      "Bash(vercel redeploy *)"
+      "Bash(vercel redeploy *)",
+      "Bash(vercel link *)",
+      "Bash(cp vercel-backend.json /tmp/vercel-backend-temp.json)",
+      "Bash(mv vercel.json vercel.json.bak)",
+      "Bash(cp vercel-backend.json vercel.json)"
     ]
   }
 }
