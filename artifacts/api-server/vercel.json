@@ -1,6 +1,6 @@
 {
   "version": 2,
   "buildCommand": "npm run build -w=artifacts/api-server",
-  "installCommand": "npm install",
+  "installCommand": "npm install --legacy-peer-deps",
   "outputDirectory": "artifacts/api-server/dist"
 }
