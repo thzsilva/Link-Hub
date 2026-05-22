@@ -178,7 +178,7 @@ export default function PublicProfileNew() {
                     <LinkButton
                       icon={<platform.Icon size={20} />}
                       title={link.title}
-                      description={link.description}
+                      description={link.description || undefined}
                       accentColor={customTheme.accent}
                       secondaryColor={customTheme.secondary}
                       backgroundColor={`${customTheme.secondary}20`}

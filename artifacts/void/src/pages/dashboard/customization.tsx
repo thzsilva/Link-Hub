@@ -261,7 +261,7 @@ export default function DashboardCustomization() {
             {profile.avatarUrl && (
               <img
                 src={profile.avatarUrl}
-                alt={profile.displayName}
+                alt={profile.displayName || profile.username}
                 className="w-20 h-20 rounded-full border-4 border-black"
                 crossOrigin="anonymous"
                 loading="lazy"
@@ -270,7 +270,7 @@ export default function DashboardCustomization() {
                   const img = e.target as HTMLImageElement;
                   if (!img.src.includes("?t=") && img.src.includes("supabase")) {
                     img.src = `${profile.avatarUrl}?t=${Date.now()}`;
-                  } else if (img.src.includes("supabase") && !img.src.includes("proxy-image")) {
+                  } else if (img.src.includes("supabase") && !img.src.includes("proxy-image") && profile.avatarUrl) {
                     img.src = `/api/proxy-image?url=${encodeURIComponent(profile.avatarUrl)}`;
                   } else {
                     img.style.display = "none";
