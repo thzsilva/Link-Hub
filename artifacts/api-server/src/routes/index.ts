@@ -6,6 +6,7 @@ import linksRouter from "./links";
 import photosRouter from "./photos";
 import analyticsRouter from "./analytics";
 import adminRouter from "./admin";
+import eventsRouter from "./events";
 
 const router: IRouter = Router();
 
@@ -16,5 +17,6 @@ router.use(linksRouter);
 router.use(photosRouter);
 router.use(analyticsRouter);
 router.use(adminRouter);
+router.use(eventsRouter);
 
 export default router;

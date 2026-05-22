@@ -15,11 +15,21 @@ import DashboardLinks from "@/pages/dashboard/links";
 import DashboardPhotos from "@/pages/dashboard/photos";
 import DashboardAppearance from "@/pages/dashboard/appearance";
 import DashboardAnalytics from "@/pages/dashboard/analytics";
+import DashboardEvents from "@/pages/dashboard/events";
 import Admin from "@/pages/admin";
 import PublicProfile from "@/pages/public/profile";
 import PublicPhotos from "@/pages/public/photos";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60_000,           // dados ficam "frescos" por 1 min — sem refetch desnecessário
+      gcTime: 5 * 60_000,          // mantém cache por 5 min na memória
+      retry: 1,                    // só 1 retry em falha
+      refetchOnWindowFocus: false, // não re-busca ao trocar de aba
+    },
+  },
+});
 
 // Só ativa o Clerk se a chave estiver explicitamente configurada no .env.
 // publishableKeyFromHost gera uma chave sintética para localhost que tenta
@@ -136,6 +146,7 @@ function DashboardRoutes() {
             <Route path="/dashboard/photos" component={DashboardPhotos} />
             <Route path="/dashboard/appearance" component={DashboardAppearance} />
             <Route path="/dashboard/analytics" component={DashboardAnalytics} />
+            <Route path="/dashboard/events" component={DashboardEvents} />
             <Route path="/admin" component={Admin} />
           </Switch>
         </DashboardLayout>

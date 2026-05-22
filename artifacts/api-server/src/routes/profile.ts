@@ -88,11 +88,14 @@ async function getOrCreateProfile(clerkUserId: string, email?: string) {
 }
 
 router.get("/me", async (req, res): Promise<void> => {
-  if (DEMO_MODE) { res.json(GetMeResponse.parse(demoProfile)); return; }
+  if (DEMO_MODE) { res.json(demoProfile); return; }
   const { userId } = getAuth(req);
   if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
   const profile = await getOrCreateProfile(userId);
-  res.json(GetMeResponse.parse(profile));
+  // Serializa diretamente — res.json converte Date→ISO string automaticamente.
+  // NÃO usar GetMeResponse.parse() aqui: Drizzle retorna Date objects para timestamps
+  // e zod.string() rejeita Date, causando ZodError → 500.
+  res.json(profile);
 });
 
 router.put("/me", async (req, res): Promise<void> => {

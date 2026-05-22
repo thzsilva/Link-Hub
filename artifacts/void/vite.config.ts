@@ -4,12 +4,14 @@ import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 
-const port = Number(process.env.PORT ?? "3000");
+const port = Number(process.env.WEB_PORT ?? "3000");
 const basePath = process.env.BASE_PATH ?? "/";
 const apiPort = Number(process.env.API_PORT ?? "3001");
 
 export default defineConfig({
   base: basePath,
+  // Carrega .env da raiz do monorepo em vez de artifacts/void/
+  envDir: path.resolve(import.meta.dirname, "../.."),
   plugins: [
     react(),
     tailwindcss(),

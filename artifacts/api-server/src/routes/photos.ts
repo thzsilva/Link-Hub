@@ -11,9 +11,88 @@ import {
   GetPublicPhotosParams,
 } from "@workspace/api-zod";
 import { getAuth } from "@clerk/express";
+import multer from "multer";
+import { createClient } from "@supabase/supabase-js";
+import { randomUUID } from "crypto";
+import path from "path";
 
 const router = Router();
 const DEMO_MODE = process.env.DEMO_MODE === "true";
+
+// Multer: guarda arquivo em memória (sem salvar em disco)
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB
+  fileFilter: (_req, file, cb) => {
+    if (file.mimetype.startsWith("image/")) cb(null, true);
+    else cb(new Error("Somente imagens são permitidas"));
+  },
+});
+
+function getSupabaseUploadClient() {
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+  if (!url || !key) return null;
+  return createClient(url, key, { auth: { persistSession: false } });
+}
+
+async function ensureBucketExists(client: ReturnType<typeof createClient>, bucket: string): Promise<boolean> {
+  try {
+    const { data: buckets } = await client.storage.listBuckets();
+    const exists = buckets?.some((b) => b.name === bucket);
+    if (!exists) {
+      console.log(`Bucket '${bucket}' não existe. Tentando criar...`);
+      const { error } = await client.storage.createBucket(bucket, { public: true });
+      if (error) {
+        console.error(`Falha ao criar bucket '${bucket}':`, error.message);
+        return false;
+      }
+      console.log(`✓ Bucket '${bucket}' criado com acesso público`);
+    }
+    return true;
+  } catch (e: any) {
+    console.error("Erro ao verificar/criar bucket:", e?.message);
+    return false;
+  }
+}
+
+async function uploadToSupabase(buffer: Buffer, originalName: string, mimetype: string): Promise<{ url: string | null; error: string | null }> {
+  const client = getSupabaseUploadClient();
+  if (!client) {
+    return {
+      url: null,
+      error: "Supabase não configurado. Verifique SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY no .env",
+    };
+  }
+
+  const bucket = process.env.SUPABASE_STORAGE_BUCKET || "linkhub";
+
+  // Verifica se bucket existe, cria se não existir
+  const bucketOk = await ensureBucketExists(client, bucket);
+  if (!bucketOk) {
+    return { url: null, error: `Bucket '${bucket}' não existe e não pôde ser criado` };
+  }
+
+  const ext = path.extname(originalName) || ".jpg";
+  const filePath = `uploads/${randomUUID()}${ext}`;
+
+  try {
+    const { error } = await client.storage
+      .from(bucket)
+      .upload(filePath, buffer, { contentType: mimetype, upsert: false });
+
+    if (error) {
+      console.error("Erro no upload Supabase:", error.message);
+      return { url: null, error: `Supabase: ${error.message}` };
+    }
+
+    const { data } = client.storage.from(bucket).getPublicUrl(filePath);
+    return { url: data.publicUrl, error: null };
+  } catch (e: any) {
+    console.error("Exceção ao fazer upload:", e?.message);
+    return { url: null, error: `Erro: ${e?.message || "desconhecido"}` };
+  }
+}
 
 const demoPhotos = [
   { id: "photo-1", profileId: "00000000-0000-0000-0000-000000000001", url: "https://picsum.photos/seed/seed-p1/600/600", caption: "Projeto em destaque", isCover: true, position: 0, createdAt: new Date().toISOString() },
@@ -56,6 +135,53 @@ router.get("/photos/public/:username", async (req, res): Promise<void> => {
     .orderBy(photosTable.position);
 
   res.json(photos);
+});
+
+// ---------------------------------------------------------------------------
+// POST /photos/upload — recebe arquivo e sobe para Supabase Storage
+// ---------------------------------------------------------------------------
+
+router.post("/photos/upload", (req, res, next) => {
+  upload.single("file")(req, res, (err) => {
+    if (err) {
+      console.error("Multer error:", err.message);
+      res.status(400).json({ error: `Upload error: ${err.message}` });
+      return;
+    }
+    next();
+  });
+}, async (req, res): Promise<void> => {
+  try {
+    if (DEMO_MODE) {
+      res.status(201).json({ url: "https://picsum.photos/seed/demo-upload/600/600" });
+      return;
+    }
+    const { userId } = getAuth(req);
+    if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+
+    const file = (req as any).file as Express.Multer.File | undefined;
+    if (!file) {
+      console.error("Upload: nenhum arquivo no request");
+      res.status(400).json({ error: "Nenhum arquivo enviado. Verifique se o campo se chama 'file'." });
+      return;
+    }
+
+    console.log(`Upload iniciado: ${file.originalname} (${file.mimetype}, ${file.size} bytes)`);
+
+    const { url, error } = await uploadToSupabase(file.buffer, file.originalname, file.mimetype);
+
+    if (!url) {
+      console.error("Upload falhou:", error);
+      res.status(503).json({ error: error || "Erro no upload" });
+      return;
+    }
+
+    console.log("✓ Upload bem-sucedido:", url);
+    res.status(201).json({ url });
+  } catch (e: any) {
+    console.error("Exceção no upload:", e?.message);
+    res.status(500).json({ error: `Erro interno: ${e?.message || "desconhecido"}` });
+  }
 });
 
 router.get("/photos", async (req, res): Promise<void> => {

@@ -1,18 +1,19 @@
 import app from "./app";
 import { logger } from "./lib/logger";
 
-const rawPort = process.env["PORT"];
+// Suporta tanto API_PORT (env unificado na raiz) quanto PORT (legado)
+const rawPort = process.env["API_PORT"] ?? process.env["PORT"];
 
 if (!rawPort) {
   throw new Error(
-    "PORT environment variable is required but was not provided.",
+    "API_PORT (ou PORT) não está definido. Verifique o .env na raiz do projeto.",
   );
 }
 
 const port = Number(rawPort);
 
 if (Number.isNaN(port) || port <= 0) {
-  throw new Error(`Invalid PORT value: "${rawPort}"`);
+  throw new Error(`Valor inválido para porta: "${rawPort}"`);
 }
 
 app.listen(port, (err) => {
