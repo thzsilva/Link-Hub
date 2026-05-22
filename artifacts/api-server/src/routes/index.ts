@@ -7,6 +7,8 @@ import photosRouter from "./photos";
 import analyticsRouter from "./analytics";
 import adminRouter from "./admin";
 import eventsRouter from "./events";
+import sectionsRouter from "./sections";
+import proxyRouter from "./proxy";
 
 const router: IRouter = Router();
 
@@ -18,5 +20,7 @@ router.use(photosRouter);
 router.use(analyticsRouter);
 router.use(adminRouter);
 router.use(eventsRouter);
+router.use(sectionsRouter);
+router.use(proxyRouter);
 
 export default router;

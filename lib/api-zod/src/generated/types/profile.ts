@@ -24,6 +24,18 @@ export interface Profile {
   bgColor?: string | null;
   /** @nullable */
   cardStyle?: string | null;
+  /** Theme ID for customization */
+  themeId?: string;
+  /** Number of columns for layout (1, 2, or 3) */
+  layoutColumns?: number;
+  /** @nullable Custom primary color in hex format */
+  customPrimaryColor?: string | null;
+  /** @nullable Custom secondary color in hex format */
+  customSecondaryColor?: string | null;
+  /** @nullable Background image URL */
+  backgroundImageUrl?: string | null;
+  /** Background blur amount */
+  backgroundBlur?: number;
   /** @nullable */
   isSuperAdmin?: boolean | null;
   isActive: boolean;

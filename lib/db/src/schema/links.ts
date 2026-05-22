@@ -6,6 +6,7 @@ import { profilesTable } from "./profiles";
 export const linksTable = pgTable("links", {
   id: uuid("id").defaultRandom().primaryKey(),
   profileId: uuid("profile_id").notNull().references(() => profilesTable.id, { onDelete: "cascade" }),
+  sectionId: uuid("section_id"),
   title: text("title").notNull(),
   url: text("url").notNull(),
   description: text("description"),

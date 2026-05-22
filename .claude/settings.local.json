@@ -43,7 +43,24 @@
       "Bash(node -e \"const m = require\\('multer'\\); console.log\\(typeof m, Object.keys\\(m\\).join\\(', '\\)\\); const inst = m\\(\\); console.log\\(typeof inst, Object.keys\\(inst\\).join\\(', '\\)\\)\")",
       "Bash(node -e \"const m = require\\('multer'\\); const inst = m\\({ storage: m.memoryStorage\\(\\) }\\); console.log\\('methods:', Object.getOwnPropertyNames\\(Object.getPrototypeOf\\(inst\\)\\).join\\(', '\\) || Object.keys\\(inst\\).join\\(', '\\)\\); console.log\\('has single:', typeof inst.single\\)\")",
       "WebSearch",
-      "WebFetch(domain:support.komi.io)"
+      "WebFetch(domain:support.komi.io)",
+      "Bash(pkill -f \"npm run dev\")",
+      "Bash(sql\")",
+      "Bash(npx drizzle-kit *)",
+      "Bash(tee /tmp/dev.log)",
+      "Bash(node run-migration.js)",
+      "Bash(Start-Sleep -Seconds 8)",
+      "Bash(Get-Content \"C:\\\\Users\\\\ADMINI~1\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-Administrador-Projetos-Link-Hub\\\\857dbb62-f180-482d-962a-7090dd408e27\\\\tasks\\\\bkdh0kdnx.output\" -Tail 30)",
+      "Bash(lsof -ti:3000,3001)",
+      "Bash(pkill -f \"node\")",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(curl -s http://localhost:3000/)",
+      "Read(//etc/**)",
+      "Bash(curl -s -X POST -H 'Content-Type: multipart/form-data' -F file=@__CMDSUB_OUTPUT__ http://localhost:3001/api/photos/upload)",
+      "Bash(curl -s http://localhost:3001/api/sections -H \"Authorization: Bearer demo\")",
+      "Bash(curl -s \"http://localhost:3001/api/proxy-image?url=https://zcuehpfnpdaoknywddbh.supabase.co/storage/v1/object/public/linkhub/uploads/fa036e6b-c05f-484b-aec8-b43deab385dc.jpg\" -I)",
+      "Bash(curl -s \"http://localhost:3001/api/proxy-image?url=https%3A%2F%2Fzcuehpfnpdaoknywddbh.supabase.co%2Fstorage%2Fv1%2Fobject%2Fpublic%2Flinkhub%2Fuploads%2Ffa036e6b-c05f-484b-aec8-b43deab385dc.jpg\")",
+      "Bash(npm list *)"
     ]
   }
 }

@@ -15,4 +15,10 @@ export interface ProfileUpdate {
   accentColor?: string;
   bgColor?: string;
   cardStyle?: string;
+  themeId?: string;
+  layoutColumns?: number;
+  customPrimaryColor?: string | null;
+  customSecondaryColor?: string | null;
+  backgroundImageUrl?: string | null;
+  backgroundBlur?: number;
 }

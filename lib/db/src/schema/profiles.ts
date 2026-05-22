@@ -1,4 +1,4 @@
-import { pgTable, text, boolean, timestamp, uuid } from "drizzle-orm/pg-core";
+import { pgTable, text, boolean, timestamp, uuid, integer, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -13,6 +13,16 @@ export const profilesTable = pgTable("profiles", {
   accentColor: text("accent_color").default("#ffffff"),
   bgColor: text("bg_color").default("#000000"),
   cardStyle: text("card_style").default("glass"),
+  // Nova customização de tema
+  themeId: text("theme_id").default("default"),
+  layoutColumns: integer("layout_columns").default(1),
+  customPrimaryColor: text("custom_primary_color"),
+  customSecondaryColor: text("custom_secondary_color"),
+  backgroundImageUrl: text("background_image_url"),
+  backgroundBlur: integer("background_blur").default(0),
+  // Configurações de seções
+  showSections: boolean("show_sections").default(true),
+  sectionSettings: jsonb("section_settings").default({}),
   isSuperAdmin: boolean("is_super_admin").default(false),
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

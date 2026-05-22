@@ -31,6 +31,12 @@ export const GetMeResponse = zod.object({
   "accentColor": zod.string().nullish(),
   "bgColor": zod.string().nullish(),
   "cardStyle": zod.string().nullish(),
+  "themeId": zod.string().optional(),
+  "layoutColumns": zod.number().optional(),
+  "customPrimaryColor": zod.string().nullish(),
+  "customSecondaryColor": zod.string().nullish(),
+  "backgroundImageUrl": zod.string().nullish(),
+  "backgroundBlur": zod.number().optional(),
   "isSuperAdmin": zod.boolean().nullish(),
   "isActive": zod.boolean(),
   "createdAt": zod.string()
@@ -48,7 +54,13 @@ export const UpdateProfileBody = zod.object({
   "headerImageUrl": zod.string().optional(),
   "accentColor": zod.string().optional(),
   "bgColor": zod.string().optional(),
-  "cardStyle": zod.string().optional()
+  "cardStyle": zod.string().optional(),
+  "themeId": zod.string().optional(),
+  "layoutColumns": zod.number().optional(),
+  "customPrimaryColor": zod.string().nullish(),
+  "customSecondaryColor": zod.string().nullish(),
+  "backgroundImageUrl": zod.string().nullish(),
+  "backgroundBlur": zod.number().optional()
 })
 
 export const UpdateProfileResponse = zod.object({
@@ -62,6 +74,12 @@ export const UpdateProfileResponse = zod.object({
   "accentColor": zod.string().nullish(),
   "bgColor": zod.string().nullish(),
   "cardStyle": zod.string().nullish(),
+  "themeId": zod.string().optional(),
+  "layoutColumns": zod.number().optional(),
+  "customPrimaryColor": zod.string().nullish(),
+  "customSecondaryColor": zod.string().nullish(),
+  "backgroundImageUrl": zod.string().nullish(),
+  "backgroundBlur": zod.number().optional(),
   "isSuperAdmin": zod.boolean().nullish(),
   "isActive": zod.boolean(),
   "createdAt": zod.string()
@@ -99,6 +117,12 @@ export const GetPublicProfileResponse = zod.object({
   "accentColor": zod.string().nullish(),
   "bgColor": zod.string().nullish(),
   "cardStyle": zod.string().nullish(),
+  "themeId": zod.string().optional(),
+  "layoutColumns": zod.number().optional(),
+  "customPrimaryColor": zod.string().nullish(),
+  "customSecondaryColor": zod.string().nullish(),
+  "backgroundImageUrl": zod.string().nullish(),
+  "backgroundBlur": zod.number().optional(),
   "isSuperAdmin": zod.boolean().nullish(),
   "isActive": zod.boolean(),
   "createdAt": zod.string()
@@ -461,5 +485,36 @@ export const GetPublicObjectParams = zod.object({
 export const GetStorageObjectParams = zod.object({
   "objectPath": zod.coerce.string().describe('Object path within the private object dir.')
 })
+
+// =========================================================================
+// Sections Schemas
+// =========================================================================
+
+export const CreateSectionBody = zod.object({
+  "name": zod.string().describe('Nome da seção'),
+  "bgColor": zod.string().optional().describe('Cor de fundo da seção'),
+});
+
+export const UpdateSectionBody = zod.object({
+  "name": zod.string().optional(),
+  "bgColor": zod.string().optional(),
+  "isVisible": zod.boolean().optional(),
+  "position": zod.number().optional(),
+});
+
+export const SectionResponse = zod.object({
+  "id": zod.string().uuid(),
+  "profileId": zod.string().uuid(),
+  "name": zod.string(),
+  "bgColor": zod.string().nullable().optional(),
+  "position": zod.number(),
+  "isVisible": zod.boolean(),
+  "createdAt": zod.string().datetime(),
+  "updatedAt": zod.string().datetime(),
+});
+
+export const ReorderSectionsBody = zod.object({
+  "ids": zod.array(zod.string().uuid()).describe('Array de IDs em nova ordem'),
+});
 
 

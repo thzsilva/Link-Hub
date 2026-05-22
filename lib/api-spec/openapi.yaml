@@ -573,6 +573,24 @@ components:
           type: ["string", "null"]
         cardStyle:
           type: ["string", "null"]
+        themeId:
+          type: string
+          description: Theme ID for customization
+        layoutColumns:
+          type: integer
+          description: Number of columns for layout (1, 2, or 3)
+        customPrimaryColor:
+          type: ["string", "null"]
+          description: Custom primary color in hex format
+        customSecondaryColor:
+          type: ["string", "null"]
+          description: Custom secondary color in hex format
+        backgroundImageUrl:
+          type: ["string", "null"]
+          description: Background image URL
+        backgroundBlur:
+          type: integer
+          description: Background blur amount
         isSuperAdmin:
           type: ["boolean", "null"]
         isActive:
@@ -599,6 +617,18 @@ components:
           type: string
         cardStyle:
           type: string
+        themeId:
+          type: string
+        layoutColumns:
+          type: integer
+        customPrimaryColor:
+          type: ["string", "null"]
+        customSecondaryColor:
+          type: ["string", "null"]
+        backgroundImageUrl:
+          type: ["string", "null"]
+        backgroundBlur:
+          type: integer
 
     PublicProfile:
       type: object

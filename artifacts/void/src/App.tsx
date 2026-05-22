@@ -14,6 +14,7 @@ import DashboardHome from "@/pages/dashboard/index";
 import DashboardLinks from "@/pages/dashboard/links";
 import DashboardPhotos from "@/pages/dashboard/photos";
 import DashboardAppearance from "@/pages/dashboard/appearance";
+import DashboardCustomization from "@/pages/dashboard/customization";
 import DashboardAnalytics from "@/pages/dashboard/analytics";
 import DashboardEvents from "@/pages/dashboard/events";
 import Admin from "@/pages/admin";
@@ -144,6 +145,7 @@ function DashboardRoutes() {
             <Route path="/dashboard" component={DashboardHome} />
             <Route path="/dashboard/links" component={DashboardLinks} />
             <Route path="/dashboard/photos" component={DashboardPhotos} />
+            <Route path="/dashboard/customization" component={DashboardCustomization} />
             <Route path="/dashboard/appearance" component={DashboardAppearance} />
             <Route path="/dashboard/analytics" component={DashboardAnalytics} />
             <Route path="/dashboard/events" component={DashboardEvents} />

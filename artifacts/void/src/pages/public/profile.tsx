@@ -4,26 +4,7 @@ import { useParams, Link } from "wouter";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CalendarDays, MapPin, ExternalLink, ChevronRight } from "lucide-react";
 import { getPlatform, toSpotifyEmbedUrl } from "@/lib/platforms";
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-function formatEventDate(dateStr: string | null | undefined): string {
-  if (!dateStr) return "";
-  try {
-    return new Date(dateStr).toLocaleString("pt-BR", {
-      weekday: "short",
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  } catch {
-    return dateStr;
-  }
-}
+import { getTheme, getCSSVariables } from "@/lib/themes";
 
 // ---------------------------------------------------------------------------
 // Skeleton
@@ -33,7 +14,7 @@ function ProfileSkeleton() {
   return (
     <div className="min-h-[100dvh] bg-black text-white">
       <div className="h-48 w-full bg-white/5 animate-pulse" />
-      <div className="max-w-2xl mx-auto px-6 py-12 flex flex-col items-center">
+      <div className="max-w-5xl mx-auto px-6 py-12 flex flex-col items-center">
         <Skeleton className="w-24 h-24 rounded-full mb-6" />
         <Skeleton className="h-8 w-52 mb-3" />
         <Skeleton className="h-4 w-72 mb-2" />
@@ -50,7 +31,7 @@ function ProfileSkeleton() {
 // Main
 // ---------------------------------------------------------------------------
 
-export default function PublicProfile() {
+export default function PublicProfileNew() {
   const { username } = useParams<{ username: string }>();
   const { data, isLoading } = useGetPublicProfile(username || "");
   const trackEvent = useTrackEvent();
@@ -72,10 +53,7 @@ export default function PublicProfile() {
     return (
       <div className="min-h-screen bg-black flex flex-col items-center justify-center text-white gap-4">
         <p className="font-mono text-muted-foreground text-lg">Perfil não encontrado.</p>
-        <a
-          href="/"
-          className="text-xs uppercase tracking-widest underline underline-offset-4 text-muted-foreground hover:text-white"
-        >
+        <a href="/" className="text-xs uppercase tracking-widest underline underline-offset-4 text-muted-foreground hover:text-white">
           Criar o meu perfil →
         </a>
       </div>
@@ -85,7 +63,16 @@ export default function PublicProfile() {
   const { profile, links, socialLinks, photos: profilePhotos } = data;
   const photos = profilePhotos;
 
-  const accentColor = profile.accentColor || "#ffffff";
+  // Obtém tema customizado
+  const theme = getTheme(profile.themeId);
+  const customTheme = {
+    ...theme,
+    primary: profile.customPrimaryColor || theme.primary,
+    secondary: profile.customSecondaryColor || theme.secondary,
+  };
+
+  const cssVars = getCSSVariables(customTheme);
+  const layoutColumns = profile.layoutColumns || 1;
 
   const handleLinkClick = (linkId: string, url: string) => {
     trackEvent.mutate({
@@ -103,75 +90,99 @@ export default function PublicProfile() {
   const spotifyLinks = links?.filter((l) => l.isVisible && l.cardType === "spotify") ?? [];
 
   return (
-    <div className="min-h-[100dvh] bg-black text-white relative">
-      {/* Header image */}
+    <div className="min-h-[100dvh] text-white" style={{ ...cssVars, backgroundColor: customTheme.background } as React.CSSProperties}>
+      {/* Header com capa */}
       {profile.headerImageUrl && (
-        <div
-          className="h-48 w-full opacity-50"
-          style={{
-            backgroundImage: `url(${profile.headerImageUrl})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-          }}
-        />
+        <div className="relative h-48 w-full overflow-hidden">
+          <img src={profile.headerImageUrl} alt="Header" className="w-full h-full object-cover opacity-40" />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/80" />
+        </div>
       )}
 
-      <main className="max-w-2xl mx-auto px-6 py-12 relative z-10 flex flex-col items-center text-center">
-        {/* Avatar */}
-        {profile.avatarUrl ? (
-          <img
-            src={profile.avatarUrl}
-            alt={profile.displayName || profile.username}
-            className="w-24 h-24 rounded-full object-cover mb-6 border-2 border-white/20"
-          />
-        ) : (
-          <div className="w-24 h-24 rounded-full bg-white/10 mb-6 border-2 border-white/20 flex items-center justify-center text-2xl font-black uppercase">
-            {(profile.displayName || profile.username).charAt(0)}
-          </div>
-        )}
+      <main className="max-w-5xl mx-auto px-6 relative z-10">
+        {/* Perfil */}
+        <div className={`flex flex-col items-center text-center mb-12 relative z-20 ${profile.headerImageUrl ? '-mt-16' : 'mt-8'}`}>
+          {profile.avatarUrl && (
+            <img
+              src={profile.avatarUrl}
+              alt={profile.displayName || profile.username}
+              className="w-32 h-32 rounded-full object-cover mb-6 border-4 shadow-lg"
+              style={{ borderColor: customTheme.primary }}
+              crossOrigin="anonymous"
+              loading="lazy"
+              onError={(e) => {
+                console.error("Erro ao carregar avatar:", profile.avatarUrl);
+                const img = e.target as HTMLImageElement;
+                if (!img.src.includes("?t=") && img.src.includes("supabase")) {
+                  img.src = `${profile.avatarUrl}?t=${Date.now()}`;
+                } else if (img.src.includes("supabase") && !img.src.includes("proxy-image")) {
+                  img.src = `/api/proxy-image?url=${encodeURIComponent(profile.avatarUrl)}`;
+                } else {
+                  img.style.display = "none";
+                }
+              }}
+            />
+          )}
+          <h1 className="text-4xl font-black tracking-tighter uppercase mb-2" style={{ color: customTheme.primary }}>
+            {profile.displayName || profile.username}
+          </h1>
+          <p className="text-muted-foreground font-mono mb-4 max-w-md">{profile.bio}</p>
+        </div>
 
-        {/* Name + Bio */}
-        <h1 className="text-3xl font-black tracking-tighter uppercase mb-2">
-          {profile.displayName || profile.username}
-        </h1>
-        {profile.bio && (
-          <p className="text-muted-foreground font-mono mb-8 max-w-md">{profile.bio}</p>
-        )}
-
-        {/* Regular Links */}
+        {/* Links regulares em grid */}
         {regularLinks.length > 0 && (
-          <div className="w-full space-y-3 mb-8">
-            {regularLinks.map((link) => {
-              const platform = getPlatform(link.icon ?? null);
-              return (
-                <button
-                  key={link.id}
-                  onClick={() => handleLinkClick(link.id, link.url)}
-                  className="w-full flex items-center gap-3 border-2 text-white hover:bg-white hover:text-black transition-all p-4 font-bold tracking-widest uppercase text-sm"
-                  style={{ borderColor: accentColor }}
-                >
-                  {/* Platform icon */}
-                  <span
-                    className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded"
-                    style={{ background: platform.bgColor, color: platform.color }}
+          <div className="mb-12">
+            <div
+              className="grid gap-3 mb-8"
+              style={{
+                gridTemplateColumns: `repeat(${Math.min(layoutColumns, regularLinks.length)}, minmax(0, 1fr))`,
+              }}
+            >
+              {regularLinks.map((link) => {
+                const platform = getPlatform(link.icon ?? null);
+                return (
+                  <button
+                    key={link.id}
+                    onClick={() => handleLinkClick(link.id, link.url)}
+                    className="flex items-center gap-3 p-4 rounded-lg border-2 transition-all hover:shadow-lg"
+                    style={{
+                      borderColor: customTheme.accent,
+                      backgroundColor: `${customTheme.secondary}20`,
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = `${customTheme.accent}30`;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = `${customTheme.secondary}20`;
+                    }}
                   >
-                    <platform.Icon size={16} />
-                  </span>
-                  <span className="flex-1 text-center pr-8">{link.title}</span>
-                </button>
-              );
-            })}
+                    {/* Platform icon */}
+                    <span
+                      className="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-lg"
+                      style={{ background: platform.bgColor, color: platform.color }}
+                    >
+                      <platform.Icon size={20} />
+                    </span>
+                    <span className="flex-1 text-left">
+                      <p className="font-bold text-sm">{link.title}</p>
+                      {link.description && <p className="text-xs opacity-70">{link.description}</p>}
+                    </span>
+                    <ChevronRight size={16} className="opacity-50" />
+                  </button>
+                );
+              })}
+            </div>
           </div>
         )}
 
         {/* Spotify Embeds */}
         {spotifyLinks.length > 0 && (
-          <div className="w-full space-y-4 mb-12">
+          <div className="space-y-4 mb-12">
             {spotifyLinks.map((link) => {
               const embedUrl = toSpotifyEmbedUrl(link.url);
               if (!embedUrl) return null;
               return (
-                <div key={link.id} className="w-full">
+                <div key={link.id}>
                   {link.title && link.title !== "Spotify" && (
                     <p className="text-xs uppercase tracking-widest text-muted-foreground mb-2 text-left">
                       {link.title}
@@ -194,15 +205,21 @@ export default function PublicProfile() {
 
         {/* Events */}
         {events && events.length > 0 && (
-          <div className="w-full mb-12">
-            <h2 className="text-xl font-black tracking-tighter uppercase mb-6 text-left border-b border-white/20 pb-2">
+          <div className="mb-12">
+            <h2 className="text-2xl font-black tracking-tighter uppercase mb-6 text-left border-b-2 pb-2" style={{ borderColor: customTheme.accent }}>
               Eventos
             </h2>
-            <div className="space-y-4">
+            <div
+              className="grid gap-4"
+              style={{
+                gridTemplateColumns: `repeat(${Math.min(layoutColumns, events.length)}, minmax(0, 1fr))`,
+              }}
+            >
               {events.map((event) => (
                 <div
                   key={event.id}
-                  className="border border-white/20 text-left hover:border-white/50 transition-colors overflow-hidden"
+                  className="rounded-lg overflow-hidden border-2 text-left transition-all hover:shadow-lg"
+                  style={{ borderColor: `${customTheme.accent}50` }}
                 >
                   {/* Event image */}
                   {event.imageUrl && (
@@ -210,31 +227,33 @@ export default function PublicProfile() {
                       <img
                         src={event.imageUrl}
                         alt={event.title}
-                        className="w-full h-full object-cover opacity-80 hover:opacity-100 transition-opacity"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).parentElement!.style.display = "none";
-                        }}
+                        className="w-full h-full object-cover hover:scale-105 transition-transform"
                       />
                     </div>
                   )}
-                  <div className="p-4">
-                    <h3 className="font-bold text-lg uppercase tracking-tight mb-2">{event.title}</h3>
+                  <div className="p-4" style={{ backgroundColor: `${customTheme.secondary}10` }}>
+                    <h3 className="font-bold text-lg uppercase tracking-tight mb-3">{event.title}</h3>
                     {event.eventDate && (
-                      <div className="flex items-center gap-1.5 text-muted-foreground text-sm font-mono mb-1">
-                        <CalendarDays size={13} />
-                        {formatEventDate(event.eventDate)}
+                      <div className="flex items-center gap-2 text-muted-foreground text-sm font-mono mb-2">
+                        <CalendarDays size={14} />
+                        {new Date(event.eventDate).toLocaleDateString("pt-BR", {
+                          weekday: "short",
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
                       </div>
                     )}
                     {event.location && (
-                      <div className="flex items-center gap-1.5 text-muted-foreground text-sm font-mono mb-2">
-                        <MapPin size={13} />
+                      <div className="flex items-center gap-2 text-muted-foreground text-sm font-mono mb-3">
+                        <MapPin size={14} />
                         {event.location}
                       </div>
                     )}
                     {event.description && (
-                      <p className="text-muted-foreground text-sm font-mono mb-3">
-                        {event.description}
-                      </p>
+                      <p className="text-muted-foreground text-sm font-mono mb-4">{event.description}</p>
                     )}
                     {event.ticketUrl && (
                       <a
@@ -242,8 +261,11 @@ export default function PublicProfile() {
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={(e) => e.stopPropagation()}
-                        className="inline-flex items-center gap-1.5 text-xs uppercase tracking-widest font-bold px-3 py-2 border text-white hover:bg-white hover:text-black transition-all"
-                        style={{ borderColor: accentColor }}
+                        className="inline-flex items-center gap-2 text-xs uppercase tracking-widest font-bold px-4 py-2 rounded-lg transition-all"
+                        style={{
+                          backgroundColor: customTheme.accent,
+                          color: customTheme.background === "#000000" ? "#000" : "#fff",
+                        }}
                       >
                         <ExternalLink size={12} />
                         Ingressos
@@ -258,18 +280,13 @@ export default function PublicProfile() {
 
         {/* Photo Gallery */}
         {photos && photos.length > 0 && (
-          <div className="w-full mb-8">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-black tracking-tighter uppercase border-b border-white/20 pb-2 flex-1">
-                Gallery
-              </h2>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+          <div className="mb-12">
+            <h2 className="text-2xl font-black tracking-tighter uppercase mb-6 text-left border-b-2 pb-2" style={{ borderColor: customTheme.accent }}>
+              Gallery
+            </h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               {photos.slice(0, 6).map((photo) => (
-                <div
-                  key={photo.id}
-                  className="aspect-square bg-white/5 relative overflow-hidden group cursor-pointer"
-                >
+                <div key={photo.id} className="aspect-square bg-white/5 relative overflow-hidden group rounded-lg">
                   <img
                     src={photo.url}
                     alt={photo.caption || "Gallery photo"}
@@ -290,7 +307,8 @@ export default function PublicProfile() {
             {photos.length > 6 && (
               <Link
                 href={`/${username}/photos`}
-                className="mt-4 w-full flex items-center justify-center gap-2 border border-white/20 py-3 text-xs uppercase tracking-widest font-bold text-muted-foreground hover:text-white hover:border-white/50 transition-colors"
+                className="mt-4 w-full flex items-center justify-center gap-2 border-2 py-3 text-xs uppercase tracking-widest font-bold text-muted-foreground hover:text-white transition-colors rounded-lg"
+                style={{ borderColor: `${customTheme.accent}50` }}
               >
                 Ver todas as {photos.length} fotos
                 <ChevronRight size={14} />
@@ -301,7 +319,7 @@ export default function PublicProfile() {
 
         {/* Social Links */}
         {socialLinks && socialLinks.length > 0 && (
-          <div className="flex gap-4 mt-4 flex-wrap justify-center">
+          <div className="flex gap-4 justify-center flex-wrap my-8">
             {socialLinks.map((s) => {
               const platform = getPlatform(s.platform ?? null);
               return (
@@ -310,11 +328,15 @@ export default function PublicProfile() {
                   href={s.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 text-xs uppercase tracking-widest text-muted-foreground hover:text-white transition-colors"
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg transition-all"
+                  style={{
+                    backgroundColor: `${customTheme.accent}20`,
+                    color: customTheme.primary,
+                  }}
                   title={platform.name}
                 >
                   <platform.Icon size={16} />
-                  <span className="sr-only">{s.platform}</span>
+                  <span className="text-xs font-bold uppercase">{platform.name}</span>
                 </a>
               );
             })}
@@ -322,9 +344,11 @@ export default function PublicProfile() {
         )}
 
         {/* Footer */}
-        <p className="mt-12 text-xs text-white/20 font-mono tracking-widest">
-          linkhub.io
-        </p>
+        <div className="py-12 text-center border-t-2" style={{ borderColor: `${customTheme.accent}20` }}>
+          <p className="text-xs text-white/30 font-mono tracking-widest">
+            Built with ✨ by VOID
+          </p>
+        </div>
       </main>
     </div>
   );

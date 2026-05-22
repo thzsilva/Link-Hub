@@ -106,6 +106,8 @@ router.put("/me", async (req, res): Promise<void> => {
   const parsed = UpdateProfileBody.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
 
+  console.log("PUT /api/me - dados recebidos:", JSON.stringify(parsed.data, null, 2));
+
   const { db, profilesTable, eq } = await getDbModule();
   const profile = await getOrCreateProfile(userId);
 
@@ -123,11 +125,49 @@ router.put("/me", async (req, res): Promise<void> => {
   if (parsed.data.username !== undefined) updateData.username = parsed.data.username;
   if (parsed.data.displayName !== undefined) updateData.displayName = parsed.data.displayName;
   if (parsed.data.bio !== undefined) updateData.bio = parsed.data.bio;
-  if (parsed.data.avatarUrl !== undefined) updateData.avatarUrl = parsed.data.avatarUrl;
+  if (parsed.data.avatarUrl !== undefined) {
+    console.log("Salvando avatarUrl:", parsed.data.avatarUrl);
+    updateData.avatarUrl = parsed.data.avatarUrl;
+  }
   if (parsed.data.headerImageUrl !== undefined) updateData.headerImageUrl = parsed.data.headerImageUrl;
   if (parsed.data.accentColor !== undefined) updateData.accentColor = parsed.data.accentColor;
   if (parsed.data.bgColor !== undefined) updateData.bgColor = parsed.data.bgColor;
   if (parsed.data.cardStyle !== undefined) updateData.cardStyle = parsed.data.cardStyle;
+  if (parsed.data.themeId !== undefined) updateData.themeId = parsed.data.themeId;
+  if (parsed.data.layoutColumns !== undefined) updateData.layoutColumns = parsed.data.layoutColumns;
+  if (parsed.data.customPrimaryColor !== undefined) updateData.customPrimaryColor = parsed.data.customPrimaryColor;
+  if (parsed.data.customSecondaryColor !== undefined) updateData.customSecondaryColor = parsed.data.customSecondaryColor;
+  if (parsed.data.backgroundImageUrl !== undefined) updateData.backgroundImageUrl = parsed.data.backgroundImageUrl;
+  if (parsed.data.backgroundBlur !== undefined) updateData.backgroundBlur = parsed.data.backgroundBlur;
+
+  console.log("PUT /api/me - updateData:", JSON.stringify(updateData, null, 2));
+
+  const [updated] = await db
+    .update(profilesTable)
+    .set(updateData)
+    .where(eq(profilesTable.id, profile.id))
+    .returning();
+
+  console.log("PUT /api/me - resultado:", JSON.stringify({ id: updated.id, avatarUrl: updated.avatarUrl }, null, 2));
+
+  res.json(updated);
+});
+
+router.patch("/profile", async (req, res): Promise<void> => {
+  if (DEMO_MODE) { res.json(demoProfile); return; }
+  const { userId } = getAuth(req);
+  if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+
+  const { db, profilesTable, eq } = await getDbModule();
+  const profile = await getOrCreateProfile(userId);
+
+  const updateData: Record<string, unknown> = {};
+  if (req.body.themeId !== undefined) updateData.themeId = req.body.themeId;
+  if (req.body.layoutColumns !== undefined) updateData.layoutColumns = req.body.layoutColumns;
+  if (req.body.customPrimaryColor !== undefined) updateData.customPrimaryColor = req.body.customPrimaryColor;
+  if (req.body.customSecondaryColor !== undefined) updateData.customSecondaryColor = req.body.customSecondaryColor;
+  if (req.body.backgroundImageUrl !== undefined) updateData.backgroundImageUrl = req.body.backgroundImageUrl;
+  if (req.body.backgroundBlur !== undefined) updateData.backgroundBlur = req.body.backgroundBlur;
 
   const [updated] = await db
     .update(profilesTable)
