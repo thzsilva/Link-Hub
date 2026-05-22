@@ -65,7 +65,8 @@
       "Bash(netstat -ano)",
       "Bash(taskkill /PID 14880 /F)",
       "Bash(git add *)",
-      "Bash(git commit *)"
+      "Bash(git commit *)",
+      "Bash(git push *)"
     ]
   }
 }
