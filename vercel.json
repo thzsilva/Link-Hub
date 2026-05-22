@@ -1,7 +1,5 @@
 {
-  "buildCommand": "npm run build --workspace=artifacts/void",
+  "buildCommand": "npm run build",
   "installCommand": "npm install",
-  "outputDirectory": "artifacts/void/dist/public",
-  "framework": "vite",
-  "root": "artifacts/void"
+  "outputDirectory": "artifacts/void/dist/public"
 }
