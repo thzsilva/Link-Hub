@@ -1,9 +1,6 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "package.json",
-      "use": "@vercel/node"
-    }
-  ]
+  "buildCommand": "npm run build -w=artifacts/api-server",
+  "installCommand": "npm install",
+  "outputDirectory": "artifacts/api-server/dist"
 }
