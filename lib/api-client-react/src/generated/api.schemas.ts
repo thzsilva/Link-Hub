@@ -28,6 +28,14 @@ export interface Profile {
   /** @nullable */
   cardStyle?: string | null;
   /** @nullable */
+  themeId?: string | null;
+  /** @nullable */
+  layoutColumns?: number | null;
+  /** @nullable */
+  customPrimaryColor?: string | null;
+  /** @nullable */
+  customSecondaryColor?: string | null;
+  /** @nullable */
   isSuperAdmin?: boolean | null;
   isActive: boolean;
   createdAt: string;

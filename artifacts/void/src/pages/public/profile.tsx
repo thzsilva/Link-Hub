@@ -125,7 +125,7 @@ export default function PublicProfileNew() {
                 const img = e.target as HTMLImageElement;
                 if (!img.src.includes("?t=") && img.src.includes("supabase")) {
                   img.src = `${profile.avatarUrl}?t=${Date.now()}`;
-                } else if (img.src.includes("supabase") && !img.src.includes("proxy-image")) {
+                } else if (img.src.includes("supabase") && !img.src.includes("proxy-image") && profile.avatarUrl) {
                   img.src = `/api/proxy-image?url=${encodeURIComponent(profile.avatarUrl)}`;
                 } else {
                   img.style.display = "none";

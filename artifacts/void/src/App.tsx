@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/reac
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
+import { setBaseUrl } from "@workspace/api-client-react";
 
 import Home from "@/pages/home";
 import DashboardLayout from "@/components/layouts/dashboard-layout";
@@ -204,6 +205,12 @@ function PublicOnlyRoutes() {
 function App() {
   useEffect(() => {
     document.documentElement.classList.add('dark');
+
+    // Configure API base URL for the client
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
+    if (apiBaseUrl) {
+      setBaseUrl(apiBaseUrl);
+    }
   }, []);
 
   return (
