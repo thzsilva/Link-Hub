@@ -21,10 +21,20 @@ import PublicPhotos from "@/pages/public/photos";
 
 const queryClient = new QueryClient();
 
-const clerkPubKey = publishableKeyFromHost(
-  window.location.hostname,
-  import.meta.env.VITE_CLERK_PUBLISHABLE_KEY,
-);
+// Só ativa o Clerk se a chave estiver explicitamente configurada no .env.
+// publishableKeyFromHost gera uma chave sintética para localhost que tenta
+// carregar de clerk.localhost (inexistente) — por isso verificamos primeiro.
+let clerkPubKey: string | null = null;
+if (import.meta.env.VITE_CLERK_PUBLISHABLE_KEY) {
+  try {
+    clerkPubKey = publishableKeyFromHost(
+      window.location.hostname,
+      import.meta.env.VITE_CLERK_PUBLISHABLE_KEY,
+    ) ?? null;
+  } catch {
+    // Clerk key inválida
+  }
+}
 
 const clerkProxyUrl = import.meta.env.VITE_CLERK_PROXY_URL;
 
@@ -34,10 +44,6 @@ function stripBase(path: string): string {
   return basePath && path.startsWith(basePath)
     ? path.slice(basePath.length) || "/"
     : path;
-}
-
-if (!clerkPubKey) {
-  throw new Error('Missing VITE_CLERK_PUBLISHABLE_KEY in .env file');
 }
 
 const clerkAppearance = {
@@ -144,13 +150,9 @@ function DashboardRoutes() {
 function ClerkProviderWithRoutes() {
   const [, setLocation] = useLocation();
 
-  useEffect(() => {
-    document.documentElement.classList.add('dark');
-  }, []);
-
   return (
     <ClerkProvider
-      publishableKey={clerkPubKey}
+      publishableKey={clerkPubKey!}
       proxyUrl={clerkProxyUrl}
       appearance={clerkAppearance}
       signInUrl={`${basePath}/sign-in`}
@@ -158,33 +160,51 @@ function ClerkProviderWithRoutes() {
       routerPush={(to) => setLocation(stripBase(to))}
       routerReplace={(to) => setLocation(stripBase(to), { replace: true })}
     >
-      <QueryClientProvider client={queryClient}>
-        <ClerkQueryClientCacheInvalidator />
-        <Switch>
-          <Route path="/" component={HomeRedirect} />
-          <Route path="/sign-in/*?" component={SignInPage} />
-          <Route path="/sign-up/*?" component={SignUpPage} />
-          <Route path="/dashboard" component={DashboardRoutes} />
-          <Route path="/dashboard/:rest*" component={DashboardRoutes} />
-          <Route path="/admin" component={DashboardRoutes} />
-          
-          <Route path="/:username" component={PublicProfile} />
-          <Route path="/:username/photos" component={PublicPhotos} />
-          
-          <Route component={NotFound} />
-        </Switch>
-      </QueryClientProvider>
+      <ClerkQueryClientCacheInvalidator />
+      <Switch>
+        <Route path="/" component={HomeRedirect} />
+        <Route path="/sign-in/*?" component={SignInPage} />
+        <Route path="/sign-up/*?" component={SignUpPage} />
+        <Route path="/dashboard" component={DashboardRoutes} />
+        <Route path="/dashboard/:rest*" component={DashboardRoutes} />
+        <Route path="/admin" component={DashboardRoutes} />
+
+        <Route path="/:username" component={PublicProfile} />
+        <Route path="/:username/photos" component={PublicPhotos} />
+
+        <Route component={NotFound} />
+      </Switch>
     </ClerkProvider>
   );
 }
 
+function PublicOnlyRoutes() {
+  return (
+    <Switch>
+      <Route path="/:username" component={PublicProfile} />
+      <Route path="/:username/photos" component={PublicPhotos} />
+      <Route component={NotFound} />
+    </Switch>
+  );
+}
+
 function App() {
+  useEffect(() => {
+    document.documentElement.classList.add('dark');
+  }, []);
+
   return (
     <WouterRouter base={basePath}>
-      <TooltipProvider>
-        <ClerkProviderWithRoutes />
-        <Toaster />
-      </TooltipProvider>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          {clerkPubKey ? (
+            <ClerkProviderWithRoutes />
+          ) : (
+            <PublicOnlyRoutes />
+          )}
+          <Toaster />
+        </TooltipProvider>
+      </QueryClientProvider>
     </WouterRouter>
   );
 }

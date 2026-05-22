@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Administrador\\\\Projetos\\\\Link-Hub\" -Recurse -Force)",
+      "Bash(Select-Object FullName, PSIsContainer)",
+      "Bash(Sort-Object FullName)",
+      "Bash(Format-Table -AutoSize)",
+      "mcp__Claude_in_Chrome__tabs_context_mcp",
+      "PowerShell(try { Invoke-WebRequest -Uri \"http://localhost:3001/api/profile/johndoe\" -UseBasicParsing -TimeoutSec 10 } catch { $stream = $_.Exception.Response.GetResponseStream\\(\\); $reader = New-Object System.IO.StreamReader\\($stream\\); Write-Host $reader.ReadToEnd\\(\\) })",
+      "PowerShell($response = Invoke-WebRequest -Uri \"http://localhost:3001/api/profile/johndoe\" -UseBasicParsing -TimeoutSec 10 -ErrorAction SilentlyContinue; Write-Host \"Status: $\\($response.StatusCode\\)\"; Write-Host $response.Content)",
+      "PowerShell(Get-NetTCPConnection -LocalPort 3000,3001 -ErrorAction SilentlyContinue)",
+      "PowerShell(Set-Location \"C:\\\\Users\\\\Administrador\\\\Projetos\\\\Link-Hub\"; Start-Process -NoNewWindow -FilePath \"cmd\" -ArgumentList \"/c npm run dev 2>&1\" -RedirectStandardOutput \"$env:TEMP\\\\dev-full.txt\"; Start-Sleep -Seconds 12; Get-Content \"$env:TEMP\\\\dev-full.txt\")",
+      "Bash(npm run *)",
+      "Read(//tmp/**)",
+      "Bash(curl -s http://localhost:3001/api/profile/johndoe)",
+      "Bash(curl -s http://localhost:3001/api/me)",
+      "Bash(curl -s http://localhost:3001/api/links)"
+    ]
+  }
+}

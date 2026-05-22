@@ -6,6 +6,7 @@ import { UpdateAdminArtistBody, UpdateAdminArtistParams } from "@workspace/api-z
 import { getAuth } from "@clerk/express";
 
 const router = Router();
+const DEMO_MODE = process.env.DEMO_MODE === "true";
 
 async function isSuperAdmin(clerkUserId: string): Promise<boolean> {
   const profile = await db
@@ -18,6 +19,7 @@ async function isSuperAdmin(clerkUserId: string): Promise<boolean> {
 }
 
 router.get("/admin/artists", async (req, res): Promise<void> => {
+  if (DEMO_MODE) { res.json([]); return; }
   const { userId } = getAuth(req);
   if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
 
@@ -29,6 +31,7 @@ router.get("/admin/artists", async (req, res): Promise<void> => {
 });
 
 router.put("/admin/artists/:id", async (req, res): Promise<void> => {
+  if (DEMO_MODE) { res.json({ ok: true }); return; }
   const { userId } = getAuth(req);
   if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
 

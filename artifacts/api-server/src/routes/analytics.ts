@@ -6,6 +6,7 @@ import { TrackEventBody } from "@workspace/api-zod";
 import { getAuth } from "@clerk/express";
 
 const router = Router();
+const DEMO_MODE = process.env.DEMO_MODE === "true";
 
 async function getProfileId(clerkUserId: string): Promise<string | null> {
   const profile = await db
@@ -18,6 +19,8 @@ async function getProfileId(clerkUserId: string): Promise<string | null> {
 }
 
 router.post("/analytics", async (req, res): Promise<void> => {
+  if (DEMO_MODE) { res.json({ ok: true }); return; }
+
   const parsed = TrackEventBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -43,6 +46,22 @@ router.post("/analytics", async (req, res): Promise<void> => {
 });
 
 router.get("/analytics", async (req, res): Promise<void> => {
+  if (DEMO_MODE) {
+    res.json({
+      totalPageViews: 142,
+      totalClicks: 53,
+      dailyViews: Array.from({ length: 7 }, (_, i) => ({
+        date: new Date(Date.now() - (6 - i) * 86400000).toISOString().slice(0, 10),
+        count: Math.floor(Math.random() * 20) + 5,
+      })),
+      topLinks: [
+        { linkId: "link-1", title: "GitHub", clickCount: 42 },
+        { linkId: "link-2", title: "Portfólio", clickCount: 28 },
+        { linkId: "link-3", title: "Twitter / X", clickCount: 17 },
+      ],
+    });
+    return;
+  }
   const { userId } = getAuth(req);
   if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
 
@@ -92,6 +111,19 @@ router.get("/analytics", async (req, res): Promise<void> => {
 });
 
 router.get("/dashboard/stats", async (req, res): Promise<void> => {
+  if (DEMO_MODE) {
+    res.json({
+      totalLinks: 5,
+      totalPhotos: 6,
+      totalPageViews: 142,
+      totalClicks: 53,
+      recentActivity: Array.from({ length: 7 }, (_, i) => ({
+        date: new Date(Date.now() - (6 - i) * 86400000).toISOString().slice(0, 10),
+        count: Math.floor(Math.random() * 20) + 5,
+      })),
+    });
+    return;
+  }
   const { userId } = getAuth(req);
   if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
 

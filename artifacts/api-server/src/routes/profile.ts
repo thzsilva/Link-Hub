@@ -1,23 +1,73 @@
 import { Router } from "express";
-import { db } from "@workspace/db";
-import {
-  profilesTable,
-  linksTable,
-  photosTable,
-  socialLinksTable,
-} from "@workspace/db";
-import { eq, and } from "drizzle-orm";
+import { getAuth } from "@clerk/express";
 import {
   GetMeResponse,
   UpdateProfileBody,
   CheckUsernameAvailabilityQueryParams,
-  GetPublicProfileParams,
 } from "@workspace/api-zod";
-import { getAuth } from "@clerk/express";
 
 const router = Router();
 
+// ---------------------------------------------------------------------------
+// Demo mode (quando DATABASE_URL não está configurado)
+// ---------------------------------------------------------------------------
+
+const DEMO_MODE = process.env.DEMO_MODE === "true";
+
+const demoProfile = {
+  id: "00000000-0000-0000-0000-000000000001",
+  clerkUserId: "user_demo",
+  username: "johndoe",
+  displayName: "João Silva",
+  bio: "Designer & Desenvolvedor Full-Stack. Transformando ideias em produtos digitais.",
+  avatarUrl: "https://i.pravatar.cc/300?img=12",
+  headerImageUrl: "https://picsum.photos/seed/linkhub-header/1200/400",
+  accentColor: "#6366f1",
+  bgColor: "#0a0a0a",
+  cardStyle: "glass",
+  isSuperAdmin: false,
+  isActive: true,
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString(),
+};
+
+const demoLinks = [
+  { id: "link-1", profileId: demoProfile.id, title: "GitHub", url: "https://github.com", description: "Meus projetos open source", icon: null, thumbnailUrl: null, cardType: "default", position: 0, isVisible: true, clickCount: 42, createdAt: new Date().toISOString() },
+  { id: "link-2", profileId: demoProfile.id, title: "Portfólio", url: "https://example.com", description: "Trabalhos e cases", icon: null, thumbnailUrl: null, cardType: "default", position: 1, isVisible: true, clickCount: 28, createdAt: new Date().toISOString() },
+  { id: "link-3", profileId: demoProfile.id, title: "Twitter / X", url: "https://twitter.com", description: "Pensamentos e atualizações", icon: null, thumbnailUrl: null, cardType: "default", position: 2, isVisible: true, clickCount: 17, createdAt: new Date().toISOString() },
+  { id: "link-4", profileId: demoProfile.id, title: "Blog & Artigos", url: "https://example.com/blog", description: "Escrita sobre tecnologia e design", icon: null, thumbnailUrl: null, cardType: "default", position: 3, isVisible: true, clickCount: 9, createdAt: new Date().toISOString() },
+  { id: "link-5", profileId: demoProfile.id, title: "Fale Comigo", url: "mailto:joao@example.com", description: "Entre em contato", icon: null, thumbnailUrl: null, cardType: "default", position: 4, isVisible: true, clickCount: 5, createdAt: new Date().toISOString() },
+];
+
+const demoPhotos = [
+  { id: "photo-1", profileId: demoProfile.id, url: "https://picsum.photos/seed/seed-p1/600/600", caption: "Projeto em destaque", isCover: true, position: 0, createdAt: new Date().toISOString() },
+  { id: "photo-2", profileId: demoProfile.id, url: "https://picsum.photos/seed/seed-p2/600/600", caption: "Workshop de Design 2024", isCover: false, position: 1, createdAt: new Date().toISOString() },
+  { id: "photo-3", profileId: demoProfile.id, url: "https://picsum.photos/seed/seed-p3/600/600", caption: "Design System", isCover: false, position: 2, createdAt: new Date().toISOString() },
+  { id: "photo-4", profileId: demoProfile.id, url: "https://picsum.photos/seed/seed-p4/600/600", caption: "Conferência Tech 2024", isCover: false, position: 3, createdAt: new Date().toISOString() },
+  { id: "photo-5", profileId: demoProfile.id, url: "https://picsum.photos/seed/seed-p5/600/600", caption: "Bastidores", isCover: false, position: 4, createdAt: new Date().toISOString() },
+  { id: "photo-6", profileId: demoProfile.id, url: "https://picsum.photos/seed/seed-p6/600/600", caption: "Lançamento", isCover: false, position: 5, createdAt: new Date().toISOString() },
+];
+
+const demoSocialLinks = [
+  { id: "social-1", profileId: demoProfile.id, platform: "github", url: "https://github.com/joaosilva", position: 0 },
+  { id: "social-2", profileId: demoProfile.id, platform: "twitter", url: "https://twitter.com/joaosilva", position: 1 },
+  { id: "social-3", profileId: demoProfile.id, platform: "instagram", url: "https://instagram.com/joaosilva", position: 2 },
+  { id: "social-4", profileId: demoProfile.id, platform: "linkedin", url: "https://linkedin.com/in/joaosilva", position: 3 },
+];
+
+// ---------------------------------------------------------------------------
+// Rotas autenticadas (requerem banco de dados)
+// ---------------------------------------------------------------------------
+
+async function getDbModule() {
+  const { db, profilesTable, linksTable, photosTable, socialLinksTable } = await import("@workspace/db");
+  const { eq, and } = await import("drizzle-orm");
+  return { db, profilesTable, linksTable, photosTable, socialLinksTable, eq, and };
+}
+
 async function getOrCreateProfile(clerkUserId: string, email?: string) {
+  const { db, profilesTable, eq } = await getDbModule();
+
   let profile = await db
     .select()
     .from(profilesTable)
@@ -38,29 +88,22 @@ async function getOrCreateProfile(clerkUserId: string, email?: string) {
 }
 
 router.get("/me", async (req, res): Promise<void> => {
+  if (DEMO_MODE) { res.json(GetMeResponse.parse(demoProfile)); return; }
   const { userId } = getAuth(req);
-  if (!userId) {
-    res.status(401).json({ error: "Unauthorized" });
-    return;
-  }
-
+  if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
   const profile = await getOrCreateProfile(userId);
   res.json(GetMeResponse.parse(profile));
 });
 
 router.put("/me", async (req, res): Promise<void> => {
+  if (DEMO_MODE) { res.json(demoProfile); return; }
   const { userId } = getAuth(req);
-  if (!userId) {
-    res.status(401).json({ error: "Unauthorized" });
-    return;
-  }
+  if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
 
   const parsed = UpdateProfileBody.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.message });
-    return;
-  }
+  if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
 
+  const { db, profilesTable, eq } = await getDbModule();
   const profile = await getOrCreateProfile(userId);
 
   if (parsed.data.username && parsed.data.username !== profile.username) {
@@ -70,10 +113,7 @@ router.put("/me", async (req, res): Promise<void> => {
       .where(eq(profilesTable.username, parsed.data.username))
       .limit(1)
       .then((r) => r[0]);
-    if (existing) {
-      res.status(400).json({ error: "Username already taken" });
-      return;
-    }
+    if (existing) { res.status(400).json({ error: "Username already taken" }); return; }
   }
 
   const updateData: Record<string, unknown> = {};
@@ -96,12 +136,12 @@ router.put("/me", async (req, res): Promise<void> => {
 });
 
 router.get("/me/username-check", async (req, res): Promise<void> => {
-  const parsed = CheckUsernameAvailabilityQueryParams.safeParse(req.query);
-  if (!parsed.success || !parsed.data.username) {
-    res.status(400).json({ error: "Username required" });
-    return;
-  }
+  if (DEMO_MODE) { res.json({ available: true }); return; }
 
+  const parsed = CheckUsernameAvailabilityQueryParams.safeParse(req.query);
+  if (!parsed.success || !parsed.data.username) { res.status(400).json({ error: "Username required" }); return; }
+
+  const { db, profilesTable, eq } = await getDbModule();
   const existing = await db
     .select({ id: profilesTable.id })
     .from(profilesTable)
@@ -112,8 +152,24 @@ router.get("/me/username-check", async (req, res): Promise<void> => {
   res.json({ available: !existing });
 });
 
+// ---------------------------------------------------------------------------
+// Rota pública — sem autenticação, com fallback demo
+// ---------------------------------------------------------------------------
+
 router.get("/profile/:username", async (req, res): Promise<void> => {
   const { username } = req.params;
+
+  // Modo demo: retorna dados estáticos sem precisar de banco
+  if (DEMO_MODE) {
+    if (username !== demoProfile.username) {
+      res.status(404).json({ error: "Profile not found" });
+      return;
+    }
+    res.json({ profile: demoProfile, links: demoLinks, photos: demoPhotos, socialLinks: demoSocialLinks });
+    return;
+  }
+
+  const { db, profilesTable, linksTable, photosTable, socialLinksTable, eq, and } = await getDbModule();
 
   const profile = await db
     .select()
@@ -122,27 +178,12 @@ router.get("/profile/:username", async (req, res): Promise<void> => {
     .limit(1)
     .then((r) => r[0]);
 
-  if (!profile) {
-    res.status(404).json({ error: "Profile not found" });
-    return;
-  }
+  if (!profile) { res.status(404).json({ error: "Profile not found" }); return; }
 
   const [links, photos, socialLinks] = await Promise.all([
-    db
-      .select()
-      .from(linksTable)
-      .where(and(eq(linksTable.profileId, profile.id), eq(linksTable.isVisible, true)))
-      .orderBy(linksTable.position),
-    db
-      .select()
-      .from(photosTable)
-      .where(eq(photosTable.profileId, profile.id))
-      .orderBy(photosTable.position),
-    db
-      .select()
-      .from(socialLinksTable)
-      .where(eq(socialLinksTable.profileId, profile.id))
-      .orderBy(socialLinksTable.position),
+    db.select().from(linksTable).where(and(eq(linksTable.profileId, profile.id), eq(linksTable.isVisible, true))).orderBy(linksTable.position),
+    db.select().from(photosTable).where(eq(photosTable.profileId, profile.id)).orderBy(photosTable.position),
+    db.select().from(socialLinksTable).where(eq(socialLinksTable.profileId, profile.id)).orderBy(socialLinksTable.position),
   ]);
 
   res.json({ profile, links, photos, socialLinks });
