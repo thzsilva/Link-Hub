@@ -63,7 +63,9 @@
       "Bash(npm list *)",
       "Bash(awk '{print $2}')",
       "Bash(netstat -ano)",
-      "Bash(taskkill /PID 14880 /F)"
+      "Bash(taskkill /PID 14880 /F)",
+      "Bash(git add *)",
+      "Bash(git commit *)"
     ]
   }
 }
