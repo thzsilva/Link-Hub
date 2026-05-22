@@ -1,0 +1,7 @@
+{
+  "version": 2,
+  "name": "linkhub-api",
+  "buildCommand": "npm run build -w=artifacts/api-server",
+  "installCommand": "npm install --legacy-peer-deps",
+  "outputDirectory": "artifacts/api-server/dist"
+}
