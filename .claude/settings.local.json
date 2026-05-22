@@ -69,7 +69,15 @@
       "Bash(git push *)",
       "Bash(rm -f SUPABASE_*.md CLERK_*.md QUICK_START_*.md IMPLEMENTATION_*.txt)",
       "Bash(git checkout *)",
-      "Bash(rm -rf artifacts/void/src/hooks artifacts/void/src/types artifacts/void/src/lib/supabase.ts && rm -f SUPABASE_*.md CLERK_*.md QUICK_START_*.md IMPLEMENTATION_*.txt && git checkout artifacts/void/src/pages/dashboard/index.tsx artifacts/void/src/pages/dashboard/links.tsx artifacts/void/src/pages/dashboard/appearance.tsx artifacts/void/src/pages/dashboard/customization.tsx artifacts/void/src/pages/public/profile.tsx artifacts/void/src/components/layouts/dashboard-layout.tsx)"
+      "Bash(rm -rf artifacts/void/src/hooks artifacts/void/src/types artifacts/void/src/lib/supabase.ts && rm -f SUPABASE_*.md CLERK_*.md QUICK_START_*.md IMPLEMENTATION_*.txt && git checkout artifacts/void/src/pages/dashboard/index.tsx artifacts/void/src/pages/dashboard/links.tsx artifacts/void/src/pages/dashboard/appearance.tsx artifacts/void/src/pages/dashboard/customization.tsx artifacts/void/src/pages/public/profile.tsx artifacts/void/src/components/layouts/dashboard-layout.tsx)",
+      "mcp__Claude_in_Chrome__switch_browser",
+      "Bash(vercel --version)",
+      "Read(//c/Users/Administrador/**)",
+      "Bash(export VERCEL_TOKEN=\"vcp_7YRjY7KUrzyiwetR0q6bQFWAHWYQFtlJsx5C10TtR1TDbE4yoL0lVY7O\")",
+      "Bash(vercel whoami *)",
+      "Bash(vercel deploy *)",
+      "Bash(tee /tmp/frontend_deploy.log)",
+      "Bash(vercel redeploy *)"
     ]
   }
 }

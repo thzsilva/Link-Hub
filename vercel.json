@@ -1,0 +1,6 @@
+{
+  "version": 2,
+  "buildCommand": "npm run build -w=artifacts/void",
+  "installCommand": "npm install",
+  "outputDirectory": "artifacts/void/dist"
+}
