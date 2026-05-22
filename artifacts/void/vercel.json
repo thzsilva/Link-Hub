@@ -1,9 +1,5 @@
 {
   "version": 2,
   "buildCommand": "npm run build",
-  "installCommand": "npm install --legacy-peer-deps",
-  "env": {
-    "VITE_CLERK_PUBLISHABLE_KEY": "@vite_clerk_key",
-    "VITE_API_BASE_URL": "@vite_api_url"
-  }
+  "installCommand": "npm install --legacy-peer-deps"
 }
