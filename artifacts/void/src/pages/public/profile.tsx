@@ -1,10 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
+import { motion } from "framer-motion";
 import { useGetPublicProfile, useTrackEvent } from "@workspace/api-client-react";
 import { useParams, Link } from "wouter";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CalendarDays, MapPin, ExternalLink, ChevronRight } from "lucide-react";
 import { getPlatform, toSpotifyEmbedUrl } from "@/lib/platforms";
 import { getTheme, getCSSVariables } from "@/lib/themes";
+import { LinkButton } from "@/components/LinkButton";
 
 // ---------------------------------------------------------------------------
 // Skeleton
@@ -101,15 +103,23 @@ export default function PublicProfileNew() {
 
       <main className="max-w-5xl mx-auto px-6 relative z-10">
         {/* Perfil */}
-        <div className={`flex flex-col items-center text-center mb-12 relative z-20 ${profile.headerImageUrl ? '-mt-16' : 'mt-8'}`}>
+        <motion.div
+          className={`flex flex-col items-center text-center mb-12 relative z-20 ${profile.headerImageUrl ? '-mt-16' : 'mt-8'}`}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
           {profile.avatarUrl && (
-            <img
+            <motion.img
               src={profile.avatarUrl}
               alt={profile.displayName || profile.username}
               className="w-32 h-32 rounded-full object-cover mb-6 border-4 shadow-lg"
               style={{ borderColor: customTheme.primary }}
               crossOrigin="anonymous"
               loading="lazy"
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
               onError={(e) => {
                 console.error("Erro ao carregar avatar:", profile.avatarUrl);
                 const img = e.target as HTMLImageElement;
@@ -123,56 +133,62 @@ export default function PublicProfileNew() {
               }}
             />
           )}
-          <h1 className="text-4xl font-black tracking-tighter uppercase mb-2" style={{ color: customTheme.primary }}>
+          <motion.h1
+            className="text-4xl font-black tracking-tighter uppercase mb-2"
+            style={{ color: customTheme.primary }}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.2 }}
+          >
             {profile.displayName || profile.username}
-          </h1>
-          <p className="text-muted-foreground font-mono mb-4 max-w-md">{profile.bio}</p>
-        </div>
+          </motion.h1>
+          <motion.p
+            className="text-muted-foreground font-mono mb-4 max-w-md"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.3 }}
+          >
+            {profile.bio}
+          </motion.p>
+        </motion.div>
 
         {/* Links regulares em grid */}
         {regularLinks.length > 0 && (
-          <div className="mb-12">
-            <div
+          <motion.div
+            className="mb-12"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <motion.div
               className="grid gap-3 mb-8"
               style={{
                 gridTemplateColumns: `repeat(${Math.min(layoutColumns, regularLinks.length)}, minmax(0, 1fr))`,
               }}
             >
-              {regularLinks.map((link) => {
+              {regularLinks.map((link, index) => {
                 const platform = getPlatform(link.icon ?? null);
                 return (
-                  <button
+                  <motion.div
                     key={link.id}
-                    onClick={() => handleLinkClick(link.id, link.url)}
-                    className="flex items-center gap-3 p-4 rounded-lg border-2 transition-all hover:shadow-lg"
-                    style={{
-                      borderColor: customTheme.accent,
-                      backgroundColor: `${customTheme.secondary}20`,
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = `${customTheme.accent}30`;
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = `${customTheme.secondary}20`;
-                    }}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: index * 0.1 }}
                   >
-                    {/* Platform icon */}
-                    <span
-                      className="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-lg"
-                      style={{ background: platform.bgColor, color: platform.color }}
-                    >
-                      <platform.Icon size={20} />
-                    </span>
-                    <span className="flex-1 text-left">
-                      <p className="font-bold text-sm">{link.title}</p>
-                      {link.description && <p className="text-xs opacity-70">{link.description}</p>}
-                    </span>
-                    <ChevronRight size={16} className="opacity-50" />
-                  </button>
+                    <LinkButton
+                      icon={<platform.Icon size={20} />}
+                      title={link.title}
+                      description={link.description}
+                      accentColor={customTheme.accent}
+                      secondaryColor={customTheme.secondary}
+                      backgroundColor={`${customTheme.secondary}20`}
+                      onClick={() => handleLinkClick(link.id, link.url)}
+                    />
+                  </motion.div>
                 );
               })}
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         )}
 
         {/* Spotify Embeds */}

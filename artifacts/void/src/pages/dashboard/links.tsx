@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import {
   useGetMyLinks,
   useCreateLink,
@@ -21,13 +22,14 @@ import {
   verticalListSortingStrategy, useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Trash2, Edit2, Check, X, Plus, ChevronDown } from "lucide-react";
+import { GripVertical, Trash2, Edit2, Check, X, Plus, ChevronDown, LinkIcon } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import {
   PLATFORMS, detectPlatform, getPlatform, toSpotifyEmbedUrl,
   type PlatformId,
 } from "@/lib/platforms";
+import { EmptyState } from "@/components/EmptyState";
 
 // ---------------------------------------------------------------------------
 // Icon Picker
@@ -419,54 +421,91 @@ export default function DashboardLinks() {
 
   return (
     <div className="space-y-8">
-      <div className="flex justify-between items-end">
+      <motion.div
+        className="flex justify-between items-end"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
         <div>
           <h1 className="text-4xl font-black uppercase tracking-tighter">Links</h1>
           <p className="text-muted-foreground mt-2 font-mono text-sm">Gerencie seus blocos de conteúdo.</p>
         </div>
-        <Button
-          onClick={() => setAddOpen(true)}
-          className="rounded-none bg-white text-black hover:bg-white/90 uppercase tracking-widest text-xs font-bold gap-2"
+        <motion.div
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
         >
-          <Plus size={14} />
-          Novo Link
-        </Button>
-      </div>
+          <Button
+            onClick={() => setAddOpen(true)}
+            className="rounded-none bg-white text-black hover:bg-white/90 uppercase tracking-widest text-xs font-bold gap-2"
+          >
+            <Plus size={14} />
+            Novo Link
+          </Button>
+        </motion.div>
+      </motion.div>
 
       {/* Platform quick-add shortcuts */}
-      <div className="flex flex-wrap gap-2">
-        {["spotify", "instagram", "youtube", "tiktok", "twitter", "whatsapp"].map((id) => {
+      <motion.div
+        className="flex flex-wrap gap-2"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.1 }}
+      >
+        {["spotify", "instagram", "youtube", "tiktok", "twitter", "whatsapp"].map((id, index) => {
           const p = getPlatform(id);
           return (
-            <button
+            <motion.button
               key={id}
               onClick={() => setAddOpen(true)}
               title={`Adicionar ${p.name}`}
               className="flex items-center gap-1.5 px-2.5 py-1.5 border border-white/10 hover:border-white/40 transition-colors text-xs uppercase tracking-widest font-bold"
               style={{ color: p.color }}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.3, delay: 0.15 + index * 0.05 }}
+              whileHover={{ scale: 1.05, borderColor: "rgba(255,255,255,0.6)" }}
+              whileTap={{ scale: 0.95 }}
             >
               <p.Icon size={13} />
               {p.name}
-            </button>
+            </motion.button>
           );
         })}
-      </div>
+      </motion.div>
 
-      <div className="space-y-3">
+      <motion.div
+        className="space-y-3"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
         {!links || links.length === 0 ? (
-          <div className="p-12 border border-border text-center text-muted-foreground font-mono">
-            Nenhum link ainda. Clique em "Novo Link" para começar.
-          </div>
+          <EmptyState
+            icon={LinkIcon}
+            title="Nenhum link ainda"
+            description="Comece a adicionar links para seu perfil. Seus visitantes verão todos os seus conteúdos importantes em um só lugar."
+            actionLabel="Criar Primeiro Link"
+            onAction={() => setAddOpen(true)}
+          />
         ) : (
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <SortableContext items={items.map((i) => i.id)} strategy={verticalListSortingStrategy}>
-              {items.map((link) => (
-                <SortableLink key={link.id} link={link} onDelete={handleDelete} onUpdate={handleUpdate} />
+              {items.map((link, index) => (
+                <motion.div
+                  key={link.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: index * 0.05 }}
+                  layout
+                >
+                  <SortableLink link={link} onDelete={handleDelete} onUpdate={handleUpdate} />
+                </motion.div>
               ))}
             </SortableContext>
           </DndContext>
         )}
-      </div>
+      </motion.div>
 
       <AddLinkDialog
         open={addOpen}

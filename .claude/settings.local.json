@@ -60,7 +60,10 @@
       "Bash(curl -s http://localhost:3001/api/sections -H \"Authorization: Bearer demo\")",
       "Bash(curl -s \"http://localhost:3001/api/proxy-image?url=https://zcuehpfnpdaoknywddbh.supabase.co/storage/v1/object/public/linkhub/uploads/fa036e6b-c05f-484b-aec8-b43deab385dc.jpg\" -I)",
       "Bash(curl -s \"http://localhost:3001/api/proxy-image?url=https%3A%2F%2Fzcuehpfnpdaoknywddbh.supabase.co%2Fstorage%2Fv1%2Fobject%2Fpublic%2Flinkhub%2Fuploads%2Ffa036e6b-c05f-484b-aec8-b43deab385dc.jpg\")",
-      "Bash(npm list *)"
+      "Bash(npm list *)",
+      "Bash(awk '{print $2}')",
+      "Bash(netstat -ano)",
+      "Bash(taskkill /PID 14880 /F)"
     ]
   }
 }

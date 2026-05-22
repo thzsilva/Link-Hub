@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { motion } from "framer-motion";
 import { useGetMe } from "@workspace/api-client-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -7,6 +8,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { THEMES, type ThemeId, type LayoutColumns, getTheme, getCSSVariables } from "@/lib/themes";
 import { Palette, Layout, Copy, Check, Upload as UploadIcon, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { ColorPickerEnhanced } from "@/components/ColorPickerEnhanced";
+import { ThemePreview } from "@/components/ThemePreview";
 
 async function updateProfileCustomization(data: {
   themeId?: string;
@@ -154,13 +157,22 @@ export default function DashboardCustomization() {
 
   return (
     <div className="space-y-8">
-      <div>
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
         <h1 className="text-4xl font-black uppercase tracking-tighter">Customização</h1>
         <p className="text-muted-foreground mt-2 font-mono text-sm">Personalize a aparência do seu perfil</p>
-      </div>
+      </motion.div>
 
       {/* Upload de Foto de Perfil */}
-      <div className="space-y-4">
+      <motion.div
+        className="space-y-4"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.1 }}
+      >
         <h2 className="text-xl font-bold uppercase tracking-tight">Foto de Perfil</h2>
         <div className="grid md:grid-cols-2 gap-6">
           {/* Preview */}
@@ -235,10 +247,15 @@ export default function DashboardCustomization() {
             <p className="text-xs text-muted-foreground">Máximo 5MB. Formatos: JPG, PNG, GIF</p>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Preview do Perfil */}
-      <Card className="rounded-none bg-black border-border overflow-hidden">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.15 }}
+      >
+        <Card className="rounded-none bg-black border-border overflow-hidden">
         <div className="bg-gradient-to-r p-8" style={{ backgroundImage: `linear-gradient(135deg, ${theme.primary}, ${theme.secondary})` }}>
           <div className="flex items-end gap-4">
             {profile.avatarUrl && (
@@ -279,134 +296,172 @@ export default function DashboardCustomization() {
           </div>
         </CardContent>
       </Card>
+      </motion.div>
 
       {/* URL do Perfil */}
-      <div className="space-y-2">
+      <motion.div
+        className="space-y-2"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+      >
         <label className="text-xs uppercase tracking-widest text-muted-foreground">Seu perfil público</label>
         <div className="flex gap-2">
           <Input value={`${window.location.origin}/${profile.username}`} readOnly className="rounded-none bg-black border-border font-mono text-sm" />
-          <Button onClick={copyProfileUrl} variant="outline" className="rounded-none">
-            {copied ? <Check size={16} /> : <Copy size={16} />}
-          </Button>
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <Button onClick={copyProfileUrl} variant="outline" className="rounded-none">
+              {copied ? <Check size={16} /> : <Copy size={16} />}
+            </Button>
+          </motion.div>
         </div>
-      </div>
+      </motion.div>
 
-      <div className="grid md:grid-cols-2 gap-8">
+      <motion.div
+        className="grid md:grid-cols-2 gap-8"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.25 }}
+      >
         {/* Seletor de Temas */}
-        <div className="space-y-4">
+        <motion.div
+          className="space-y-4"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
           <div className="flex items-center gap-2">
             <Palette size={18} />
             <h2 className="text-xl font-bold uppercase tracking-tight">Temas</h2>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            {Object.values(THEMES).map((t) => (
-              <button
+            {Object.values(THEMES).map((t, index) => (
+              <motion.div
                 key={t.id}
-                onClick={() => setSelectedTheme(t.id)}
-                className={`p-4 rounded-lg border-2 transition-all ${selectedTheme === t.id ? "border-white" : "border-white/20 hover:border-white/40"}`}
-                style={{
-                  background: `linear-gradient(135deg, ${t.primary}, ${t.secondary})`,
-                }}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: index * 0.05 }}
               >
-                <p className="text-xs font-bold text-white uppercase tracking-widest">{t.name}</p>
-              </button>
+                <ThemePreview
+                  theme={t}
+                  isSelected={selectedTheme === t.id}
+                  onClick={() => setSelectedTheme(t.id)}
+                />
+              </motion.div>
             ))}
           </div>
-        </div>
+        </motion.div>
 
         {/* Layout */}
-        <div className="space-y-4">
+        <motion.div
+          className="space-y-4"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
           <div className="flex items-center gap-2">
             <Layout size={18} />
             <h2 className="text-xl font-bold uppercase tracking-tight">Layout</h2>
           </div>
 
           <div className="grid grid-cols-3 gap-3">
-            {([1, 2, 3] as LayoutColumns[]).map((cols) => (
-              <button
+            {([1, 2, 3] as LayoutColumns[]).map((cols, index) => (
+              <motion.button
                 key={cols}
                 onClick={() => setLayoutColumns(cols)}
                 className={`p-4 border-2 rounded-lg transition-all ${layoutColumns === cols ? "border-white bg-white/10" : "border-white/20 hover:border-white/40"}`}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.3, delay: index * 0.1 }}
+                whileHover={{ scale: 1.05, y: -2 }}
+                whileTap={{ scale: 0.95 }}
               >
                 <div className={`grid gap-1 mb-2`} style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}>
                   {[...Array(cols)].map((_, i) => (
-                    <div key={i} className="h-8 bg-white/20 rounded-sm" />
+                    <motion.div
+                      key={i}
+                      className="h-8 bg-white/20 rounded-sm"
+                      animate={layoutColumns === cols ? { scale: [1, 1.05, 1] } : {}}
+                      transition={{ duration: 0.3 }}
+                    />
                   ))}
                 </div>
                 <p className="text-xs font-bold uppercase">{cols} {cols === 1 ? "coluna" : "colunas"}</p>
-              </button>
+              </motion.button>
             ))}
           </div>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
 
       {/* Cores Customizadas */}
-      <div className="space-y-4">
+      <motion.div
+        className="space-y-4"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.1 }}
+      >
         <h2 className="text-xl font-bold uppercase tracking-tight">Cores Customizadas (opcional)</h2>
-        <div className="grid md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <label className="text-xs uppercase tracking-widest text-muted-foreground">Cor Primária</label>
-            <div className="flex gap-2">
-              <div className="flex-1 flex items-center border border-border rounded-none">
-                <div
-                  className="w-12 h-12 cursor-pointer"
-                  style={{ backgroundColor: customPrimary || theme.primary }}
-                  onClick={() => {
-                    const input = document.createElement("input");
-                    input.type = "color";
-                    input.value = customPrimary || theme.primary;
-                    input.onchange = (e) => setCustomPrimary((e.target as HTMLInputElement).value);
-                    input.click();
-                  }}
-                />
-                <Input
-                  value={customPrimary || theme.primary}
-                  onChange={(e) => setCustomPrimary(e.target.value)}
-                  className="rounded-none border-0 font-mono text-sm"
-                  placeholder="#000000"
-                />
-              </div>
-            </div>
-          </div>
+        <div className="grid md:grid-cols-2 gap-6">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.15 }}
+          >
+            <ColorPickerEnhanced
+              label="Cor Primária"
+              value={customPrimary || theme.primary}
+              onChange={setCustomPrimary}
+              suggestedColors={["#FF6B6B", "#4ECDC4", "#45B7D1", "#FFA07A", "#FF1744", "#2979F0", "#00BCD4", "#FF6F00"]}
+            />
+          </motion.div>
 
-          <div className="space-y-2">
-            <label className="text-xs uppercase tracking-widest text-muted-foreground">Cor Secundária</label>
-            <div className="flex gap-2">
-              <div className="flex-1 flex items-center border border-border rounded-none">
-                <div
-                  className="w-12 h-12 cursor-pointer"
-                  style={{ backgroundColor: customSecondary || theme.secondary }}
-                  onClick={() => {
-                    const input = document.createElement("input");
-                    input.type = "color";
-                    input.value = customSecondary || theme.secondary;
-                    input.onchange = (e) => setCustomSecondary((e.target as HTMLInputElement).value);
-                    input.click();
-                  }}
-                />
-                <Input
-                  value={customSecondary || theme.secondary}
-                  onChange={(e) => setCustomSecondary(e.target.value)}
-                  className="rounded-none border-0 font-mono text-sm"
-                  placeholder="#ffffff"
-                />
-              </div>
-            </div>
-          </div>
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.2 }}
+          >
+            <ColorPickerEnhanced
+              label="Cor Secundária"
+              value={customSecondary || theme.secondary}
+              onChange={setCustomSecondary}
+              suggestedColors={["#98D8C8", "#6C5CE7", "#A29BFE", "#74B9FF", "#81C784", "#FFB74D", "#E57373", "#9575CD"]}
+            />
+          </motion.div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Salvar */}
-      <div className="flex gap-2">
-        <Button
-          onClick={handleSaveCustomization}
-          disabled={updateProfileMutation.isPending}
-          className="rounded-none bg-white text-black hover:bg-white/90 uppercase tracking-widest text-xs font-bold"
+      <motion.div
+        className="flex gap-2"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+      >
+        <motion.div
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
         >
-          {updateProfileMutation.isPending ? "Salvando..." : "Salvar Customização"}
-        </Button>
-      </div>
+          <Button
+            onClick={handleSaveCustomization}
+            disabled={updateProfileMutation.isPending}
+            className="rounded-none bg-white text-black hover:bg-white/90 uppercase tracking-widest text-xs font-bold"
+          >
+            {updateProfileMutation.isPending ? (
+              <motion.span
+                animate={{ opacity: [1, 0.5, 1] }}
+                transition={{ duration: 1.5, repeat: Infinity }}
+              >
+                Salvando...
+              </motion.span>
+            ) : (
+              "Salvar Customização"
+            )}
+          </Button>
+        </motion.div>
+      </motion.div>
     </div>
   );
 }
