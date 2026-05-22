@@ -8,6 +8,8 @@
  * Após executar: acesse http://localhost:3000/johndoe para ver o perfil público.
  */
 
+export {};
+
 // Definir DATABASE_URL antes de importar @workspace/db (que valida a env no carregamento)
 process.env.DATABASE_URL ??=
   "postgresql://postgres:postgres@localhost:5432/linkhub";
@@ -29,7 +31,7 @@ async function seed() {
     .from(profilesTable)
     .where(eq(profilesTable.clerkUserId, SEED_CLERK_ID))
     .limit(1)
-    .then((r) => r[0]);
+    .then((r: any[]) => r[0]);
 
   if (existing) {
     console.log("♻️  Removendo seed anterior...");
