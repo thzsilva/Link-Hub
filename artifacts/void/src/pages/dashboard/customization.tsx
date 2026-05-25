@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { motion } from "framer-motion";
-import { useGetMe } from "@workspace/api-client-react";
+import { useGetMe, customFetch } from "@workspace/api-client-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,36 +17,39 @@ async function updateProfileCustomization(data: {
   customPrimaryColor?: string | null;
   customSecondaryColor?: string | null;
 }) {
-  const res = await fetch("/api/profile", {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  });
-  if (!res.ok) throw new Error("Falha ao atualizar perfil");
-  return res.json();
+  try {
+    return await customFetch("/api/profile", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+  } catch (error: any) {
+    throw new Error(error.message || "Falha ao atualizar perfil");
+  }
 }
 
 async function updateProfileAvatar(data: { avatarUrl: string }) {
-  const res = await fetch("/api/me", {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  });
-  if (!res.ok) throw new Error("Falha ao atualizar foto de perfil");
-  return res.json();
+  try {
+    return await customFetch("/api/me", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+  } catch (error: any) {
+    throw new Error(error.message || "Falha ao atualizar foto de perfil");
+  }
 }
 
 async function updateProfileUsername(data: { username: string }) {
-  const res = await fetch("/api/me", {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  });
-  if (!res.ok) {
-    const error = await res.json();
-    throw new Error(error.error || "Falha ao atualizar nome de usuário");
+  try {
+    return await customFetch("/api/me", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+  } catch (error: any) {
+    throw new Error(error.message || "Falha ao atualizar nome de usuário");
   }
-  return res.json();
 }
 
 export default function DashboardCustomization() {
