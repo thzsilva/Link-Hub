@@ -92,61 +92,83 @@ export default function PublicProfileNew() {
   const spotifyLinks = links?.filter((l) => l.isVisible && l.cardType === "spotify") ?? [];
 
   return (
-    <div className="min-h-[100dvh] text-white" style={{ ...cssVars, backgroundColor: customTheme.background } as React.CSSProperties}>
-      {/* Header com capa */}
-      {profile.headerImageUrl && (
-        <div className="relative h-48 w-full overflow-hidden">
-          <img src={profile.headerImageUrl} alt="Header" className="w-full h-full object-cover opacity-40" />
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/80" />
-        </div>
-      )}
+    <div className="min-h-[100dvh] text-white overflow-hidden" style={{ ...cssVars, backgroundColor: customTheme.background } as React.CSSProperties}>
+      {/* Header com capa premium */}
+      <div className="relative h-64 w-full overflow-hidden">
+        {profile.headerImageUrl ? (
+          <>
+            <img src={profile.headerImageUrl} alt="Capa" className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/20 to-black/90" />
+          </>
+        ) : (
+          <div
+            className="w-full h-full bg-gradient-to-br"
+            style={{
+              backgroundImage: `linear-gradient(135deg, ${customTheme.primary}40 0%, ${customTheme.secondary}40 100%)`
+            }}
+          />
+        )}
+      </div>
 
-      <main className="max-w-5xl mx-auto px-6 relative z-10">
-        {/* Perfil */}
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        {/* Perfil com efeito premium */}
         <motion.div
-          className={`flex flex-col items-center text-center mb-12 relative z-20 ${profile.headerImageUrl ? '-mt-16' : 'mt-8'}`}
+          className="flex flex-col items-center text-center mb-16 relative z-20 -mt-24"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
+          transition={{ duration: 0.6 }}
         >
+          {/* Avatar com efeito de brilho */}
           {profile.avatarUrl && (
-            <motion.img
-              src={profile.avatarUrl}
-              alt={profile.displayName || profile.username}
-              className="w-32 h-32 rounded-full object-cover mb-6 border-4 shadow-lg"
-              style={{ borderColor: customTheme.primary }}
-              crossOrigin="anonymous"
-              loading="lazy"
+            <motion.div
+              className="relative mb-8"
               initial={{ scale: 0, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              onError={(e) => {
-                console.error("Erro ao carregar avatar:", profile.avatarUrl);
-                const img = e.target as HTMLImageElement;
-                if (!img.src.includes("?t=") && img.src.includes("supabase")) {
-                  img.src = `${profile.avatarUrl}?t=${Date.now()}`;
-                } else if (img.src.includes("supabase") && !img.src.includes("proxy-image") && profile.avatarUrl) {
-                  img.src = `/api/proxy-image?url=${encodeURIComponent(profile.avatarUrl)}`;
-                } else {
-                  img.style.display = "none";
-                }
-              }}
-            />
+              transition={{ duration: 0.5, delay: 0.1, type: "spring" }}
+            >
+              <div
+                className="absolute inset-0 rounded-full blur-2xl opacity-75 animate-pulse"
+                style={{ backgroundColor: customTheme.primary }}
+              />
+              <motion.img
+                src={profile.avatarUrl}
+                alt={profile.displayName || profile.username}
+                className="relative w-40 h-40 rounded-full object-cover border-4 shadow-2xl"
+                style={{ borderColor: customTheme.primary }}
+                crossOrigin="anonymous"
+                loading="lazy"
+                whileHover={{ scale: 1.05 }}
+                onError={(e) => {
+                  console.error("Erro ao carregar avatar:", profile.avatarUrl);
+                  const img = e.target as HTMLImageElement;
+                  if (!img.src.includes("?t=") && img.src.includes("supabase")) {
+                    img.src = `${profile.avatarUrl}?t=${Date.now()}`;
+                  } else if (img.src.includes("supabase") && !img.src.includes("proxy-image") && profile.avatarUrl) {
+                    img.src = `/api/proxy-image?url=${encodeURIComponent(profile.avatarUrl)}`;
+                  } else {
+                    img.style.display = "none";
+                  }
+                }}
+              />
+            </motion.div>
           )}
+
+          {/* Nome e bio com tipografia premium */}
           <motion.h1
-            className="text-4xl font-black tracking-tighter uppercase mb-2"
+            className="text-5xl sm:text-6xl font-black tracking-tighter uppercase mb-3 leading-tight max-w-2xl"
             style={{ color: customTheme.primary }}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.2 }}
+            transition={{ duration: 0.4, delay: 0.2 }}
           >
             {profile.displayName || profile.username}
           </motion.h1>
+
           <motion.p
-            className="text-muted-foreground font-mono mb-4 max-w-md"
+            className="text-lg sm:text-xl text-white/70 font-light max-w-xl leading-relaxed px-4"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.3 }}
+            transition={{ duration: 0.4, delay: 0.3 }}
           >
             {profile.bio}
           </motion.p>
@@ -219,152 +241,270 @@ export default function PublicProfileNew() {
           </div>
         )}
 
-        {/* Events */}
+        {/* Seção de Eventos */}
         {events && events.length > 0 && (
-          <div className="mb-12">
-            <h2 className="text-2xl font-black tracking-tighter uppercase mb-6 text-left border-b-2 pb-2" style={{ borderColor: customTheme.accent }}>
-              Eventos
-            </h2>
+          <motion.div
+            className="mb-20"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            viewport={{ once: true }}
+          >
+            <div className="mb-8">
+              <h2
+                className="text-3xl sm:text-4xl font-black tracking-tighter uppercase relative inline-block"
+                style={{ color: customTheme.primary }}
+              >
+                Próximos Eventos
+                <motion.div
+                  className="h-1 absolute -bottom-3 left-0"
+                  style={{ backgroundColor: customTheme.accent }}
+                  initial={{ width: 0 }}
+                  whileInView={{ width: "100%" }}
+                  transition={{ duration: 0.6, delay: 0.2 }}
+                  viewport={{ once: true }}
+                />
+              </h2>
+            </div>
+
             <div
-              className="grid gap-4"
+              className="grid gap-5 pt-2"
               style={{
                 gridTemplateColumns: `repeat(${Math.min(layoutColumns, events.length)}, minmax(0, 1fr))`,
               }}
             >
-              {events.map((event) => (
-                <div
+              {events.map((event, index) => (
+                <motion.div
                   key={event.id}
-                  className="rounded-lg overflow-hidden border-2 text-left transition-all hover:shadow-lg"
-                  style={{ borderColor: `${customTheme.accent}50` }}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: index * 0.1 }}
+                  viewport={{ once: true }}
+                  whileHover={{ y: -8, transition: { duration: 0.2 } }}
+                  className="group rounded-xl overflow-hidden border border-white/10 backdrop-blur-sm hover:border-white/30 transition-all duration-300"
+                  style={{
+                    backgroundColor: `${customTheme.secondary}08`,
+                    boxShadow: "0 8px 32px rgba(0, 0, 0, 0.2)"
+                  }}
                 >
-                  {/* Event image */}
+                  {/* Imagem do evento */}
                   {event.imageUrl && (
-                    <div className="w-full h-40 overflow-hidden">
+                    <div className="relative w-full h-48 overflow-hidden">
                       <img
                         src={event.imageUrl}
                         alt={event.title}
-                        className="w-full h-full object-cover hover:scale-105 transition-transform"
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                       />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                     </div>
                   )}
-                  <div className="p-4" style={{ backgroundColor: `${customTheme.secondary}10` }}>
-                    <h3 className="font-bold text-lg uppercase tracking-tight mb-3">{event.title}</h3>
+
+                  <div className="p-5">
+                    <h3 className="font-bold text-xl uppercase tracking-tight mb-4 line-clamp-2">
+                      {event.title}
+                    </h3>
+
                     {event.eventDate && (
-                      <div className="flex items-center gap-2 text-muted-foreground text-sm font-mono mb-2">
-                        <CalendarDays size={14} />
-                        {new Date(event.eventDate).toLocaleDateString("pt-BR", {
-                          weekday: "short",
-                          day: "2-digit",
-                          month: "short",
-                          year: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
+                      <div className="flex items-start gap-3 mb-3">
+                        <CalendarDays size={16} style={{ color: customTheme.accent }} className="mt-1 flex-shrink-0" />
+                        <div>
+                          <p className="text-xs uppercase tracking-widest text-white/50 mb-1">Data & Hora</p>
+                          <p className="text-sm font-light">
+                            {new Date(event.eventDate).toLocaleDateString("pt-BR", {
+                              weekday: "long",
+                              day: "2-digit",
+                              month: "long",
+                              year: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </p>
+                        </div>
                       </div>
                     )}
+
                     {event.location && (
-                      <div className="flex items-center gap-2 text-muted-foreground text-sm font-mono mb-3">
-                        <MapPin size={14} />
-                        {event.location}
+                      <div className="flex items-start gap-3 mb-4">
+                        <MapPin size={16} style={{ color: customTheme.accent }} className="mt-1 flex-shrink-0" />
+                        <div>
+                          <p className="text-xs uppercase tracking-widest text-white/50 mb-1">Local</p>
+                          <p className="text-sm font-light">{event.location}</p>
+                        </div>
                       </div>
                     )}
+
                     {event.description && (
-                      <p className="text-muted-foreground text-sm font-mono mb-4">{event.description}</p>
+                      <p className="text-sm text-white/60 font-light mb-4 line-clamp-2">{event.description}</p>
                     )}
+
                     {event.ticketUrl && (
-                      <a
+                      <motion.a
                         href={event.ticketUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={(e) => e.stopPropagation()}
-                        className="inline-flex items-center gap-2 text-xs uppercase tracking-widest font-bold px-4 py-2 rounded-lg transition-all"
+                        className="inline-flex items-center gap-2 text-xs uppercase tracking-widest font-bold px-4 py-3 rounded-lg transition-all"
                         style={{
                           backgroundColor: customTheme.accent,
                           color: customTheme.background === "#000000" ? "#000" : "#fff",
                         }}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
                       >
-                        <ExternalLink size={12} />
-                        Ingressos
-                      </a>
+                        <ExternalLink size={14} />
+                        Comprar Ingressos
+                      </motion.a>
                     )}
                   </div>
-                </div>
+                </motion.div>
               ))}
             </div>
-          </div>
+          </motion.div>
         )}
 
-        {/* Photo Gallery */}
+        {/* Galeria de Fotos */}
         {photos && photos.length > 0 && (
-          <div className="mb-12">
-            <h2 className="text-2xl font-black tracking-tighter uppercase mb-6 text-left border-b-2 pb-2" style={{ borderColor: customTheme.accent }}>
-              Gallery
-            </h2>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              {photos.slice(0, 6).map((photo) => (
-                <div key={photo.id} className="aspect-square bg-white/5 relative overflow-hidden group rounded-lg">
+          <motion.div
+            className="mb-20"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            viewport={{ once: true }}
+          >
+            <div className="mb-8">
+              <h2
+                className="text-3xl sm:text-4xl font-black tracking-tighter uppercase relative inline-block"
+                style={{ color: customTheme.primary }}
+              >
+                Galeria
+                <motion.div
+                  className="h-1 absolute -bottom-3 left-0"
+                  style={{ backgroundColor: customTheme.accent }}
+                  initial={{ width: 0 }}
+                  whileInView={{ width: "100%" }}
+                  transition={{ duration: 0.6, delay: 0.2 }}
+                  viewport={{ once: true }}
+                />
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 pt-2">
+              {photos.slice(0, 6).map((photo, index) => (
+                <motion.div
+                  key={photo.id}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.4, delay: index * 0.05 }}
+                  viewport={{ once: true }}
+                  whileHover={{ scale: 1.05 }}
+                  className="aspect-square relative overflow-hidden group rounded-xl border border-white/5 hover:border-white/20 transition-all duration-300"
+                  style={{
+                    backgroundColor: `${customTheme.secondary}08`,
+                  }}
+                >
                   <img
                     src={photo.url}
-                    alt={photo.caption || "Gallery photo"}
-                    className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
+                    alt={photo.caption || "Foto da galeria"}
+                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                     loading="lazy"
                     onError={(e) => {
                       (e.target as HTMLImageElement).parentElement!.style.display = "none";
                     }}
                   />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   {photo.caption && (
-                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-2 text-xs font-mono opacity-0 group-hover:opacity-100 transition-opacity text-left">
+                    <div className="absolute inset-x-0 bottom-0 p-3 text-xs font-light opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-left">
                       {photo.caption}
                     </div>
                   )}
-                </div>
+                </motion.div>
               ))}
             </div>
+
             {photos.length > 6 && (
-              <Link
-                href={`/${username}/photos`}
-                className="mt-4 w-full flex items-center justify-center gap-2 border-2 py-3 text-xs uppercase tracking-widest font-bold text-muted-foreground hover:text-white transition-colors rounded-lg"
-                style={{ borderColor: `${customTheme.accent}50` }}
+              <motion.div
+                className="mt-8"
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                transition={{ duration: 0.4, delay: 0.3 }}
+                viewport={{ once: true }}
               >
-                Ver todas as {photos.length} fotos
-                <ChevronRight size={14} />
-              </Link>
+                <Link
+                  href={`/${username}/photos`}
+                  className="w-full flex items-center justify-center gap-3 py-4 text-sm uppercase tracking-widest font-bold rounded-lg border border-white/10 hover:border-white/30 transition-all duration-300 group"
+                  style={{
+                    backgroundColor: `${customTheme.accent}10`,
+                  }}
+                >
+                  <span>Ver todas as {photos.length} fotos</span>
+                  <motion.div
+                    className="flex items-center"
+                    initial={{ x: 0 }}
+                    whileHover={{ x: 4 }}
+                  >
+                    <ChevronRight size={16} />
+                  </motion.div>
+                </Link>
+              </motion.div>
             )}
-          </div>
+          </motion.div>
         )}
 
-        {/* Social Links */}
+        {/* Links Sociais */}
         {socialLinks && socialLinks.length > 0 && (
-          <div className="flex gap-4 justify-center flex-wrap my-8">
-            {socialLinks.map((s) => {
+          <motion.div
+            className="flex gap-3 justify-center flex-wrap my-16 pb-12"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            viewport={{ once: true }}
+          >
+            {socialLinks.map((s, index) => {
               const platform = getPlatform(s.platform ?? null);
               return (
-                <a
+                <motion.a
                   key={s.id}
                   href={s.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg transition-all"
+                  className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition-all border border-white/10 hover:border-white/30"
                   style={{
-                    backgroundColor: `${customTheme.accent}20`,
-                    color: customTheme.primary,
+                    backgroundColor: `${customTheme.accent}15`,
                   }}
                   title={platform.name}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.3, delay: index * 0.05 }}
+                  viewport={{ once: true }}
+                  whileHover={{ scale: 1.1, backgroundColor: `${customTheme.accent}25` }}
+                  whileTap={{ scale: 0.95 }}
                 >
-                  <platform.Icon size={16} />
-                  <span className="text-xs font-bold uppercase">{platform.name}</span>
-                </a>
+                  <platform.Icon size={18} style={{ color: customTheme.primary }} />
+                  <span className="text-xs font-bold uppercase hidden sm:inline" style={{ color: customTheme.primary }}>
+                    {platform.name}
+                  </span>
+                </motion.a>
               );
             })}
-          </div>
+          </motion.div>
         )}
 
-        {/* Footer */}
-        <div className="py-12 text-center border-t-2" style={{ borderColor: `${customTheme.accent}20` }}>
-          <p className="text-xs text-white/30 font-mono tracking-widest">
-            Built with ✨ by VOID
+        {/* Footer Premium */}
+        <motion.div
+          className="py-12 text-center border-t-2"
+          style={{ borderColor: `${customTheme.accent}15` }}
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          transition={{ duration: 0.5 }}
+          viewport={{ once: true }}
+        >
+          <p className="text-xs text-white/40 font-light tracking-widest uppercase">
+            Criado com <span style={{ color: customTheme.accent }}>✨</span> por Link-Hub
           </p>
-        </div>
+          <p className="text-xs text-white/30 font-light tracking-widest mt-2">
+            © {new Date().getFullYear()} • Seu perfil profissional em um link
+          </p>
+        </motion.div>
       </main>
     </div>
   );

@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { ClerkProvider, SignIn, SignUp, Show, useClerk } from '@clerk/react';
+import { ClerkProvider, SignIn, SignUp, Show, useClerk, useAuth } from '@clerk/react';
 import { publishableKeyFromHost } from '@clerk/react/internal';
 import { dark } from '@clerk/themes';
 import { Switch, Route, useLocation, Router as WouterRouter, Redirect } from 'wouter';
@@ -7,7 +7,7 @@ import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/reac
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
-import { setBaseUrl } from "@workspace/api-client-react";
+import { setBaseUrl, setAuthTokenGetter } from "@workspace/api-client-react";
 
 import Home from "@/pages/home";
 import DashboardLayout from "@/components/layouts/dashboard-layout";
@@ -102,6 +102,24 @@ function SignUpPage() {
   );
 }
 
+function ClerkAuthSetup() {
+  const { getToken } = useAuth();
+
+  useEffect(() => {
+    // Configure the API client to use Clerk's session token
+    setAuthTokenGetter(async () => {
+      try {
+        return await getToken();
+      } catch (error) {
+        console.error('Failed to get auth token:', error);
+        return null;
+      }
+    });
+  }, [getToken]);
+
+  return null;
+}
+
 function ClerkQueryClientCacheInvalidator() {
   const { addListener } = useClerk();
   const queryClient = useQueryClient();
@@ -174,6 +192,7 @@ function ClerkProviderWithRoutes() {
       routerPush={(to) => setLocation(stripBase(to))}
       routerReplace={(to) => setLocation(stripBase(to), { replace: true })}
     >
+      <ClerkAuthSetup />
       <ClerkQueryClientCacheInvalidator />
       <Switch>
         <Route path="/" component={HomeRedirect} />
