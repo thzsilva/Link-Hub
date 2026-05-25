@@ -36,6 +36,19 @@ async function updateProfileAvatar(data: { avatarUrl: string }) {
   return res.json();
 }
 
+async function updateProfileUsername(data: { username: string }) {
+  const res = await fetch("/api/me", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.error || "Falha ao atualizar nome de usuário");
+  }
+  return res.json();
+}
+
 export default function DashboardCustomization() {
   const { data: profile } = useGetMe();
   const queryClient = useQueryClient();
@@ -62,6 +75,8 @@ export default function DashboardCustomization() {
   const [copied, setCopied] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState(profile?.avatarUrl || "");
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [username, setUsername] = useState(profile?.username || "");
+  const [isSavingUsername, setIsSavingUsername] = useState(false);
 
   const currentTheme = getTheme(selectedTheme);
   const theme = customPrimary || customSecondary ? { ...currentTheme, primary: customPrimary || currentTheme.primary, secondary: customSecondary || currentTheme.secondary } : currentTheme;
@@ -91,6 +106,24 @@ export default function DashboardCustomization() {
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
     toast({ title: "Link copiado!" });
+  };
+
+  const handleSaveUsername = async () => {
+    if (!username.trim()) {
+      toast({ title: "Nome de usuário não pode estar vazio", variant: "destructive" });
+      return;
+    }
+    setIsSavingUsername(true);
+    try {
+      await updateProfileUsername({ username: username.trim() });
+      queryClient.invalidateQueries({ queryKey: ["useGetMe"] });
+      toast({ title: "✓ Nome de usuário atualizado!" });
+    } catch (error: any) {
+      toast({ title: error.message || "Erro ao atualizar", variant: "destructive" });
+      setUsername(profile?.username || "");
+    } finally {
+      setIsSavingUsername(false);
+    }
   };
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -164,6 +197,33 @@ export default function DashboardCustomization() {
       >
         <h1 className="text-4xl font-black uppercase tracking-tighter">Customização</h1>
         <p className="text-muted-foreground mt-2 font-mono text-sm">Personalize a aparência do seu perfil</p>
+      </motion.div>
+
+      {/* Nome de Usuário */}
+      <motion.div
+        className="space-y-4"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.05 }}
+      >
+        <h2 className="text-xl font-bold uppercase tracking-tight">Nome de Usuário</h2>
+        <div className="flex gap-3">
+          <Input
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            placeholder="seu-username"
+            className="rounded-none bg-black border-border font-mono"
+            disabled={isSavingUsername}
+          />
+          <Button
+            onClick={handleSaveUsername}
+            disabled={isSavingUsername || username === profile?.username}
+            className="rounded-none px-6 uppercase font-bold"
+          >
+            {isSavingUsername ? "Salvando..." : "Salvar"}
+          </Button>
+        </div>
+        <p className="text-xs text-muted-foreground">Seu perfil público será acessível em: <span className="font-mono text-white">{window.location.origin}/{username || "seu-username"}</span></p>
       </motion.div>
 
       {/* Upload de Foto de Perfil */}
