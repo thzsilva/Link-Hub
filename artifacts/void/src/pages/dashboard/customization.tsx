@@ -10,6 +10,7 @@ import { Palette, Layout, Copy, Check, Upload as UploadIcon, Loader2 } from "luc
 import { useToast } from "@/hooks/use-toast";
 import { ColorPickerEnhanced } from "@/components/ColorPickerEnhanced";
 import { ThemePreview } from "@/components/ThemePreview";
+import ImageCropModal from "@/components/ImageCropModal";
 
 async function updateProfileCustomization(data: {
   themeId?: string;
@@ -110,6 +111,14 @@ export default function DashboardCustomization() {
   const [bio, setBio] = useState(profile?.bio || "");
   const [isSavingBio, setIsSavingBio] = useState(false);
 
+  // Crop modal states
+  const [showAvatarCropModal, setShowAvatarCropModal] = useState(false);
+  const [showBannerCropModal, setShowBannerCropModal] = useState(false);
+  const [avatarCropImageSrc, setAvatarCropImageSrc] = useState("");
+  const [bannerCropImageSrc, setBannerCropImageSrc] = useState("");
+  const [pendingAvatarFile, setPendingAvatarFile] = useState<File | null>(null);
+  const [pendingBannerFile, setPendingBannerFile] = useState<File | null>(null);
+
   const currentTheme = getTheme(selectedTheme);
   const theme = customPrimary || customSecondary ? { ...currentTheme, primary: customPrimary || currentTheme.primary, secondary: customSecondary || currentTheme.secondary } : currentTheme;
 
@@ -175,17 +184,21 @@ export default function DashboardCustomization() {
     }
   };
 
-  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const local = URL.createObjectURL(file);
-    setAvatarPreview(local);
+  const handleAvatarCropComplete = async (croppedImageUrl: string) => {
+    if (!pendingAvatarFile) return;
+
+    setShowAvatarCropModal(false);
     setIsUploadingAvatar(true);
+
     try {
+      // Convert blob URL to file
+      const response = await fetch(croppedImageUrl);
+      const blob = await response.blob();
+
       const fd = new FormData();
-      fd.append("file", file);
+      fd.append("file", blob, "avatar.jpg");
+
       const res = await fetch("/api/photos/upload", { method: "POST", body: fd });
-      console.log("Upload response status:", res.status);
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         console.error("Upload error:", err);
@@ -193,8 +206,8 @@ export default function DashboardCustomization() {
         setAvatarPreview(profile?.avatarUrl || "");
         return;
       }
+
       const data = await res.json();
-      console.log("Upload response:", data);
       const { url } = data;
       if (!url) {
         toast({ title: "Erro: URL não retornada do servidor", variant: "destructive" });
@@ -202,25 +215,19 @@ export default function DashboardCustomization() {
         return;
       }
 
-      // NÃO revogar URL local ainda - usaremos para preview enquanto salva no banco
       setAvatarPreview(url);
 
-      // Atualizar avatar no backend
-      console.log("Enviando avatarUrl para PUT /api/me:", url);
+      // Update avatar in backend
       updateAvatarMutation.mutate(
         { avatarUrl: url },
         {
           onSuccess: (data) => {
             console.log("Avatar updated successfully:", data);
-            // Agora sim, revoga a URL temporária após sucesso
-            URL.revokeObjectURL(local);
-            // Recarregar o perfil para garantir que a foto está atualizada
             queryClient.invalidateQueries({ queryKey: ["useGetMe"] });
             toast({ title: "✓ Foto de perfil atualizada!" });
           },
           onError: (error: any) => {
             console.error("Avatar PUT /api/me error:", error);
-            // Se falhar, volta para a URL anterior
             setAvatarPreview(profile?.avatarUrl || "");
             toast({ title: `Erro ao salvar: ${error.message || "desconhecido"}`, variant: "destructive" });
           },
@@ -232,18 +239,25 @@ export default function DashboardCustomization() {
       setAvatarPreview(profile?.avatarUrl || "");
     } finally {
       setIsUploadingAvatar(false);
+      setPendingAvatarFile(null);
+      setAvatarCropImageSrc("");
     }
   };
 
-  const handleBannerChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const local = URL.createObjectURL(file);
-    setBannerPreview(local);
+  const handleBannerCropComplete = async (croppedImageUrl: string) => {
+    if (!pendingBannerFile) return;
+
+    setShowBannerCropModal(false);
     setIsUploadingBanner(true);
+
     try {
+      // Convert blob URL to file
+      const response = await fetch(croppedImageUrl);
+      const blob = await response.blob();
+
       const fd = new FormData();
-      fd.append("file", file);
+      fd.append("file", blob, "banner.jpg");
+
       const res = await fetch("/api/photos/upload", { method: "POST", body: fd });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
@@ -251,6 +265,7 @@ export default function DashboardCustomization() {
         setBannerPreview(profile?.headerImageUrl || "");
         return;
       }
+
       const data = await res.json();
       const { url } = data;
       if (!url) {
@@ -258,12 +273,12 @@ export default function DashboardCustomization() {
         setBannerPreview(profile?.headerImageUrl || "");
         return;
       }
+
       setBannerPreview(url);
 
       // Update banner in backend
       try {
         await updateProfileBanner({ headerImageUrl: url });
-        URL.revokeObjectURL(local);
         queryClient.invalidateQueries({ queryKey: ["useGetMe"] });
         toast({ title: "✓ Banner atualizado!" });
       } catch (error: any) {
@@ -276,7 +291,29 @@ export default function DashboardCustomization() {
       setBannerPreview(profile?.headerImageUrl || "");
     } finally {
       setIsUploadingBanner(false);
+      setPendingBannerFile(null);
+      setBannerCropImageSrc("");
     }
+  };
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const local = URL.createObjectURL(file);
+    setPendingAvatarFile(file);
+    setAvatarCropImageSrc(local);
+    setShowAvatarCropModal(true);
+  };
+
+  const handleBannerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const local = URL.createObjectURL(file);
+    setPendingBannerFile(file);
+    setBannerCropImageSrc(local);
+    setShowBannerCropModal(true);
   };
 
   if (!profile) return <div className="text-muted-foreground animate-pulse">Carregando...</div>;
@@ -291,7 +328,7 @@ export default function DashboardCustomization() {
       </div>
 
       {/* Content with relative positioning */}
-      <div className="relative z-10 space-y-8">
+      <div className="relative z-10 space-y-8 px-4 sm:px-6 lg:px-8 pt-8 pb-12">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -749,6 +786,38 @@ export default function DashboardCustomization() {
           </Button>
         </motion.div>
       </motion.div>
+
+      {/* Avatar Crop Modal */}
+      {showAvatarCropModal && avatarCropImageSrc && (
+        <ImageCropModal
+          imageSrc={avatarCropImageSrc}
+          onCrop={handleAvatarCropComplete}
+          onClose={() => {
+            setShowAvatarCropModal(false);
+            setAvatarCropImageSrc("");
+            setPendingAvatarFile(null);
+            URL.revokeObjectURL(avatarCropImageSrc);
+          }}
+          aspectRatio={1}
+          title="Ajustar Foto de Perfil"
+        />
+      )}
+
+      {/* Banner Crop Modal */}
+      {showBannerCropModal && bannerCropImageSrc && (
+        <ImageCropModal
+          imageSrc={bannerCropImageSrc}
+          onCrop={handleBannerCropComplete}
+          onClose={() => {
+            setShowBannerCropModal(false);
+            setBannerCropImageSrc("");
+            setPendingBannerFile(null);
+            URL.revokeObjectURL(bannerCropImageSrc);
+          }}
+          aspectRatio={4}
+          title="Ajustar Banner"
+        />
+      )}
       </div>
     </div>
   );

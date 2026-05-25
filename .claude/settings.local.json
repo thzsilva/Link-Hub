@@ -143,7 +143,11 @@
       "Bash(xargs grep -l \"useGetPublicProfile\")",
       "Bash(grep -r \"linkhub-ten-psi\\\\|/\\\\${username\\\\|linkhub\\\\.\" /c/Users/Administrador/Projetos/Link-Hub/artifacts/void/src --include=\"*.tsx\" --include=\"*.ts\")",
       "Bash(netsh advfirewall *)",
-      "Bash(git rm *)"
+      "Bash(git rm *)",
+      "Bash(xargs grep -l \"avatarUrl\")",
+      "Bash(grep -E \"\\\\.\\(ts|tsx\\)$\")",
+      "Bash(xargs grep -l \"UpdateProfileBody\")",
+      "Bash(xargs grep -l \"export.*UpdateProfileBody\")"
     ]
   }
 }
