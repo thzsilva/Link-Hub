@@ -61,16 +61,12 @@ function isUrl(input: RequestInfo | URL): input is URL {
 }
 
 function applyBaseUrl(input: RequestInfo | URL): RequestInfo | URL {
-  if (!_baseUrl) {
-    console.debug('📍 applyBaseUrl: _baseUrl não está configurado');
-    return input;
-  }
+  if (!_baseUrl) return input;
   const url = resolveUrl(input);
   // Only prepend to relative paths (starting with /)
   if (!url.startsWith("/")) return input;
 
   const absolute = `${_baseUrl}${url}`;
-  console.debug('🌐 applyBaseUrl:', { original: url, baseUrl: _baseUrl, absolute });
   if (typeof input === "string") return absolute;
   if (isUrl(input)) return new URL(absolute);
   return new Request(absolute, input as Request);
