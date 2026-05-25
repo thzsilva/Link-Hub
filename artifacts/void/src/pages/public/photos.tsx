@@ -1,14 +1,13 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useGetPublicPhotos } from "@workspace/api-client-react";
-import { useLocation, Link } from "wouter";
+import { Link } from "wouter";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ChevronLeft, ChevronRight, X, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function PublicPhotos() {
-  const [location] = useLocation();
-  const searchParams = new URLSearchParams(location.split('?')[1] || '');
+  const searchParams = new URLSearchParams(window.location.search);
   const username = searchParams.get('user') || '';
   const { data: photos, isLoading } = useGetPublicPhotos(username);
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState<number | null>(null);

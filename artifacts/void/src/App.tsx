@@ -152,8 +152,7 @@ function ClerkQueryClientCacheInvalidator() {
 }
 
 function HomeRedirect() {
-  const [location] = useLocation();
-  const searchParams = new URLSearchParams(location.split('?')[1] || '');
+  const searchParams = new URLSearchParams(window.location.search);
   const username = searchParams.get('user');
   const isPhotos = searchParams.get('photos') === 'true';
 
