@@ -148,9 +148,14 @@ router.put("/me", async (req, res): Promise<void> => {
     .where(eq(profilesTable.id, profile.id))
     .returning();
 
-  console.log("PUT /api/me - resultado:", JSON.stringify({ id: updated.id, avatarUrl: updated.avatarUrl }, null, 2));
+  console.log("PUT /api/me - resultado:", JSON.stringify({ id: updated.id, username: updated.username, avatarUrl: updated.avatarUrl }, null, 2));
 
-  res.json(updated);
+  // Serializar corretamente para evitar erros com Date objects
+  res.json({
+    ...updated,
+    createdAt: updated.createdAt?.toISOString(),
+    updatedAt: updated.updatedAt?.toISOString(),
+  });
 });
 
 router.patch("/profile", async (req, res): Promise<void> => {
