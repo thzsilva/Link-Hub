@@ -8,6 +8,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import { setAuthTokenGetter } from "@workspace/api-client-react";
+import PermissionGate from "@/components/PermissionGate";
 
 import Home from "@/pages/home";
 import DashboardLayout from "@/components/layouts/dashboard-layout";
@@ -233,21 +234,23 @@ function App() {
   }, []);
 
   return (
-    <WouterRouter base={basePath}>
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          {clerkPubKey ? (
-            <ClerkProviderWithRoutes />
-          ) : (
-            <Switch>
-              <Route path="/" component={HomeRedirect} />
-              <Route component={NotFound} />
-            </Switch>
-          )}
-          <Toaster />
-        </TooltipProvider>
-      </QueryClientProvider>
-    </WouterRouter>
+    <PermissionGate>
+      <WouterRouter base={basePath}>
+        <QueryClientProvider client={queryClient}>
+          <TooltipProvider>
+            {clerkPubKey ? (
+              <ClerkProviderWithRoutes />
+            ) : (
+              <Switch>
+                <Route path="/" component={HomeRedirect} />
+                <Route component={NotFound} />
+              </Switch>
+            )}
+            <Toaster />
+          </TooltipProvider>
+        </QueryClientProvider>
+      </WouterRouter>
+    </PermissionGate>
   );
 }
 
