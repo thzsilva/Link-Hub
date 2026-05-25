@@ -236,8 +236,12 @@ function App() {
 
     // Configure API base URL for the client
     const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
+    console.log('🔧 App.tsx - VITE_API_BASE_URL:', apiBaseUrl);
     if (apiBaseUrl) {
       setBaseUrl(apiBaseUrl);
+      console.log('✅ setBaseUrl() chamado com:', apiBaseUrl);
+    } else {
+      console.warn('❌ VITE_API_BASE_URL não está configurado!');
     }
   }, []);
 
