@@ -107,7 +107,14 @@
       "Bash(curl -s https://web-production-cfb1c.up.railway.app/ -I)",
       "Bash(vercel projects *)",
       "Bash(curl -s -v https://web-production-cfb1c.up.railway.app/api/healthz)",
-      "Bash(timeout 120 curl -v --max-time 60 https://web-production-cfb1c.up.railway.app/api/healthz)"
+      "Bash(timeout 120 curl -v --max-time 60 https://web-production-cfb1c.up.railway.app/api/healthz)",
+      "Bash(docker build *)",
+      "Bash(bash /tmp/vercel-redeploy.sh)",
+      "Bash(curl -s https://api.vercel.com/v9/projects -H 'Authorization: Bearer vcp_6VXgXgR0ADEmmLwjKQA4g7HoRSs9ekHUcaWRvFHa0PGnwNAfoX3RVXQP')",
+      "Bash(curl -s -I https://linkhub-frontend-chi.vercel.app)",
+      "Bash(curl -s https://api.vercel.com/v9/projects?limit=100 -H 'Authorization: Bearer vcp_6VXgXgR0ADEmmLwjKQA4g7HoRSs9ekHUcaWRvFHa0PGnwNAfoX3RVXQP')",
+      "Bash(VERCEL_TOKEN=vcp_6VXgXgR0ADEmmLwjKQA4g7HoRSs9ekHUcaWRvFHa0PGnwNAfoX3RVXQP vercel --prod)",
+      "Bash(VERCEL_TOKEN=vcp_6VXgXgR0ADEmmLwjKQA4g7HoRSs9ekHUcaWRvFHa0PGnwNAfoX3RVXQP vercel --prod --scope thzsilvas-projects)"
     ]
   }
 }

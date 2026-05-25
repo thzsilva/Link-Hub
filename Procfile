@@ -1,1 +1,1 @@
-﻿web: bash start.sh
+web: node artifacts/api-server/dist/index.mjs

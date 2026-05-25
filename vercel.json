@@ -1,5 +1,5 @@
-{
-  "version": 2,
-  "buildCommand": "npm run build -w=artifacts/api-server",
-  "outputDirectory": "artifacts/api-server/dist"
+﻿{
+  "buildCommand": "cd artifacts/void && npm install --legacy-peer-deps && npm run build",
+  "installCommand": "npm install --legacy-peer-deps",
+  "outputDirectory": "artifacts/void/dist"
 }
