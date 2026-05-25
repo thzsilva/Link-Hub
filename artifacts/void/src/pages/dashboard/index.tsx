@@ -13,7 +13,7 @@ export default function DashboardHome() {
   const [copied, setCopied] = useState(false);
 
   const shareUrl = me?.username
-    ? `${window.location.origin}/${me.username}`
+    ? `${window.location.origin}/profile/${me.username}`
     : null;
 
   const handleCopyLink = () => {

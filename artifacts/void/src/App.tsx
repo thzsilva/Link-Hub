@@ -211,8 +211,8 @@ function ClerkProviderWithRoutes() {
         <Route path="/dashboard/:rest*" component={DashboardRoutes} />
         <Route path="/admin" component={DashboardRoutes} />
 
-        <Route path="/:username" component={PublicProfile} />
-        <Route path="/:username/photos" component={PublicPhotos} />
+        <Route path="/profile/:username" component={PublicProfile} />
+        <Route path="/profile/:username/photos" component={PublicPhotos} />
 
         <Route component={NotFound} />
       </Switch>
@@ -223,8 +223,8 @@ function ClerkProviderWithRoutes() {
 function PublicOnlyRoutes() {
   return (
     <Switch>
-      <Route path="/:username" component={PublicProfile} />
-      <Route path="/:username/photos" component={PublicPhotos} />
+      <Route path="/profile/:username" component={PublicProfile} />
+      <Route path="/profile/:username/photos" component={PublicPhotos} />
       <Route component={NotFound} />
     </Switch>
   );

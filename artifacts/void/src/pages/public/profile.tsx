@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { useGetPublicProfile, useTrackEvent } from "@workspace/api-client-react";
+import { useGetPublicProfile, useTrackEvent, customFetch } from "@workspace/api-client-react";
 import { useParams, Link } from "wouter";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CalendarDays, MapPin, ExternalLink, ChevronRight } from "lucide-react";
@@ -42,8 +42,8 @@ export default function PublicProfileNew() {
   const { data: events } = useQuery<any[]>({
     queryKey: [`/api/events/public/${username}`],
     queryFn: () =>
-      fetch(`/api/events/public/${username}`)
-        .then((r) => (r.ok ? r.json() : []))
+      customFetch<any[]>(`/api/events/public/${username}`, { method: 'GET' })
+        .then((data) => data || [])
         .catch(() => []),
     enabled: !!username,
     staleTime: 60_000,
@@ -430,7 +430,7 @@ export default function PublicProfileNew() {
                 viewport={{ once: true }}
               >
                 <Link
-                  href={`/${username}/photos`}
+                  href={`/profile/${username}/photos`}
                   className="w-full flex items-center justify-center gap-3 py-4 text-sm uppercase tracking-widest font-bold rounded-lg border border-white/10 hover:border-white/30 transition-all duration-300 group"
                   style={{
                     backgroundColor: `${customTheme.accent}10`,
