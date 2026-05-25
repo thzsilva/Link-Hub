@@ -52,6 +52,18 @@ async function updateProfileUsername(data: { username: string; displayName?: str
   }
 }
 
+async function updateProfileBio(data: { bio: string }) {
+  try {
+    return await customFetch("/api/me", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+  } catch (error: any) {
+    throw new Error(error.message || "Falha ao atualizar descrição");
+  }
+}
+
 export default function DashboardCustomization() {
   const { data: profile } = useGetMe();
   const queryClient = useQueryClient();
@@ -80,6 +92,8 @@ export default function DashboardCustomization() {
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [username, setUsername] = useState(profile?.username || "");
   const [isSavingUsername, setIsSavingUsername] = useState(false);
+  const [bio, setBio] = useState(profile?.bio || "");
+  const [isSavingBio, setIsSavingBio] = useState(false);
 
   const currentTheme = getTheme(selectedTheme);
   const theme = customPrimary || customSecondary ? { ...currentTheme, primary: customPrimary || currentTheme.primary, secondary: customSecondary || currentTheme.secondary } : currentTheme;
@@ -129,6 +143,20 @@ export default function DashboardCustomization() {
       setUsername(profile?.username || "");
     } finally {
       setIsSavingUsername(false);
+    }
+  };
+
+  const handleSaveBio = async () => {
+    setIsSavingBio(true);
+    try {
+      await updateProfileBio({ bio: bio.trim() });
+      queryClient.invalidateQueries({ queryKey: ["useGetMe"] });
+      toast({ title: "✓ Descrição atualizada!" });
+    } catch (error: any) {
+      toast({ title: error.message || "Erro ao atualizar", variant: "destructive" });
+      setBio(profile?.bio || "");
+    } finally {
+      setIsSavingBio(false);
     }
   };
 
@@ -230,6 +258,37 @@ export default function DashboardCustomization() {
           </Button>
         </div>
         <p className="text-xs text-muted-foreground">Seu perfil público será acessível em: <span className="font-mono text-white">{window.location.origin}/{username || "seu-username"}</span></p>
+      </motion.div>
+
+      {/* Descrição / Bio */}
+      <motion.div
+        className="space-y-4"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.07 }}
+      >
+        <h2 className="text-xl font-bold uppercase tracking-tight">Descrição</h2>
+        <div className="space-y-3">
+          <textarea
+            value={bio}
+            onChange={(e) => setBio(e.target.value)}
+            placeholder="Descreva você em poucas palavras..."
+            maxLength={150}
+            className="w-full rounded-none bg-black border border-border p-3 text-white font-mono text-sm resize-none focus:outline-none focus:border-white/50 transition-colors"
+            rows={3}
+            disabled={isSavingBio}
+          />
+          <div className="flex justify-between items-center">
+            <p className="text-xs text-muted-foreground">{bio.length} / 150 caracteres</p>
+            <Button
+              onClick={handleSaveBio}
+              disabled={isSavingBio || bio === (profile?.bio || "")}
+              className="rounded-none px-6 uppercase font-bold"
+            >
+              {isSavingBio ? "Salvando..." : "Salvar"}
+            </Button>
+          </div>
+        </div>
       </motion.div>
 
       {/* Upload de Foto de Perfil */}
