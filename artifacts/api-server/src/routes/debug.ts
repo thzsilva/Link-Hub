@@ -1,7 +1,17 @@
-import { Router, type IRouter } from "express";
+import { Router, type IRouter, Request } from "express";
 import { logger } from "../lib/logger";
 
 const router: IRouter = Router();
+
+// Helper para mostrar headers
+function debugHeaders(req: Request) {
+  return {
+    authorization: req.headers.authorization ? "✅ Presente" : "❌ Ausente",
+    "content-type": req.headers["content-type"],
+    origin: req.headers.origin,
+    cookie: req.headers.cookie ? "✅ Presente" : "❌ Ausente",
+  };
+}
 
 // Endpoint de debug - remover em produção!
 router.get("/debug/env", (_req, res) => {
@@ -15,6 +25,17 @@ router.get("/debug/env", (_req, res) => {
     CLERK_SECRET_KEY: process.env.CLERK_SECRET_KEY ? "✅ Configurado" : "❌ Não configurado",
   };
   res.json(env);
+});
+
+// Debug de headers e token
+router.all("/debug/headers", (req, res) => {
+  res.json({
+    method: req.method,
+    headers: debugHeaders(req),
+    authObject: (req as any).auth || null,
+    userId: (req as any).auth?.userId || null,
+    message: (req as any).auth?.userId ? "✅ userId presente" : "❌ userId ausente",
+  });
 });
 
 // Teste de conexão com banco de dados
@@ -42,23 +63,43 @@ router.get("/debug/db-connection", async (_req, res) => {
 });
 
 // Teste de autenticação Clerk
-router.get("/debug/clerk", (req, res) => {
-  const { userId } = (req as any).auth || {};
+router.get("/debug/clerk", async (req, res) => {
+  try {
+    const { userId } = (req as any).auth || {};
 
-  if (!userId) {
-    return res.json({
-      status: "⚠️ Não autenticado",
-      message: "userId é null - Clerk não conseguiu autenticar",
-      userId: null,
-      hasClerkKey: !!process.env.CLERK_PUBLISHABLE_KEY,
+    if (!userId) {
+      return res.json({
+        status: "⚠️ Não autenticado",
+        message: "userId é null - Clerk não conseguiu autenticar",
+        userId: null,
+        hasClerkKey: !!process.env.CLERK_PUBLISHABLE_KEY,
+        authHeader: req.headers.authorization ? "✅ Presente" : "❌ Ausente",
+        cookie: req.headers.cookie ? "✅ Presente" : "❌ Ausente",
+      });
+    }
+
+    // Se conseguiu autenticar, busca mais detalhes
+    const { db, profilesTable, eq } = await import("@workspace/db");
+    const profile = await db
+      .select()
+      .from(profilesTable)
+      .where(eq(profilesTable.clerkUserId, userId))
+      .limit(1)
+      .then((r) => r[0]);
+
+    res.json({
+      status: "✅ Autenticado",
+      message: "Clerk está funcionando",
+      userId,
+      profileExists: !!profile,
+      profileUsername: profile?.username,
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      error: "Database error",
+      message: error?.message,
     });
   }
-
-  res.json({
-    status: "✅ Autenticado",
-    message: "Clerk está funcionando",
-    userId,
-  });
 });
 
 // Teste completo do PUT /api/me
