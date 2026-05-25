@@ -1,0 +1,13 @@
+{
+  "version": 2,
+  "name": "linkhub-frontend",
+  "buildCommand": "npm install --legacy-peer-deps && npm run build -w=artifacts/void",
+  "installCommand": "npm install --legacy-peer-deps",
+  "outputDirectory": "artifacts/void/dist",
+  "framework": "vite",
+  "env": {
+    "VITE_CLERK_PUBLISHABLE_KEY": "@clerk-publishable-key",
+    "VITE_API_BASE_URL": "@api-base-url",
+    "VITE_CLERK_PROXY_URL": "@clerk-proxy-url"
+  }
+}
