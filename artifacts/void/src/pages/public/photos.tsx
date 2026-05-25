@@ -9,8 +9,36 @@ import { Button } from "@/components/ui/button";
 export default function PublicPhotos() {
   const searchParams = new URLSearchParams(window.location.search);
   const username = searchParams.get('user') || '';
-  const { data: photos, isLoading } = useGetPublicPhotos(username);
+  const { data: photos, isLoading, error } = useGetPublicPhotos(username);
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState<number | null>(null);
+
+  if (!username) {
+    return (
+      <div className="min-h-[100dvh] bg-black text-white flex flex-col items-center justify-center px-4">
+        <p className="mb-8 text-lg text-white/70">Usuário não encontrado.</p>
+        <Link href="/">
+          <Button className="rounded-lg uppercase tracking-widest text-xs font-bold px-6 py-3 bg-white/10 hover:bg-white/20 border border-white/20">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Voltar
+          </Button>
+        </Link>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-[100dvh] bg-black text-white flex flex-col items-center justify-center px-4">
+        <p className="mb-8 text-lg text-white/70">Erro ao carregar galeria.</p>
+        <Link href={`/?user=${username}`}>
+          <Button className="rounded-lg uppercase tracking-widest text-xs font-bold px-6 py-3 bg-white/10 hover:bg-white/20 border border-white/20">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Voltar ao Perfil
+          </Button>
+        </Link>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
