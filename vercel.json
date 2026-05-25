@@ -1,6 +1,4 @@
 {
-  "buildCommand": "cd artifacts/void && npm install --legacy-peer-deps && npm run build",
-  "outputDirectory": "artifacts/void/dist/public",
   "rewrites": [
     {
       "source": "/api/:path*",
