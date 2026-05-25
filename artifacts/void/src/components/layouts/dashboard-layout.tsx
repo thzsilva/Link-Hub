@@ -39,7 +39,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <div className="min-h-[100dvh] bg-background text-foreground flex flex-col md:flex-row">
       <aside className="w-full md:w-64 border-b md:border-b-0 md:border-r border-border p-6 flex flex-col">
         <div className="mb-8">
-          <h2 className="text-2xl font-black tracking-tighter uppercase">VOID</h2>
+          <h2 className="text-2xl font-black tracking-tighter">hubvoid</h2>
           <p className="text-xs text-muted-foreground uppercase tracking-widest mt-1">Creator Studio</p>
         </div>
 

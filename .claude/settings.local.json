@@ -142,7 +142,8 @@
       "Bash(git -C 'C:\\\\Users\\\\Administrador\\\\Projetos\\\\Link-Hub' commit -m 'Simplify vercel.json - only API proxy rewrites *)",
       "Bash(xargs grep -l \"useGetPublicProfile\")",
       "Bash(grep -r \"linkhub-ten-psi\\\\|/\\\\${username\\\\|linkhub\\\\.\" /c/Users/Administrador/Projetos/Link-Hub/artifacts/void/src --include=\"*.tsx\" --include=\"*.ts\")",
-      "Bash(netsh advfirewall *)"
+      "Bash(netsh advfirewall *)",
+      "Bash(git rm *)"
     ]
   }
 }

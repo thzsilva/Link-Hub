@@ -44,7 +44,7 @@ export default function Home() {
           className="text-2xl sm:text-3xl font-black tracking-tighter bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent"
           whileHover={{ scale: 1.05 }}
         >
-          Link-Hub
+          hubvoid
         </motion.h1>
 
         <motion.div
@@ -178,7 +178,7 @@ export default function Home() {
         transition={{ duration: 0.6, delay: 0.6 }}
       >
         <p className="text-xs text-white/40 font-light uppercase tracking-widest">
-          © {new Date().getFullYear()} Link-Hub • Seu perfil profissional em um link
+          © {new Date().getFullYear()} hubvoid • Seu perfil profissional em um link
         </p>
       </motion.footer>
     </div>
