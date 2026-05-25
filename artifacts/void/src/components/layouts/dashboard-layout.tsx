@@ -15,7 +15,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [copied, setCopied] = useState(false);
 
   const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
-  const shareUrl = me?.username ? `${window.location.origin}/profile/${me.username}` : null;
+  const shareUrl = me?.username ? `${window.location.origin}/?user=${me.username}` : null;
 
   const handleCopyLink = () => {
     if (!shareUrl) return;

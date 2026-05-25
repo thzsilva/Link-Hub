@@ -152,13 +152,22 @@ function ClerkQueryClientCacheInvalidator() {
 }
 
 function HomeRedirect() {
+  const [location] = useLocation();
+  const searchParams = new URLSearchParams(location.split('?')[1] || '');
+  const username = searchParams.get('user');
+  const isPhotos = searchParams.get('photos') === 'true';
+
   return (
     <>
       <Show when="signed-in">
         <Redirect to="/dashboard" />
       </Show>
       <Show when="signed-out">
-        <Home />
+        {username ? (
+          isPhotos ? <PublicPhotos /> : <PublicProfile />
+        ) : (
+          <Home />
+        )}
       </Show>
     </>
   );
@@ -211,24 +220,12 @@ function ClerkProviderWithRoutes() {
         <Route path="/dashboard/:rest*" component={DashboardRoutes} />
         <Route path="/admin" component={DashboardRoutes} />
 
-        <Route path="/profile/:username" component={PublicProfile} />
-        <Route path="/profile/:username/photos" component={PublicPhotos} />
-
         <Route component={NotFound} />
       </Switch>
     </ClerkProvider>
   );
 }
 
-function PublicOnlyRoutes() {
-  return (
-    <Switch>
-      <Route path="/profile/:username" component={PublicProfile} />
-      <Route path="/profile/:username/photos" component={PublicPhotos} />
-      <Route component={NotFound} />
-    </Switch>
-  );
-}
 
 function App() {
   useEffect(() => {
@@ -242,7 +239,10 @@ function App() {
           {clerkPubKey ? (
             <ClerkProviderWithRoutes />
           ) : (
-            <PublicOnlyRoutes />
+            <Switch>
+              <Route path="/" component={HomeRedirect} />
+              <Route component={NotFound} />
+            </Switch>
           )}
           <Toaster />
         </TooltipProvider>

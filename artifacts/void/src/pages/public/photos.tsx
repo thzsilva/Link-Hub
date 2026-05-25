@@ -1,14 +1,16 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useGetPublicPhotos } from "@workspace/api-client-react";
-import { useParams, Link } from "wouter";
+import { useLocation, Link } from "wouter";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ChevronLeft, ChevronRight, X, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function PublicPhotos() {
-  const { username } = useParams<{ username: string }>();
-  const { data: photos, isLoading } = useGetPublicPhotos(username || "");
+  const [location] = useLocation();
+  const searchParams = new URLSearchParams(location.split('?')[1] || '');
+  const username = searchParams.get('user') || '';
+  const { data: photos, isLoading } = useGetPublicPhotos(username);
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState<number | null>(null);
 
   if (isLoading) {
@@ -30,7 +32,7 @@ export default function PublicPhotos() {
     return (
       <div className="min-h-[100dvh] bg-black text-white flex flex-col items-center justify-center px-4">
         <p className="mb-8 text-lg text-white/70">Nenhuma foto nesta galeria.</p>
-        <Link href={`/profile/${username}`}>
+        <Link href={`/?user=${username}`}>
           <Button className="rounded-lg uppercase tracking-widest text-xs font-bold px-6 py-3 bg-white/10 hover:bg-white/20 border border-white/20">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Voltar ao Perfil
@@ -62,7 +64,7 @@ export default function PublicPhotos() {
       {/* Header Premium */}
       <header className="sticky top-0 z-40 bg-black/80 backdrop-blur-md border-b border-white/5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex items-center justify-between">
-          <Link href={`/profile/${username}`}>
+          <Link href={`/?user=${username}`}>
             <motion.button
               className="flex items-center gap-2 uppercase tracking-widest text-xs font-bold text-white/60 hover:text-white transition-colors"
               whileHover={{ x: -4 }}

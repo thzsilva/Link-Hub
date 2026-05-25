@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { useGetPublicProfile, useTrackEvent, customFetch } from "@workspace/api-client-react";
-import { useParams, Link } from "wouter";
+import { useLocation, Link } from "wouter";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CalendarDays, MapPin, ExternalLink, ChevronRight } from "lucide-react";
 import { getPlatform, toSpotifyEmbedUrl } from "@/lib/platforms";
@@ -34,8 +34,10 @@ function ProfileSkeleton() {
 // ---------------------------------------------------------------------------
 
 export default function PublicProfileNew() {
-  const { username } = useParams<{ username: string }>();
-  const { data, isLoading } = useGetPublicProfile(username || "");
+  const [location] = useLocation();
+  const searchParams = new URLSearchParams(location.split('?')[1] || '');
+  const username = searchParams.get('user') || '';
+  const { data, isLoading } = useGetPublicProfile(username);
   const trackEvent = useTrackEvent();
 
   // Public events — separate query
@@ -430,7 +432,7 @@ export default function PublicProfileNew() {
                 viewport={{ once: true }}
               >
                 <Link
-                  href={`/profile/${username}/photos`}
+                  href={`/?user=${username}&photos=true`}
                   className="w-full flex items-center justify-center gap-3 py-4 text-sm uppercase tracking-widest font-bold rounded-lg border border-white/10 hover:border-white/30 transition-all duration-300 group"
                   style={{
                     backgroundColor: `${customTheme.accent}10`,
