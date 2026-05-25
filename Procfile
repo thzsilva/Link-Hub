@@ -1,1 +1,1 @@
-web: cd artifacts/api-server && node ./dist/index.mjs
+web: node artifacts/api-server/dist/index.mjs
