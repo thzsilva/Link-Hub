@@ -157,17 +157,18 @@ function HomeRedirect() {
   const username = searchParams.get('user');
   const isPhotos = searchParams.get('photos') === 'true';
 
+  // Se tem ?user= param, mostra perfil público mesmo se logado
+  if (username) {
+    return isPhotos ? <PublicPhotos /> : <PublicProfile />;
+  }
+
   return (
     <>
       <Show when="signed-in">
         <Redirect to="/dashboard" />
       </Show>
       <Show when="signed-out">
-        {username ? (
-          isPhotos ? <PublicPhotos /> : <PublicProfile />
-        ) : (
-          <Home />
-        )}
+        <Home />
       </Show>
     </>
   );
