@@ -64,6 +64,18 @@ async function updateProfileBio(data: { bio: string }) {
   }
 }
 
+async function updateProfileBanner(data: { bannerUrl: string | null }) {
+  try {
+    return await customFetch("/api/me", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+  } catch (error: any) {
+    throw new Error(error.message || "Falha ao atualizar banner");
+  }
+}
+
 export default function DashboardCustomization() {
   const { data: profile } = useGetMe();
   const queryClient = useQueryClient();
@@ -81,6 +93,7 @@ export default function DashboardCustomization() {
   });
   const { toast } = useToast();
   const fileRef = useRef<HTMLInputElement>(null);
+  const bannerFileRef = useRef<HTMLInputElement>(null);
 
   const [selectedTheme, setSelectedTheme] = useState<ThemeId>((profile?.themeId as ThemeId) || "default");
   const [layoutColumns, setLayoutColumns] = useState<LayoutColumns>((profile?.layoutColumns as LayoutColumns) || 1);
@@ -89,7 +102,9 @@ export default function DashboardCustomization() {
   const [profileUrl, setProfileUrl] = useState("");
   const [copied, setCopied] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState(profile?.avatarUrl || "");
+  const [bannerPreview, setBannerPreview] = useState(profile?.bannerUrl || "");
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [isUploadingBanner, setIsUploadingBanner] = useState(false);
   const [username, setUsername] = useState(profile?.username || "");
   const [isSavingUsername, setIsSavingUsername] = useState(false);
   const [bio, setBio] = useState(profile?.bio || "");
@@ -217,6 +232,50 @@ export default function DashboardCustomization() {
       setAvatarPreview(profile?.avatarUrl || "");
     } finally {
       setIsUploadingAvatar(false);
+    }
+  };
+
+  const handleBannerChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const local = URL.createObjectURL(file);
+    setBannerPreview(local);
+    setIsUploadingBanner(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/photos/upload", { method: "POST", body: fd });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        toast({ title: err.error || "Erro no upload", variant: "destructive" });
+        setBannerPreview(profile?.bannerUrl || "");
+        return;
+      }
+      const data = await res.json();
+      const { url } = data;
+      if (!url) {
+        toast({ title: "Erro: URL não retornada do servidor", variant: "destructive" });
+        setBannerPreview(profile?.bannerUrl || "");
+        return;
+      }
+      setBannerPreview(url);
+
+      // Update banner in backend
+      try {
+        await updateProfileBanner({ bannerUrl: url });
+        URL.revokeObjectURL(local);
+        queryClient.invalidateQueries({ queryKey: ["useGetMe"] });
+        toast({ title: "✓ Banner atualizado!" });
+      } catch (error: any) {
+        setBannerPreview(profile?.bannerUrl || "");
+        toast({ title: `Erro ao salvar: ${error.message || "desconhecido"}`, variant: "destructive" });
+      }
+    } catch (error) {
+      console.error("Erro no upload:", error);
+      toast({ title: "Falha no upload.", variant: "destructive" });
+      setBannerPreview(profile?.bannerUrl || "");
+    } finally {
+      setIsUploadingBanner(false);
     }
   };
 
@@ -385,6 +444,93 @@ export default function DashboardCustomization() {
         </div>
       </motion.div>
 
+      {/* Upload de Banner/Imagem de Fundo */}
+      <motion.div
+        className="bg-white/5 border border-white/10 rounded-xl p-6 sm:p-8 space-y-4 backdrop-blur-sm hover:bg-white/[0.07] transition-all duration-300"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.12 }}
+      >
+        <h2 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-cyan-300 to-blue-300 bg-clip-text text-transparent">Banner/Imagem de Fundo</h2>
+        <div className="space-y-4">
+          {/* Banner Preview */}
+          <div className="space-y-2">
+            <label className="text-xs uppercase tracking-widest text-muted-foreground">Prévia do Banner</label>
+            <div className="relative rounded-xl overflow-hidden border-2 border-white/10 bg-gradient-to-br from-white/5 to-transparent hover:bg-white/10 transition-colors">
+              {bannerPreview ? (
+                <img
+                  src={bannerPreview}
+                  alt="Banner"
+                  className="w-full h-32 sm:h-40 object-cover"
+                  crossOrigin="anonymous"
+                  onError={(e) => {
+                    const img = e.target as HTMLImageElement;
+                    if (!img.src.includes("?t=") && img.src.includes("supabase")) {
+                      img.src = `${bannerPreview}?t=${Date.now()}`;
+                    } else if (img.src.includes("supabase") && !img.src.includes("proxy-image")) {
+                      img.src = `/api/proxy-image?url=${encodeURIComponent(bannerPreview)}`;
+                    } else {
+                      img.style.display = "none";
+                    }
+                  }}
+                />
+              ) : (
+                <div className="w-full h-32 sm:h-40 bg-white/10 flex items-center justify-center text-muted-foreground">
+                  <UploadIcon size={32} strokeWidth={1} />
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Banner Upload Area */}
+          <div className="space-y-2">
+            <label className="text-xs uppercase tracking-widest text-muted-foreground">Upload Banner</label>
+            <div
+              className="relative border-2 border-dashed border-white/20 hover:border-white/50 hover:bg-white/5 transition-all cursor-pointer rounded-xl p-8 text-center backdrop-blur-sm"
+              onClick={() => !isUploadingBanner && bannerFileRef.current?.click()}
+            >
+              <input
+                ref={bannerFileRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleBannerChange}
+                disabled={isUploadingBanner}
+              />
+              {isUploadingBanner ? (
+                <div className="flex flex-col items-center justify-center gap-2">
+                  <Loader2 className="animate-spin text-white" size={24} />
+                  <span className="text-xs text-white/80 uppercase tracking-widest">Enviando...</span>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center gap-2">
+                  <UploadIcon size={32} className="text-muted-foreground" strokeWidth={1.5} />
+                  <div>
+                    <p className="text-sm font-bold text-white">Clique para selecionar</p>
+                    <p className="text-xs text-muted-foreground">ou arraste uma imagem</p>
+                  </div>
+                </div>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">Máximo 5MB. Formatos: JPG, PNG, GIF. Recomendado: 1920x480px</p>
+            {bannerPreview && (
+              <Button
+                onClick={() => {
+                  setBannerPreview("");
+                  updateProfileBanner({ bannerUrl: null }).catch((err) =>
+                    toast({ title: "Erro ao remover banner", variant: "destructive" })
+                  );
+                }}
+                variant="ghost"
+                className="w-full text-red-400 hover:bg-red-500/20 text-xs"
+              >
+                Remover Banner
+              </Button>
+            )}
+          </div>
+        </div>
+      </motion.div>
+
       {/* Preview do Perfil */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -392,8 +538,14 @@ export default function DashboardCustomization() {
         transition={{ duration: 0.5, delay: 0.15 }}
       >
         <Card className="rounded-xl bg-black/50 border-white/10 overflow-hidden backdrop-blur-sm shadow-lg hover:shadow-2xl hover:shadow-purple-500/10 transition-all duration-300">
-        <div className="bg-gradient-to-r p-8" style={{ backgroundImage: `linear-gradient(135deg, ${theme.primary}, ${theme.secondary})` }}>
-          <div className="flex items-end gap-4">
+        {/* Banner or Gradient Header */}
+        <div
+          className="w-full h-48 bg-gradient-to-r relative overflow-hidden"
+          style={bannerPreview ? { backgroundImage: `url(${bannerPreview})`, backgroundSize: 'cover', backgroundPosition: 'center' } : { backgroundImage: `linear-gradient(135deg, ${theme.primary}, ${theme.secondary})` }}
+        >
+          {bannerPreview && <div className="absolute inset-0 bg-black/30" />}
+        </div>
+        <div className="px-8 py-6 flex items-end gap-4" style={{ marginTop: '-60px', position: 'relative', zIndex: 10 }}>
             {profile.avatarUrl && (
               <img
                 src={profile.avatarUrl}
