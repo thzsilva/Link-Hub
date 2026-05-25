@@ -64,7 +64,7 @@ async function updateProfileBio(data: { bio: string }) {
   }
 }
 
-async function updateProfileBanner(data: { bannerUrl: string | null }) {
+async function updateProfileBanner(data: { headerImageUrl: string | null }) {
   try {
     return await customFetch("/api/me", {
       method: "PUT",
@@ -102,7 +102,7 @@ export default function DashboardCustomization() {
   const [profileUrl, setProfileUrl] = useState("");
   const [copied, setCopied] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState(profile?.avatarUrl || "");
-  const [bannerPreview, setBannerPreview] = useState(profile?.bannerUrl || "");
+  const [bannerPreview, setBannerPreview] = useState(profile?.headerImageUrl || "");
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [isUploadingBanner, setIsUploadingBanner] = useState(false);
   const [username, setUsername] = useState(profile?.username || "");
@@ -248,32 +248,32 @@ export default function DashboardCustomization() {
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         toast({ title: err.error || "Erro no upload", variant: "destructive" });
-        setBannerPreview(profile?.bannerUrl || "");
+        setBannerPreview(profile?.headerImageUrl || "");
         return;
       }
       const data = await res.json();
       const { url } = data;
       if (!url) {
         toast({ title: "Erro: URL não retornada do servidor", variant: "destructive" });
-        setBannerPreview(profile?.bannerUrl || "");
+        setBannerPreview(profile?.headerImageUrl || "");
         return;
       }
       setBannerPreview(url);
 
       // Update banner in backend
       try {
-        await updateProfileBanner({ bannerUrl: url });
+        await updateProfileBanner({ headerImageUrl: url });
         URL.revokeObjectURL(local);
         queryClient.invalidateQueries({ queryKey: ["useGetMe"] });
         toast({ title: "✓ Banner atualizado!" });
       } catch (error: any) {
-        setBannerPreview(profile?.bannerUrl || "");
+        setBannerPreview(profile?.headerImageUrl || "");
         toast({ title: `Erro ao salvar: ${error.message || "desconhecido"}`, variant: "destructive" });
       }
     } catch (error) {
       console.error("Erro no upload:", error);
       toast({ title: "Falha no upload.", variant: "destructive" });
-      setBannerPreview(profile?.bannerUrl || "");
+      setBannerPreview(profile?.headerImageUrl || "");
     } finally {
       setIsUploadingBanner(false);
     }
@@ -517,7 +517,7 @@ export default function DashboardCustomization() {
               <Button
                 onClick={() => {
                   setBannerPreview("");
-                  updateProfileBanner({ bannerUrl: null }).catch((err) =>
+                  updateProfileBanner({ headerImageUrl: null }).catch((err) =>
                     toast({ title: "Erro ao remover banner", variant: "destructive" })
                   );
                 }}
