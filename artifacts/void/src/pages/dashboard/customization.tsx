@@ -40,7 +40,7 @@ async function updateProfileAvatar(data: { avatarUrl: string }) {
   }
 }
 
-async function updateProfileUsername(data: { username: string }) {
+async function updateProfileUsername(data: { username: string; displayName?: string }) {
   try {
     return await customFetch("/api/me", {
       method: "PUT",
@@ -118,7 +118,10 @@ export default function DashboardCustomization() {
     }
     setIsSavingUsername(true);
     try {
-      await updateProfileUsername({ username: username.trim() });
+      await updateProfileUsername({
+        username: username.trim(),
+        displayName: username.trim() // Atualizar displayName também
+      });
       queryClient.invalidateQueries({ queryKey: ["useGetMe"] });
       toast({ title: "✓ Nome de usuário atualizado!" });
     } catch (error: any) {
