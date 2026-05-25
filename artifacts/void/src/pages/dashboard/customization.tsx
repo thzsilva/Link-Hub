@@ -223,58 +223,69 @@ export default function DashboardCustomization() {
   if (!profile) return <div className="text-muted-foreground animate-pulse">Carregando...</div>;
 
   return (
-    <div className="space-y-8">
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <h1 className="text-4xl font-black uppercase tracking-tighter">Customização</h1>
-        <p className="text-muted-foreground mt-2 font-mono text-sm">Personalize a aparência do seu perfil</p>
-      </motion.div>
+    <div className="relative min-h-[100dvh] overflow-hidden">
+      {/* Elegant background with animated blur circles */}
+      <div className="absolute inset-0 z-0 overflow-hidden">
+        <div className="absolute top-10 right-10 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-20 left-10 w-72 h-72 bg-purple-500/10 rounded-full blur-3xl" />
+        <div className="absolute top-1/2 right-1/4 w-96 h-96 bg-pink-500/5 rounded-full blur-3xl" />
+      </div>
+
+      {/* Content with relative positioning */}
+      <div className="relative z-10 space-y-8">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <h1 className="text-4xl sm:text-5xl font-black tracking-tighter bg-gradient-to-r from-white via-blue-200 to-white bg-clip-text text-transparent">
+            Customização
+          </h1>
+          <p className="text-muted-foreground mt-2 text-sm">Personalize a aparência do seu perfil</p>
+        </motion.div>
 
       {/* Nome de Usuário */}
       <motion.div
-        className="space-y-4"
+        className="bg-white/5 border border-white/10 rounded-xl p-6 sm:p-8 space-y-4 backdrop-blur-sm hover:bg-white/[0.07] transition-all duration-300"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.05 }}
       >
-        <h2 className="text-xl font-bold uppercase tracking-tight">Nome de Usuário</h2>
-        <div className="flex gap-3">
+        <h2 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-blue-300 to-purple-300 bg-clip-text text-transparent">Nome de Usuário</h2>
+        <div className="flex flex-col sm:flex-row gap-3">
           <Input
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             placeholder="seu-username"
-            className="rounded-none bg-black border-border font-mono"
+            className="rounded-lg bg-white/5 border-white/20 font-mono focus:border-white/50 focus:bg-white/10 transition-colors"
             disabled={isSavingUsername}
           />
           <Button
             onClick={handleSaveUsername}
             disabled={isSavingUsername || username === profile?.username}
-            className="rounded-none px-6 uppercase font-bold"
+            className="rounded-lg px-6 uppercase font-bold bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 whitespace-nowrap"
           >
             {isSavingUsername ? "Salvando..." : "Salvar"}
           </Button>
         </div>
-        <p className="text-xs text-muted-foreground">Seu perfil público será acessível em: <span className="font-mono text-white">{window.location.origin}/{username || "seu-username"}</span></p>
+        <p className="text-xs text-muted-foreground">Seu perfil público será acessível em: <span className="font-mono text-white/70">{window.location.origin}/?user={username || "seu-username"}</span></p>
       </motion.div>
 
       {/* Descrição / Bio */}
       <motion.div
-        className="space-y-4"
+        className="bg-white/5 border border-white/10 rounded-xl p-6 sm:p-8 space-y-4 backdrop-blur-sm hover:bg-white/[0.07] transition-all duration-300"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.07 }}
       >
-        <h2 className="text-xl font-bold uppercase tracking-tight">Descrição</h2>
+        <h2 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-purple-300 to-pink-300 bg-clip-text text-transparent">Descrição</h2>
         <div className="space-y-3">
           <textarea
             value={bio}
             onChange={(e) => setBio(e.target.value)}
             placeholder="Descreva você em poucas palavras..."
             maxLength={150}
-            className="w-full rounded-none bg-black border border-border p-3 text-white font-mono text-sm resize-none focus:outline-none focus:border-white/50 transition-colors"
+            className="w-full rounded-lg bg-white/5 border border-white/20 p-4 text-white text-sm resize-none focus:outline-none focus:border-white/50 focus:bg-white/10 transition-colors"
             rows={3}
             disabled={isSavingBio}
           />
@@ -283,7 +294,7 @@ export default function DashboardCustomization() {
             <Button
               onClick={handleSaveBio}
               disabled={isSavingBio || bio === (profile?.bio || "")}
-              className="rounded-none px-6 uppercase font-bold"
+              className="rounded-lg px-6 uppercase font-bold bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
             >
               {isSavingBio ? "Salvando..." : "Salvar"}
             </Button>
@@ -293,17 +304,17 @@ export default function DashboardCustomization() {
 
       {/* Upload de Foto de Perfil */}
       <motion.div
-        className="space-y-4"
+        className="bg-white/5 border border-white/10 rounded-xl p-6 sm:p-8 space-y-4 backdrop-blur-sm hover:bg-white/[0.07] transition-all duration-300"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.1 }}
       >
-        <h2 className="text-xl font-bold uppercase tracking-tight">Foto de Perfil</h2>
+        <h2 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-pink-300 to-orange-300 bg-clip-text text-transparent">Foto de Perfil</h2>
         <div className="grid md:grid-cols-2 gap-6">
           {/* Preview */}
           <div className="space-y-2">
             <label className="text-xs uppercase tracking-widest text-muted-foreground">Seu Avatar</label>
-            <div className="flex flex-col items-center justify-center p-8 border-2 border-border rounded-lg bg-white/5">
+            <div className="flex flex-col items-center justify-center p-8 border-2 border-white/10 rounded-xl bg-gradient-to-br from-white/5 to-transparent hover:bg-white/10 transition-colors">
               {avatarPreview ? (
                 <img
                   src={avatarPreview}
@@ -343,7 +354,7 @@ export default function DashboardCustomization() {
           <div className="space-y-2">
             <label className="text-xs uppercase tracking-widest text-muted-foreground">Fazer Upload</label>
             <div
-              className="relative border-2 border-dashed border-white/20 hover:border-white/50 transition-colors cursor-pointer rounded-lg p-8 text-center"
+              className="relative border-2 border-dashed border-white/20 hover:border-white/50 hover:bg-white/5 transition-all cursor-pointer rounded-xl p-8 text-center backdrop-blur-sm"
               onClick={() => !isUploadingAvatar && fileRef.current?.click()}
             >
               <input
@@ -380,7 +391,7 @@ export default function DashboardCustomization() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.15 }}
       >
-        <Card className="rounded-none bg-black border-border overflow-hidden">
+        <Card className="rounded-xl bg-black/50 border-white/10 overflow-hidden backdrop-blur-sm shadow-lg hover:shadow-2xl hover:shadow-purple-500/10 transition-all duration-300">
         <div className="bg-gradient-to-r p-8" style={{ backgroundImage: `linear-gradient(135deg, ${theme.primary}, ${theme.secondary})` }}>
           <div className="flex items-end gap-4">
             {profile.avatarUrl && (
@@ -425,19 +436,19 @@ export default function DashboardCustomization() {
 
       {/* URL do Perfil */}
       <motion.div
-        className="space-y-2"
+        className="bg-white/5 border border-white/10 rounded-xl p-6 sm:p-8 space-y-4 backdrop-blur-sm hover:bg-white/[0.07] transition-all duration-300"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.2 }}
       >
         <label className="text-xs uppercase tracking-widest text-muted-foreground">Seu perfil público</label>
-        <div className="flex gap-2">
-          <Input value={`${window.location.origin}/${profile.username}`} readOnly className="rounded-none bg-black border-border font-mono text-sm" />
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Input value={`${window.location.origin}/?user=${profile.username}`} readOnly className="rounded-lg bg-white/5 border-white/20 font-mono text-sm focus:border-white/50 flex-1" />
           <motion.div
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
-            <Button onClick={copyProfileUrl} variant="outline" className="rounded-none">
+            <Button onClick={copyProfileUrl} className="rounded-lg bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 whitespace-nowrap">
               {copied ? <Check size={16} /> : <Copy size={16} />}
             </Button>
           </motion.div>
@@ -452,14 +463,14 @@ export default function DashboardCustomization() {
       >
         {/* Seletor de Temas */}
         <motion.div
-          className="space-y-4"
+          className="bg-white/5 border border-white/10 rounded-xl p-6 sm:p-8 space-y-4 backdrop-blur-sm hover:bg-white/[0.07] transition-all duration-300"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
           <div className="flex items-center gap-2">
-            <Palette size={18} />
-            <h2 className="text-xl font-bold uppercase tracking-tight">Temas</h2>
+            <Palette size={18} className="text-blue-400" />
+            <h2 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-blue-300 to-cyan-300 bg-clip-text text-transparent">Temas</h2>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -482,14 +493,14 @@ export default function DashboardCustomization() {
 
         {/* Layout */}
         <motion.div
-          className="space-y-4"
+          className="bg-white/5 border border-white/10 rounded-xl p-6 sm:p-8 space-y-4 backdrop-blur-sm hover:bg-white/[0.07] transition-all duration-300"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
           <div className="flex items-center gap-2">
-            <Layout size={18} />
-            <h2 className="text-xl font-bold uppercase tracking-tight">Layout</h2>
+            <Layout size={18} className="text-purple-400" />
+            <h2 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-purple-300 to-pink-300 bg-clip-text text-transparent">Layout</h2>
           </div>
 
           <div className="grid grid-cols-3 gap-3">
@@ -523,12 +534,12 @@ export default function DashboardCustomization() {
 
       {/* Cores Customizadas */}
       <motion.div
-        className="space-y-4"
+        className="bg-white/5 border border-white/10 rounded-xl p-6 sm:p-8 space-y-4 backdrop-blur-sm hover:bg-white/[0.07] transition-all duration-300"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.1 }}
       >
-        <h2 className="text-xl font-bold uppercase tracking-tight">Cores Customizadas (opcional)</h2>
+        <h2 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-orange-300 to-red-300 bg-clip-text text-transparent">Cores Customizadas (opcional)</h2>
         <div className="grid md:grid-cols-2 gap-6">
           <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -587,6 +598,9 @@ export default function DashboardCustomization() {
           </Button>
         </motion.div>
       </motion.div>
+      </div>
+      {/* Closing z-10 relative div */}
     </div>
+    {/* Closing relative background div */}
   );
 }
