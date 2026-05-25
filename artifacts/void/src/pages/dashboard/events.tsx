@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { customFetch } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -202,18 +203,14 @@ export default function DashboardEvents() {
   const { data: events, isLoading, error } = useQuery<EventItem[]>({
     queryKey: EVENTS_KEY,
     queryFn: async () => {
-      const r = await fetch("/api/events");
-      const json = await r.json();
-      if (!r.ok) throw new Error(json.error || "Erro ao carregar eventos");
-      return json;
+      return await customFetch<EventItem[]>("/api/events");
     },
   });
 
   const createEvent = useMutation({
     mutationFn: (data: EventFormData) =>
-      fetch("/api/events", {
+      customFetch("/api/events", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...data,
           eventDate: data.eventDate ? new Date(data.eventDate).toISOString() : null,
@@ -222,10 +219,6 @@ export default function DashboardEvents() {
           ticketUrl: data.ticketUrl || null,
           imageUrl: data.imageUrl || null,
         }),
-      }).then(async (r) => {
-        const json = await r.json();
-        if (!r.ok) throw new Error(json.error || "Erro ao criar evento");
-        return json;
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: EVENTS_KEY });
@@ -238,9 +231,8 @@ export default function DashboardEvents() {
 
   const updateEvent = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<EventFormData> }) =>
-      fetch(`/api/events/${id}`, {
+      customFetch(`/api/events/${id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...data,
           eventDate: data.eventDate !== undefined ? (data.eventDate ? new Date(data.eventDate).toISOString() : null) : undefined,
@@ -249,7 +241,7 @@ export default function DashboardEvents() {
           ticketUrl: data.ticketUrl || null,
           imageUrl: data.imageUrl || null,
         }),
-      }).then((r) => r.json()),
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: EVENTS_KEY });
       setDialogOpen(false);
@@ -260,7 +252,7 @@ export default function DashboardEvents() {
   });
 
   const deleteEvent = useMutation({
-    mutationFn: (id: string) => fetch(`/api/events/${id}`, { method: "DELETE" }).then((r) => r.json()),
+    mutationFn: (id: string) => customFetch(`/api/events/${id}`, { method: "DELETE" }),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: EVENTS_KEY }); toast({ title: "Evento removido." }); },
   });
 
