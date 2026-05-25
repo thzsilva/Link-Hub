@@ -235,10 +235,12 @@ function App() {
     document.documentElement.classList.add('dark');
 
     // Configure API base URL for the client
-    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
-    if (apiBaseUrl) {
-      setBaseUrl(apiBaseUrl);
-    }
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ||
+      (typeof window !== 'undefined' && window.location.hostname !== 'localhost'
+        ? 'https://link-hub-production.up.railway.app'
+        : 'http://localhost:3001');
+
+    setBaseUrl(apiBaseUrl);
   }, []);
 
   return (
