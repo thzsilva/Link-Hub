@@ -9,10 +9,12 @@ import adminRouter from "./admin";
 import eventsRouter from "./events";
 import sectionsRouter from "./sections";
 import proxyRouter from "./proxy";
+import debugRouter from "./debug";
 
 const router: IRouter = Router();
 
 router.use(healthRouter);
+router.use(debugRouter);
 router.use(storageRouter);
 router.use(profileRouter);
 router.use(linksRouter);
