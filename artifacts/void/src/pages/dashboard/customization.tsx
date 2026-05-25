@@ -599,8 +599,6 @@ export default function DashboardCustomization() {
         </motion.div>
       </motion.div>
       </div>
-      {/* Closing z-10 relative div */}
     </div>
-    {/* Closing relative background div */}
   );
 }
