@@ -106,7 +106,8 @@
       "Bash(curl -s https://web-production-cfb1c.up.railway.app/api/healthz)",
       "Bash(curl -s https://web-production-cfb1c.up.railway.app/ -I)",
       "Bash(vercel projects *)",
-      "Bash(curl -s -v https://web-production-cfb1c.up.railway.app/api/healthz)"
+      "Bash(curl -s -v https://web-production-cfb1c.up.railway.app/api/healthz)",
+      "Bash(timeout 120 curl -v --max-time 60 https://web-production-cfb1c.up.railway.app/api/healthz)"
     ]
   }
 }
