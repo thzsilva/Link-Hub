@@ -571,7 +571,6 @@ export default function DashboardCustomization() {
               <p className="text-white/80 text-sm">@{profile.username}</p>
             </div>
           </div>
-        </div>
         <CardContent className="p-6">
           <p className="text-muted-foreground text-sm mb-4">{profile.bio}</p>
           <div className="space-y-2">
