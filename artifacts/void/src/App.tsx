@@ -231,19 +231,22 @@ function PublicOnlyRoutes() {
 }
 
 function App() {
+  // FORÇAR LOG MESMO QUE SEJA ERROR
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
+  console.error('🔧 App renderizado - VITE_API_BASE_URL:', apiBaseUrl);
+
   useEffect(() => {
     document.documentElement.classList.add('dark');
 
     // Configure API base URL for the client
-    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
-    console.log('🔧 App.tsx - VITE_API_BASE_URL:', apiBaseUrl);
+    console.error('⚙️ useEffect rodou - configurando baseUrl');
     if (apiBaseUrl) {
       setBaseUrl(apiBaseUrl);
-      console.log('✅ setBaseUrl() chamado com:', apiBaseUrl);
+      console.error('✅ setBaseUrl() chamado com:', apiBaseUrl);
     } else {
-      console.warn('❌ VITE_API_BASE_URL não está configurado!');
+      console.error('❌ VITE_API_BASE_URL é vazio/undefined!', { apiBaseUrl });
     }
-  }, []);
+  }, [apiBaseUrl]);
 
   return (
     <WouterRouter base={basePath}>
