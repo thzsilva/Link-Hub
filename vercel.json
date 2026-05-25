@@ -1,6 +1,4 @@
 {
-  "buildCommand": "npm run build --workspace=artifacts/void",
-  "outputDirectory": "artifacts/void/dist",
   "rewrites": [
     {
       "source": "/(.*)",
