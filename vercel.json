@@ -1,5 +1,0 @@
-﻿{
-  "buildCommand": "cd artifacts/void && npm install --legacy-peer-deps && npm run build",
-  "installCommand": "npm install --legacy-peer-deps",
-  "outputDirectory": "artifacts/void/dist"
-}
