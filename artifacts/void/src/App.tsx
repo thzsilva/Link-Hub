@@ -109,9 +109,18 @@ function ClerkAuthSetup() {
     // Configure the API client to use Clerk's session token
     setAuthTokenGetter(async () => {
       try {
-        return await getToken();
+        const token = await getToken();
+        if (!token) {
+          console.warn('⚠️ Clerk getToken() retornou null/undefined');
+          console.warn('VITE_CLERK_PROXY_URL:', import.meta.env.VITE_CLERK_PROXY_URL);
+          console.warn('VITE_API_BASE_URL:', import.meta.env.VITE_API_BASE_URL);
+          return null;
+        }
+        console.debug('✅ Clerk token obtido com sucesso');
+        return token;
       } catch (error) {
-        console.error('Failed to get auth token:', error);
+        console.error('❌ Erro ao obter token Clerk:', error);
+        console.error('Detalhes:', (error as any)?.message);
         return null;
       }
     });
