@@ -97,38 +97,62 @@ function ImagePicker({
   };
 
   const handleCropComplete = async (croppedImageUrl: string) => {
-    if (!pendingFile) return;
-
     setShowCropModal(false);
     setIsUploading(true);
 
     try {
+      // Convert blob URL to fetch-able resource
       const response = await fetch(croppedImageUrl);
       const blob = await response.blob();
 
+      // Create FormData and upload
       const fd = new FormData();
       fd.append("file", blob, "event-image.jpg");
 
-      const res = await fetch("/api/photos/upload", { method: "POST", body: fd });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        toast({ title: err.error || "Erro no upload", variant: "destructive" });
+      const uploadRes = await fetch("/api/photos/upload", {
+        method: "POST",
+        body: fd
+      });
+
+      if (!uploadRes.ok) {
+        const err = await uploadRes.json().catch(() => ({ error: "Erro no upload" }));
+        toast({
+          title: err.error || "Erro no upload",
+          variant: "destructive"
+        });
         setPreview(value || null);
         return;
       }
 
-      const { url } = await res.json();
+      const { url } = await uploadRes.json();
+      if (!url) {
+        toast({
+          title: "Erro: servidor não retornou URL",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Update preview and parent
       setPreview(url);
       setUrlInput(url);
       onChange(url);
-      toast({ title: "Imagem do evento salva!" });
-    } catch {
-      toast({ title: "Falha no upload.", variant: "destructive" });
+      toast({ title: "✓ Imagem do evento salva!" });
+    } catch (error) {
+      console.error("Erro ao processar imagem:", error);
+      toast({
+        title: "Falha no upload. Tente novamente.",
+        variant: "destructive"
+      });
       setPreview(value || null);
     } finally {
       setIsUploading(false);
       setPendingFile(null);
       setCropImageSrc("");
+      // Revoke the blob URL to free memory
+      if (cropImageSrc) {
+        URL.revokeObjectURL(cropImageSrc);
+      }
     }
   };
 
@@ -164,17 +188,31 @@ function ImagePicker({
 
       {mode === "upload" ? (
         <div
-          className="relative border border-dashed border-white/20 hover:border-white/50 transition-colors cursor-pointer"
-          onClick={() => !isUploading && fileRef.current?.click()}
+          className="relative border border-dashed border-white/20 hover:border-white/50 transition-colors cursor-pointer rounded-lg"
+          onClick={() => !isUploading && !showCropModal && fileRef.current?.click()}
         >
-          <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} disabled={isUploading} />
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleFileChange}
+            disabled={isUploading || showCropModal}
+          />
           {preview ? (
-            <div className="relative h-32 overflow-hidden">
-              <img src={preview} alt="Preview" className="w-full h-full object-cover" />
-              {isUploading && (
-                <div className="absolute inset-0 bg-black/60 flex items-center justify-center gap-2">
+            <div className="relative h-32 overflow-hidden rounded-lg">
+              <img
+                src={preview}
+                alt="Preview"
+                className="w-full h-full object-cover"
+                crossOrigin="anonymous"
+              />
+              {(isUploading || showCropModal) && (
+                <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-2">
                   <Loader2 className="animate-spin text-white" size={20} />
-                  <span className="text-xs text-white/80 uppercase tracking-widest">Enviando...</span>
+                  <span className="text-xs text-white/80 uppercase tracking-widest text-center px-2">
+                    {showCropModal ? "Ajustando..." : "Enviando..."}
+                  </span>
                 </div>
               )}
             </div>

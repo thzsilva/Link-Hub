@@ -147,7 +147,8 @@
       "Bash(xargs grep -l \"avatarUrl\")",
       "Bash(grep -E \"\\\\.\\(ts|tsx\\)$\")",
       "Bash(xargs grep -l \"UpdateProfileBody\")",
-      "Bash(xargs grep -l \"export.*UpdateProfileBody\")"
+      "Bash(xargs grep -l \"export.*UpdateProfileBody\")",
+      "Bash(pkill -f \"vite\")"
     ]
   }
 }
