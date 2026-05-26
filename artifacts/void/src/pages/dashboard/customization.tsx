@@ -410,40 +410,54 @@ export default function DashboardCustomization() {
           {/* Preview */}
           <div className="space-y-2">
             <label className="text-xs uppercase tracking-widest text-muted-foreground">Seu Avatar</label>
-            <div className="flex flex-col items-center justify-center p-8 border-2 border-white/10 rounded-xl bg-gradient-to-br from-white/5 to-transparent hover:bg-white/10 transition-colors">
+            <motion.div
+              className="flex flex-col items-center justify-center p-8 border-2 border-white/10 rounded-xl bg-gradient-to-br from-white/5 to-transparent hover:bg-white/10 hover:border-white/20 transition-all duration-300"
+              whileHover={{ scale: 1.02 }}
+            >
               {avatarPreview ? (
-                <img
-                  src={avatarPreview}
-                  alt="Avatar"
-                  className="w-32 h-32 rounded-full object-cover border-4 border-white/20 mb-4"
-                  crossOrigin="anonymous"
-                  loading="lazy"
-                  onError={(e) => {
-                    console.error("Erro ao carregar imagem diretamente:", avatarPreview);
-                    // Tentar com timestamp first
-                    const img = e.target as HTMLImageElement;
-                    if (!img.src.includes("?t=") && img.src.includes("supabase")) {
-                      img.src = `${avatarPreview}?t=${Date.now()}`;
-                    } else if (img.src.includes("supabase") && !img.src.includes("proxy-image")) {
-                      // Fallback para proxy se for Supabase
-                      img.src = `/api/proxy-image?url=${encodeURIComponent(avatarPreview)}`;
-                    } else {
-                      img.style.display = "none";
-                    }
-                  }}
-                  onLoad={() => {
-                    console.log("✅ Imagem carregada com sucesso:", avatarPreview);
-                  }}
-                />
+                <motion.div
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ duration: 0.3, type: "spring" }}
+                >
+                  <div className="relative">
+                    <div className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 opacity-0 hover:opacity-75 transition-opacity duration-300 blur-lg" />
+                    <img
+                      src={avatarPreview}
+                      alt="Avatar"
+                      className="relative w-32 h-32 rounded-full object-cover border-4 border-white/20 mb-4 hover:border-white/40 transition-colors"
+                      crossOrigin="anonymous"
+                      loading="lazy"
+                      onError={(e) => {
+                        console.error("Erro ao carregar imagem diretamente:", avatarPreview);
+                        const img = e.target as HTMLImageElement;
+                        if (!img.src.includes("?t=") && img.src.includes("supabase")) {
+                          img.src = `${avatarPreview}?t=${Date.now()}`;
+                        } else if (img.src.includes("supabase") && !img.src.includes("proxy-image")) {
+                          img.src = `/api/proxy-image?url=${encodeURIComponent(avatarPreview)}`;
+                        } else {
+                          img.style.display = "none";
+                        }
+                      }}
+                      onLoad={() => {
+                        console.log("✅ Imagem carregada com sucesso:", avatarPreview);
+                      }}
+                    />
+                  </div>
+                </motion.div>
               ) : (
-                <div className="w-32 h-32 rounded-full bg-white/10 flex items-center justify-center mb-4 text-muted-foreground">
+                <motion.div
+                  className="w-32 h-32 rounded-full bg-gradient-to-br from-white/10 to-white/5 flex items-center justify-center mb-4 text-muted-foreground border-2 border-dashed border-white/20"
+                  animate={{ scale: [1, 1.02, 1] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                >
                   <UploadIcon size={40} strokeWidth={1} />
-                </div>
+                </motion.div>
               )}
               <p className="text-muted-foreground text-sm text-center">
                 {profile.displayName || profile.username}
               </p>
-            </div>
+            </motion.div>
           </div>
 
           {/* Upload Area */}

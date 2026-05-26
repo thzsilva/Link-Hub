@@ -178,7 +178,7 @@ export default function PublicProfileNew() {
         {/* Links regulares em grid */}
         {regularLinks.length > 0 && (
           <motion.div
-            className="mb-12"
+            className="mb-16"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
@@ -197,6 +197,7 @@ export default function PublicProfileNew() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3, delay: index * 0.1 }}
+                    whileHover={{ y: -8 }}
                   >
                     <LinkButton
                       icon={<platform.Icon size={20} />}
@@ -490,9 +491,36 @@ export default function PublicProfileNew() {
           </motion.div>
         )}
 
+        {/* CTA Button */}
+        <motion.div
+          className="py-12 text-center space-y-6"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          viewport={{ once: true }}
+        >
+          <motion.a
+            href="/"
+            className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-lg text-sm uppercase tracking-widest font-bold border-2 transition-all"
+            style={{
+              borderColor: customTheme.primary,
+              color: customTheme.primary,
+              backgroundColor: `${customTheme.primary}10`,
+            }}
+            whileHover={{
+              backgroundColor: `${customTheme.primary}20`,
+              scale: 1.05,
+            }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <ExternalLink size={16} />
+            Crie Seu Próprio Hub
+          </motion.a>
+        </motion.div>
+
         {/* Footer Premium */}
         <motion.div
-          className="py-12 text-center border-t-2"
+          className="py-8 text-center border-t-2"
           style={{ borderColor: `${customTheme.accent}15` }}
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
@@ -500,7 +528,7 @@ export default function PublicProfileNew() {
           viewport={{ once: true }}
         >
           <p className="text-xs text-white/40 font-light tracking-widest uppercase">
-            Criado com <span style={{ color: customTheme.accent }}>✨</span> por Link-Hub
+            Criado com <span style={{ color: customTheme.accent }}>✨</span> por hubvoid
           </p>
           <p className="text-xs text-white/30 font-light tracking-widest mt-2">
             © {new Date().getFullYear()} • Seu perfil profissional em um link

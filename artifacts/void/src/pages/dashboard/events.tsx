@@ -8,6 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Trash2, Edit2, Plus, CalendarDays, MapPin, ExternalLink, ImageIcon, Upload, Link2, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import ImageCropModal from "@/components/ImageCropModal";
 
 const EVENTS_KEY = ["/api/events"];
 
@@ -80,18 +81,34 @@ function ImagePicker({
   const [urlInput, setUrlInput] = useState(value);
   const [isUploading, setIsUploading] = useState(false);
   const [preview, setPreview] = useState<string | null>(value || null);
+  const [showCropModal, setShowCropModal] = useState(false);
+  const [cropImageSrc, setCropImageSrc] = useState("");
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const local = URL.createObjectURL(file);
-    setPreview(local);
+    setPendingFile(file);
+    setCropImageSrc(local);
+    setShowCropModal(true);
+  };
+
+  const handleCropComplete = async (croppedImageUrl: string) => {
+    if (!pendingFile) return;
+
+    setShowCropModal(false);
     setIsUploading(true);
+
     try {
+      const response = await fetch(croppedImageUrl);
+      const blob = await response.blob();
+
       const fd = new FormData();
-      fd.append("file", file);
+      fd.append("file", blob, "event-image.jpg");
+
       const res = await fetch("/api/photos/upload", { method: "POST", body: fd });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
@@ -99,16 +116,19 @@ function ImagePicker({
         setPreview(value || null);
         return;
       }
+
       const { url } = await res.json();
-      URL.revokeObjectURL(local);
       setPreview(url);
       setUrlInput(url);
       onChange(url);
+      toast({ title: "Imagem do evento salva!" });
     } catch {
       toast({ title: "Falha no upload.", variant: "destructive" });
       setPreview(value || null);
     } finally {
       setIsUploading(false);
+      setPendingFile(null);
+      setCropImageSrc("");
     }
   };
 
@@ -184,6 +204,22 @@ function ImagePicker({
             </div>
           )}
         </div>
+      )}
+
+      {/* Crop Modal */}
+      {showCropModal && cropImageSrc && (
+        <ImageCropModal
+          imageSrc={cropImageSrc}
+          onCrop={handleCropComplete}
+          onClose={() => {
+            setShowCropModal(false);
+            setCropImageSrc("");
+            setPendingFile(null);
+            URL.revokeObjectURL(cropImageSrc);
+          }}
+          aspectRatio={16 / 9}
+          title="Ajustar Imagem do Evento"
+        />
       )}
     </div>
   );
