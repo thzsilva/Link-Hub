@@ -149,7 +149,9 @@
       "Bash(xargs grep -l \"UpdateProfileBody\")",
       "Bash(xargs grep -l \"export.*UpdateProfileBody\")",
       "Bash(pkill -f \"vite\")",
-      "WebFetch(domain:presskitpro.app)"
+      "WebFetch(domain:presskitpro.app)",
+      "Bash(findstr :3000)",
+      "Bash(wsl -d Bash -e bash -c \"kill -9 17116 2>/dev/null || true\")"
     ]
   }
 }

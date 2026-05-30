@@ -77,6 +77,18 @@ async function updateProfileBanner(data: { headerImageUrl: string | null }) {
   }
 }
 
+async function updateProfileVideo(data: { videoUrl: string | null }) {
+  try {
+    return await customFetch("/api/me", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+  } catch (error: any) {
+    throw new Error(error.message || "Falha ao atualizar vídeo");
+  }
+}
+
 export default function DashboardCustomization() {
   const { data: profile } = useGetMe();
   const queryClient = useQueryClient();
@@ -110,6 +122,8 @@ export default function DashboardCustomization() {
   const [isSavingUsername, setIsSavingUsername] = useState(false);
   const [bio, setBio] = useState(profile?.bio || "");
   const [isSavingBio, setIsSavingBio] = useState(false);
+  const [videoUrl, setVideoUrl] = useState((profile as any)?.videoUrl || "");
+  const [isSavingVideo, setIsSavingVideo] = useState(false);
 
   // Crop modal states
   const [showAvatarCropModal, setShowAvatarCropModal] = useState(false);
@@ -181,6 +195,22 @@ export default function DashboardCustomization() {
       setBio(profile?.bio || "");
     } finally {
       setIsSavingBio(false);
+    }
+  };
+
+  const handleSaveVideo = async () => {
+    setIsSavingVideo(true);
+    try {
+      const trimmedUrl = videoUrl.trim();
+      // Allow empty string to remove video
+      await updateProfileVideo({ videoUrl: trimmedUrl || null });
+      queryClient.invalidateQueries({ queryKey: ["useGetMe"] });
+      toast({ title: trimmedUrl ? "✓ Vídeo atualizado!" : "✓ Vídeo removido!" });
+    } catch (error: any) {
+      toast({ title: error.message || "Erro ao atualizar", variant: "destructive" });
+      setVideoUrl((profile as any)?.videoUrl || "");
+    } finally {
+      setIsSavingVideo(false);
     }
   };
 
@@ -393,6 +423,74 @@ export default function DashboardCustomization() {
               className="rounded-lg px-6 uppercase font-bold bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
             >
               {isSavingBio ? "Salvando..." : "Salvar"}
+            </Button>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Vídeo */}
+      <motion.div
+        className="bg-white/5 border border-white/10 rounded-xl p-6 sm:p-8 space-y-4 backdrop-blur-sm hover:bg-white/[0.07] transition-all duration-300"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.09 }}
+      >
+        <h2 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-blue-300 to-cyan-300 bg-clip-text text-transparent">🎥 Seu Vídeo</h2>
+        <div className="space-y-4">
+          <div>
+            <label className="text-xs uppercase tracking-widest text-muted-foreground mb-2 block">URL do Vídeo</label>
+            <p className="text-xs text-white/50 mb-3">Cole a URL de um vídeo do YouTube, Vimeo ou arquivo MP4</p>
+            <Input
+              type="url"
+              value={videoUrl}
+              onChange={(e) => setVideoUrl(e.target.value)}
+              placeholder="https://youtube.com/watch?v=... ou https://vimeo.com/..."
+              className="rounded-lg bg-white/5 border border-white/20 text-white placeholder-white/40 focus:border-white/50 focus:bg-white/10"
+              disabled={isSavingVideo}
+            />
+            <div className="mt-2 text-xs text-white/40 space-y-1">
+              <p>✓ YouTube: youtube.com/watch?v=ID ou youtu.be/ID</p>
+              <p>✓ Vimeo: vimeo.com/ID</p>
+              <p>✓ Local: link direto para arquivo .mp4</p>
+            </div>
+          </div>
+
+          {/* Preview do vídeo */}
+          {videoUrl && (
+            <motion.div
+              className="mt-4 p-4 rounded-lg bg-white/5 border border-white/10"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              <p className="text-xs uppercase tracking-widest text-muted-foreground mb-2">Preview</p>
+              <div className="aspect-video w-full bg-black rounded-lg overflow-hidden border border-white/10">
+                <iframe
+                  src={
+                    videoUrl.includes("youtube.com") || videoUrl.includes("youtu.be")
+                      ? `https://www.youtube.com/embed/${videoUrl.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|embed\/)([a-zA-Z0-9_-]{11})/)?.[1]}`
+                      : videoUrl.includes("vimeo.com")
+                      ? `https://player.vimeo.com/video/${videoUrl.match(/vimeo\.com\/(\d+)/)?.[1]}`
+                      : videoUrl
+                  }
+                  className="w-full h-full"
+                  allow="autoplay"
+                  frameBorder="0"
+                  onError={() => {
+                    // Erro no preview não é crítico
+                    console.log("Erro ao renderizar preview do vídeo");
+                  }}
+                />
+              </div>
+            </motion.div>
+          )}
+
+          <div className="flex justify-end">
+            <Button
+              onClick={handleSaveVideo}
+              disabled={isSavingVideo || videoUrl === ((profile as any)?.videoUrl || "")}
+              className="rounded-lg px-6 uppercase font-bold bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600"
+            >
+              {isSavingVideo ? "Salvando..." : videoUrl ? "Atualizar Vídeo" : "Remover Vídeo"}
             </Button>
           </div>
         </div>
