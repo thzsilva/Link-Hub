@@ -89,6 +89,22 @@ async function updateProfileVideo(data: { videoUrl: string | null }) {
   }
 }
 
+async function updateProfileContact(data: {
+  whatsappNumber?: string | null;
+  email?: string | null;
+  instagramHandle?: string | null;
+}) {
+  try {
+    return await customFetch("/api/me", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+  } catch (error: any) {
+    throw new Error(error.message || "Falha ao atualizar contato");
+  }
+}
+
 export default function DashboardCustomization() {
   const { data: profile } = useGetMe();
   const queryClient = useQueryClient();
@@ -124,6 +140,10 @@ export default function DashboardCustomization() {
   const [isSavingBio, setIsSavingBio] = useState(false);
   const [videoUrl, setVideoUrl] = useState((profile as any)?.videoUrl || "");
   const [isSavingVideo, setIsSavingVideo] = useState(false);
+  const [whatsappNumber, setWhatsappNumber] = useState((profile as any)?.whatsappNumber || "");
+  const [email, setEmail] = useState((profile as any)?.email || "");
+  const [instagramHandle, setInstagramHandle] = useState((profile as any)?.instagramHandle || "");
+  const [isSavingContact, setIsSavingContact] = useState(false);
 
   // Crop modal states
   const [showAvatarCropModal, setShowAvatarCropModal] = useState(false);
@@ -211,6 +231,26 @@ export default function DashboardCustomization() {
       setVideoUrl((profile as any)?.videoUrl || "");
     } finally {
       setIsSavingVideo(false);
+    }
+  };
+
+  const handleSaveContact = async () => {
+    setIsSavingContact(true);
+    try {
+      await updateProfileContact({
+        whatsappNumber: whatsappNumber.trim() || null,
+        email: email.trim() || null,
+        instagramHandle: instagramHandle.trim() || null,
+      });
+      queryClient.invalidateQueries({ queryKey: ["useGetMe"] });
+      toast({ title: "✓ Informações de contato atualizadas!" });
+    } catch (error: any) {
+      toast({ title: error.message || "Erro ao atualizar", variant: "destructive" });
+      setWhatsappNumber((profile as any)?.whatsappNumber || "");
+      setEmail((profile as any)?.email || "");
+      setInstagramHandle((profile as any)?.instagramHandle || "");
+    } finally {
+      setIsSavingContact(false);
     }
   };
 
@@ -493,6 +533,76 @@ export default function DashboardCustomization() {
               {isSavingVideo ? "Salvando..." : videoUrl ? "Atualizar Vídeo" : "Remover Vídeo"}
             </Button>
           </div>
+        </div>
+      </motion.div>
+
+      {/* Informações de Contato */}
+      <motion.div
+        className="bg-white/5 border border-white/10 rounded-xl p-6 sm:p-8 space-y-4 backdrop-blur-sm hover:bg-white/[0.07] transition-all duration-300"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.11 }}
+      >
+        <h2 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-green-300 to-emerald-300 bg-clip-text text-transparent">📞 Informações de Contato</h2>
+        <p className="text-xs text-white/60">Deixe seus contatos para que visitantes possam chegar até você</p>
+
+        <div className="grid md:grid-cols-3 gap-4">
+          {/* WhatsApp */}
+          <div className="space-y-2">
+            <label className="text-xs uppercase tracking-widest text-muted-foreground block">WhatsApp</label>
+            <Input
+              type="tel"
+              value={whatsappNumber}
+              onChange={(e) => setWhatsappNumber(e.target.value)}
+              placeholder="55 11 99999-9999"
+              className="rounded-lg bg-white/5 border border-white/20 text-white placeholder-white/40 focus:border-white/50 focus:bg-white/10"
+              disabled={isSavingContact}
+            />
+            <p className="text-xs text-white/40">Com código do país (55 para Brasil)</p>
+          </div>
+
+          {/* Email */}
+          <div className="space-y-2">
+            <label className="text-xs uppercase tracking-widest text-muted-foreground block">Email</label>
+            <Input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="seu@email.com"
+              className="rounded-lg bg-white/5 border border-white/20 text-white placeholder-white/40 focus:border-white/50 focus:bg-white/10"
+              disabled={isSavingContact}
+            />
+            <p className="text-xs text-white/40">Para mensagens diretas</p>
+          </div>
+
+          {/* Instagram */}
+          <div className="space-y-2">
+            <label className="text-xs uppercase tracking-widest text-muted-foreground block">Instagram</label>
+            <Input
+              type="text"
+              value={instagramHandle}
+              onChange={(e) => setInstagramHandle(e.target.value)}
+              placeholder="seu_usuario"
+              className="rounded-lg bg-white/5 border border-white/20 text-white placeholder-white/40 focus:border-white/50 focus:bg-white/10"
+              disabled={isSavingContact}
+            />
+            <p className="text-xs text-white/40">Sem @ (apenas usuário)</p>
+          </div>
+        </div>
+
+        <div className="flex justify-end">
+          <Button
+            onClick={handleSaveContact}
+            disabled={
+              isSavingContact ||
+              (whatsappNumber === ((profile as any)?.whatsappNumber || "") &&
+                email === ((profile as any)?.email || "") &&
+                instagramHandle === ((profile as any)?.instagramHandle || ""))
+            }
+            className="rounded-lg px-6 uppercase font-bold bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600"
+          >
+            {isSavingContact ? "Salvando..." : "Salvar Contatos"}
+          </Button>
         </div>
       </motion.div>
 
