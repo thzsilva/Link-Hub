@@ -74,6 +74,11 @@ export function ContactSection({
     try {
       if (onSubmit) {
         await onSubmit(formData);
+      } else {
+        // Fallback: Copy to clipboard if no submit handler
+        const message = `Nome: ${formData.name}\nEmail: ${formData.email}\nMensagem: ${formData.message}`;
+        await navigator.clipboard.writeText(message);
+        console.log("Mensagem copiada para clipboard:", message);
       }
 
       setStatus("success");
