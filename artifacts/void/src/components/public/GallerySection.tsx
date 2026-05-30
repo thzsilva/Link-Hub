@@ -58,10 +58,10 @@ export function GallerySection({
     <motion.section
       className="mb-16 sm:mb-20"
       id="gallery"
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.5 }}
+      viewport={{ once: true, margin: "-100px" }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
     >
       <div className="mb-6 sm:mb-8 flex items-end justify-between">
         <div>
@@ -83,16 +83,31 @@ export function GallerySection({
       </div>
 
       {/* Grid de fotos */}
-      <motion.div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6 sm:mb-8">
+      <motion.div
+        className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6 sm:mb-8"
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-50px" }}
+        variants={{
+          hidden: { opacity: 0 },
+          visible: {
+            opacity: 1,
+            transition: {
+              staggerChildren: 0.08,
+              delayChildren: 0.1,
+            },
+          },
+        }}
+      >
         {displayPhotos.map((photo, index) => (
           <motion.button
             key={photo.id}
             className="group relative aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-white/30 transition-all cursor-pointer"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.3, delay: index * 0.05 }}
-            whileHover={{ scale: 1.02 }}
+            variants={{
+              hidden: { opacity: 0, y: 20, scale: 0.9 },
+              visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.4, ease: "easeOut" } },
+            }}
+            whileHover={{ scale: 1.05, transition: { duration: 0.2 } }}
             onClick={() => handlePhotoClick(index)}
           >
             <img

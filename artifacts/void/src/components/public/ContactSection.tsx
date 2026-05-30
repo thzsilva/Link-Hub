@@ -122,10 +122,10 @@ export function ContactSection({
     <motion.section
       className="mb-16 sm:mb-20"
       id="contact"
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.5 }}
+      viewport={{ once: true, margin: "-100px" }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
     >
       <div className="mb-6 sm:mb-8">
         <h2
@@ -148,12 +148,21 @@ export function ContactSection({
       <div className="mb-12">
         <motion.div
           className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.3, delay: 0.1 }}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-50px" }}
+          variants={{
+            hidden: { opacity: 0 },
+            visible: {
+              opacity: 1,
+              transition: {
+                staggerChildren: 0.1,
+                delayChildren: 0.05,
+              },
+            },
+          }}
         >
-          {contactButtons.map((btn, idx) => {
+          {contactButtons.map((btn) => {
             const Icon = btn.icon;
             return (
               <motion.a
@@ -166,15 +175,16 @@ export function ContactSection({
                   borderColor: theme.secondary,
                   backgroundColor: `${theme.secondary}08`,
                 }}
+                variants={{
+                  hidden: { opacity: 0, y: 20, scale: 0.9 },
+                  visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.4, ease: "easeOut" } },
+                }}
                 whileHover={{
-                  scale: 1.05,
+                  scale: 1.08,
                   backgroundColor: `${theme.secondary}15`,
+                  transition: { duration: 0.2 },
                 }}
                 whileTap={{ scale: 0.95 }}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.3, delay: 0.1 + idx * 0.05 }}
               >
                 <Icon size={24} style={{ color: theme.secondary }} />
                 <span>{btn.label}</span>

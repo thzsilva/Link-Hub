@@ -24,10 +24,10 @@ export function VideoSection({ videoUrl, theme }: VideoSectionProps) {
     <motion.section
       id="video-section"
       className="mb-16 sm:mb-20"
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.5 }}
+      viewport={{ once: true, margin: "-100px" }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
     >
       <div className="mb-6 sm:mb-8">
         <h2
