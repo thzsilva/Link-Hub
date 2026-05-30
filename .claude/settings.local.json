@@ -148,7 +148,8 @@
       "Bash(grep -E \"\\\\.\\(ts|tsx\\)$\")",
       "Bash(xargs grep -l \"UpdateProfileBody\")",
       "Bash(xargs grep -l \"export.*UpdateProfileBody\")",
-      "Bash(pkill -f \"vite\")"
+      "Bash(pkill -f \"vite\")",
+      "WebFetch(domain:presskitpro.app)"
     ]
   }
 }

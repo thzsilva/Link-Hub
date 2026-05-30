@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { useGetPublicProfile, useTrackEvent, customFetch } from "@workspace/api-client-react";
 import { Link } from "wouter";
@@ -7,6 +7,10 @@ import { CalendarDays, MapPin, ExternalLink, ChevronRight } from "lucide-react";
 import { getPlatform, toSpotifyEmbedUrl } from "@/lib/platforms";
 import { getTheme, getCSSVariables } from "@/lib/themes";
 import { LinkButton } from "@/components/LinkButton";
+import { HeroSection } from "@/components/public/HeroSection";
+import { VideoSection } from "@/components/public/VideoSection";
+import { GallerySection } from "@/components/public/GallerySection";
+import { ContactSection } from "@/components/public/ContactSection";
 
 // ---------------------------------------------------------------------------
 // Skeleton
@@ -112,73 +116,34 @@ export default function PublicProfileNew() {
       </div>
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        {/* Perfil com efeito premium */}
-        <motion.div
-          className="flex flex-col items-center text-center mb-16 relative z-20 -mt-24"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-        >
-          {/* Avatar com efeito de brilho */}
-          {profile.avatarUrl && (
-            <motion.div
-              className="relative mb-8"
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.1, type: "spring" }}
-            >
-              <div
-                className="absolute inset-0 rounded-full blur-2xl opacity-75 animate-pulse"
-                style={{ backgroundColor: customTheme.primary }}
-              />
-              <motion.img
-                src={profile.avatarUrl}
-                alt={profile.displayName || profile.username}
-                className="relative w-40 h-40 rounded-full object-cover border-4 shadow-2xl"
-                style={{ borderColor: customTheme.primary }}
-                crossOrigin="anonymous"
-                loading="lazy"
-                whileHover={{ scale: 1.05 }}
-                onError={(e) => {
-                  console.error("Erro ao carregar avatar:", profile.avatarUrl);
-                  const img = e.target as HTMLImageElement;
-                  if (!img.src.includes("?t=") && img.src.includes("supabase")) {
-                    img.src = `${profile.avatarUrl}?t=${Date.now()}`;
-                  } else if (img.src.includes("supabase") && !img.src.includes("proxy-image") && profile.avatarUrl) {
-                    img.src = `/api/proxy-image?url=${encodeURIComponent(profile.avatarUrl)}`;
-                  } else {
-                    img.style.display = "none";
-                  }
-                }}
-              />
-            </motion.div>
-          )}
+        {/* Hero Section */}
+        <HeroSection
+          avatarUrl={profile.avatarUrl}
+          displayName={profile.displayName || profile.username}
+          username={profile.username}
+          bio={profile.bio}
+          headerImageUrl={profile.headerImageUrl}
+          theme={customTheme}
+          onWatchVideo={() => {
+            const videoSection = document.getElementById('video-section');
+            if (videoSection) {
+              videoSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+          }}
+          hasVideo={!!(profile as any).videoUrl}
+        />
 
-          {/* Nome e bio com tipografia premium */}
-          <motion.h1
-            className="text-5xl sm:text-6xl font-black tracking-tighter uppercase mb-3 leading-tight max-w-2xl"
-            style={{ color: customTheme.primary }}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.2 }}
-          >
-            {profile.displayName || profile.username}
-          </motion.h1>
-
-          <motion.p
-            className="text-lg sm:text-xl text-white/70 font-light max-w-xl leading-relaxed px-4"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.3 }}
-          >
-            {profile.bio}
-          </motion.p>
-        </motion.div>
+        {/* Video Section */}
+        <VideoSection
+          videoUrl={(profile as any).videoUrl}
+          theme={customTheme}
+        />
 
         {/* Links regulares em grid */}
         {regularLinks.length > 0 && (
           <motion.div
             className="mb-16"
+            id="links"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
@@ -364,93 +329,40 @@ export default function PublicProfileNew() {
           </motion.div>
         )}
 
-        {/* Galeria de Fotos */}
-        {photos && photos.length > 0 && (
-          <motion.div
-            className="mb-20"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            viewport={{ once: true }}
-          >
-            <div className="mb-8">
-              <h2
-                className="text-3xl sm:text-4xl font-black tracking-tighter uppercase relative inline-block"
-                style={{ color: customTheme.primary }}
-              >
-                Galeria
-                <motion.div
-                  className="h-1 absolute -bottom-3 left-0"
-                  style={{ backgroundColor: customTheme.accent }}
-                  initial={{ width: 0 }}
-                  whileInView={{ width: "100%" }}
-                  transition={{ duration: 0.6, delay: 0.2 }}
-                  viewport={{ once: true }}
-                />
-              </h2>
-            </div>
+        {/* Gallery Section */}
+        <GallerySection
+          photos={photos || []}
+          username={username}
+          theme={customTheme}
+          onSeeAll={() => window.location.href = `/?user=${username}&photos=true`}
+        />
 
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 pt-2">
-              {photos.slice(0, 6).map((photo, index) => (
-                <motion.div
-                  key={photo.id}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.4, delay: index * 0.05 }}
-                  viewport={{ once: true }}
-                  whileHover={{ scale: 1.05 }}
-                  className="aspect-square relative overflow-hidden group rounded-xl border border-white/5 hover:border-white/20 transition-all duration-300"
-                  style={{
-                    backgroundColor: `${customTheme.secondary}08`,
-                  }}
-                >
-                  <img
-                    src={photo.url}
-                    alt={photo.caption || "Foto da galeria"}
-                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                    loading="lazy"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).parentElement!.style.display = "none";
-                    }}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  {photo.caption && (
-                    <div className="absolute inset-x-0 bottom-0 p-3 text-xs font-light opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-left">
-                      {photo.caption}
-                    </div>
-                  )}
-                </motion.div>
-              ))}
-            </div>
-
-            {photos.length > 6 && (
-              <motion.div
-                className="mt-8"
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                transition={{ duration: 0.4, delay: 0.3 }}
-                viewport={{ once: true }}
-              >
-                <Link
-                  href={`/?user=${username}&photos=true`}
-                  className="w-full flex items-center justify-center gap-3 py-4 text-sm uppercase tracking-widest font-bold rounded-lg border border-white/10 hover:border-white/30 transition-all duration-300 group"
-                  style={{
-                    backgroundColor: `${customTheme.accent}10`,
-                  }}
-                >
-                  <span>Ver todas as {photos.length} fotos</span>
-                  <motion.div
-                    className="flex items-center"
-                    initial={{ x: 0 }}
-                    whileHover={{ x: 4 }}
-                  >
-                    <ChevronRight size={16} />
-                  </motion.div>
-                </Link>
-              </motion.div>
-            )}
-          </motion.div>
-        )}
+        {/* Contact Section */}
+        <ContactSection
+          contact={{
+            whatsapp: (profile as any).whatsappNumber,
+            email: (profile as any).email,
+            instagram: (profile as any).instagramHandle,
+          }}
+          theme={customTheme}
+          displayName={profile.displayName || profile.username}
+          onSubmit={async (data) => {
+            try {
+              await customFetch(`/api/contact-messages`, {
+                method: 'POST',
+                body: JSON.stringify({
+                  profileId: profile.id,
+                  senderName: data.name,
+                  senderEmail: data.email,
+                  message: data.message,
+                }),
+              });
+            } catch (error) {
+              console.error('Erro ao enviar mensagem:', error);
+              throw error;
+            }
+          }}
+        />
 
         {/* Links Sociais */}
         {socialLinks && socialLinks.length > 0 && (
