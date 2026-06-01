@@ -300,7 +300,7 @@ export default function PublicProfileNew() {
         {/* ━━━ VIDEO ━━━ */}
         {(profile as any).videoUrl && (
           <Section>
-            <SectionTitle>Featured</SectionTitle>
+            <SectionTitle>Destaque</SectionTitle>
             <VideoSection videoUrl={(profile as any).videoUrl} theme={customTheme} />
           </Section>
         )}
@@ -308,7 +308,7 @@ export default function PublicProfileNew() {
         {/* ━━━ GALLERY — columns follow layoutColumns ━━━ */}
         {photos && photos.length > 0 && (
           <Section id="gallery">
-            <SectionTitle>Gallery</SectionTitle>
+            <SectionTitle>Galeria</SectionTitle>
             <GallerySection
               photos={(photos as any) || []}
               username={username}
@@ -322,7 +322,7 @@ export default function PublicProfileNew() {
         {/* ━━━ EVENTS — columns follow layoutColumns ━━━ */}
         {events && events.length > 0 && (
           <Section id="events">
-            <SectionTitle>Upcoming Events</SectionTitle>
+            <SectionTitle>Próximos Eventos</SectionTitle>
             <div
               className="grid gap-4 sm:gap-5"
               style={{ gridTemplateColumns: gridCols(events.length) }}
@@ -531,7 +531,7 @@ export default function PublicProfileNew() {
               throw new Error(
                 error instanceof Error
                   ? error.message
-                  : "Failed to send message. Please check your connection and try again."
+                  : "Falha ao enviar mensagem. Verifique sua conexão e tente novamente."
               );
             }
           }}
@@ -548,7 +548,7 @@ export default function PublicProfileNew() {
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-10 text-center space-y-6">
             <div>
               <p className="text-xs uppercase tracking-[0.2em] text-white/50 mb-4">
-                Create your professional hub
+                Crie seu hub profissional
               </p>
               <motion.a
                 href="/"
@@ -556,13 +556,13 @@ export default function PublicProfileNew() {
                 whileHover={{ y: -2 }}
                 whileTap={{ scale: 0.98 }}
               >
-                Start Now
+                Começar Agora
               </motion.a>
             </div>
             <nav className="flex items-center justify-center gap-6 text-xs text-white/40 pt-4 border-t border-white/5">
-              <a href="/" className="hover:text-white/70 transition-colors pt-4">Home</a>
-              <a href="/" className="hover:text-white/70 transition-colors pt-4">Privacy</a>
-              <a href="/" className="hover:text-white/70 transition-colors pt-4">Terms</a>
+              <a href="/" className="hover:text-white/70 transition-colors pt-4">Início</a>
+              <a href="/" className="hover:text-white/70 transition-colors pt-4">Privacidade</a>
+              <a href="/" className="hover:text-white/70 transition-colors pt-4">Termos</a>
             </nav>
             <p className="text-xs text-white/30 font-light">
               © {new Date().getFullYear()} hubvoid

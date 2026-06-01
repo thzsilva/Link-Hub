@@ -58,12 +58,12 @@ export function ContactSection({
     e.preventDefault();
 
     if (!formData.name.trim() || !formData.email.trim() || !formData.message.trim()) {
-      setError("Please fill in all fields");
+      setError("Preencha todos os campos");
       return;
     }
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      setError("Please enter a valid email address");
+      setError("Insira um endereço de email válido");
       return;
     }
 
@@ -75,7 +75,7 @@ export function ContactSection({
       if (onSubmit) {
         await onSubmit(formData);
       } else {
-        const message = `Name: ${formData.name}\nEmail: ${formData.email}\nMessage: ${formData.message}`;
+        const message = `Nome: ${formData.name}\nEmail: ${formData.email}\nMensagem: ${formData.message}`;
         await navigator.clipboard.writeText(message);
       }
 
@@ -85,7 +85,7 @@ export function ContactSection({
     } catch (err) {
       console.error("Contact form error:", err);
       setStatus("error");
-      const errorMessage = err instanceof Error ? err.message : "Unable to send message. Please try again.";
+      const errorMessage = err instanceof Error ? err.message : "Não foi possível enviar a mensagem. Tente novamente.";
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -98,7 +98,7 @@ export function ContactSection({
       label: "WhatsApp",
       href: getWhatsAppLink(
         contact.whatsapp,
-        `Hello ${displayName}, I'd like to get in touch!`
+        `Olá ${displayName}, gostaria de entrar em contato!`
       ),
     },
     contact.email && {
@@ -119,21 +119,21 @@ export function ContactSection({
 
   return (
     <motion.section
-      className="w-full py-16 sm:py-24 border-b border-white/5"
+      className="w-full py-16 sm:py-20 lg:py-24 border-b border-white/5"
       id="contact"
       initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-100px" }}
       transition={{ duration: 0.5 }}
     >
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 className="text-3xl sm:text-4xl font-bold uppercase tracking-tighter mb-12">
-          Get in Touch
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-10">
+        <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold uppercase tracking-tight mb-8 sm:mb-10 lg:mb-12">
+          Contato
         </h2>
 
         {/* Contact buttons */}
         <motion.div
-          className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-16"
+          className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5 mb-12 sm:mb-16"
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-50px" }}
@@ -141,9 +141,7 @@ export function ContactSection({
             hidden: { opacity: 0 },
             visible: {
               opacity: 1,
-              transition: {
-                staggerChildren: 0.08,
-              },
+              transition: { staggerChildren: 0.08 },
             },
           }}
         >
@@ -155,7 +153,7 @@ export function ContactSection({
                 href={btn.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-8 border border-white/20 rounded-xl hover:border-white/50 hover:bg-white/8 transition-all duration-300 flex flex-col items-center gap-4 text-center group backdrop-blur-sm"
+                className="p-6 sm:p-8 border border-white/15 rounded-xl hover:border-white/40 hover:bg-white/5 transition-all duration-300 flex flex-col items-center gap-4 text-center group"
                 variants={{
                   hidden: { opacity: 0, y: 20 },
                   visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
@@ -163,7 +161,7 @@ export function ContactSection({
                 whileHover={{ y: -4, transition: { duration: 0.2 } }}
               >
                 <div className="p-3 rounded-lg bg-white/10 group-hover:bg-white/15 transition-all duration-300">
-                  <Icon size={32} className="text-white/80 group-hover:text-white transition-colors" />
+                  <Icon size={28} className="text-white/80 group-hover:text-white transition-colors" />
                 </div>
                 <h3 className="font-bold uppercase tracking-wider text-sm text-white group-hover:text-white/90">
                   {btn.label}
@@ -176,7 +174,7 @@ export function ContactSection({
         {/* Contact form */}
         <motion.form
           onSubmit={handleSubmit}
-          className="max-w-2xl space-y-8 p-10 sm:p-12 border border-white/15 rounded-2xl backdrop-blur-sm"
+          className="max-w-2xl space-y-7 p-8 sm:p-10 border border-white/15 rounded-2xl"
           style={{ backgroundColor: "rgba(255, 255, 255, 0.03)" }}
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -184,52 +182,52 @@ export function ContactSection({
           transition={{ duration: 0.5, delay: 0.1 }}
         >
           <div>
-            <h3 className="text-xl sm:text-2xl uppercase tracking-wider font-bold text-white">
-              Send a Message
+            <h3 className="text-lg sm:text-xl uppercase tracking-wider font-bold text-white">
+              Enviar Mensagem
             </h3>
-            <p className="text-white/50 text-sm mt-2">I'll get back to you as soon as possible</p>
+            <p className="text-white/50 text-sm mt-2">Retornarei assim que possível</p>
           </div>
 
-          {/* Name input */}
+          {/* Name */}
           <div>
             <label className="block text-xs uppercase tracking-[0.15em] text-white/70 mb-3 font-medium">
-              Full Name
+              Nome Completo
             </label>
             <input
               type="text"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-5 py-3.5 bg-white/5 border border-white/20 rounded-xl text-white placeholder-white/40 focus:border-white/50 focus:bg-white/10 transition-all duration-200 outline-none backdrop-blur-sm"
-              placeholder="Your name"
+              className="w-full px-5 py-3.5 bg-white/5 border border-white/20 rounded-xl text-white placeholder-white/40 focus:border-white/50 focus:bg-white/10 transition-all duration-200 outline-none"
+              placeholder="Seu nome"
               disabled={loading}
             />
           </div>
 
-          {/* Email input */}
+          {/* Email */}
           <div>
             <label className="block text-xs uppercase tracking-[0.15em] text-white/70 mb-3 font-medium">
-              Email Address
+              Endereço de Email
             </label>
             <input
               type="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="w-full px-5 py-3.5 bg-white/5 border border-white/20 rounded-xl text-white placeholder-white/40 focus:border-white/50 focus:bg-white/10 transition-all duration-200 outline-none backdrop-blur-sm"
-              placeholder="your@email.com"
+              className="w-full px-5 py-3.5 bg-white/5 border border-white/20 rounded-xl text-white placeholder-white/40 focus:border-white/50 focus:bg-white/10 transition-all duration-200 outline-none"
+              placeholder="seu@email.com"
               disabled={loading}
             />
           </div>
 
-          {/* Message input */}
+          {/* Message */}
           <div>
             <label className="block text-xs uppercase tracking-[0.15em] text-white/70 mb-3 font-medium">
-              Message
+              Mensagem
             </label>
             <textarea
               value={formData.message}
               onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-              className="w-full px-5 py-3.5 bg-white/5 border border-white/20 rounded-xl text-white placeholder-white/40 focus:border-white/50 focus:bg-white/10 transition-all duration-200 outline-none resize-none h-32 backdrop-blur-sm"
-              placeholder="Your message..."
+              className="w-full px-5 py-3.5 bg-white/5 border border-white/20 rounded-xl text-white placeholder-white/40 focus:border-white/50 focus:bg-white/10 transition-all duration-200 outline-none resize-none h-32"
+              placeholder="Sua mensagem..."
               disabled={loading}
               maxLength={1000}
             />
@@ -238,7 +236,7 @@ export function ContactSection({
             </div>
           </div>
 
-          {/* Error message */}
+          {/* Error */}
           {(error || status === "error") && (
             <motion.div
               className="flex items-center gap-3 p-4 rounded-xl bg-red-500/15 border border-red-500/40 text-red-300 text-sm"
@@ -246,11 +244,11 @@ export function ContactSection({
               animate={{ opacity: 1, y: 0 }}
             >
               <AlertCircle size={18} className="flex-shrink-0" />
-              <span>{error || "Error sending message"}</span>
+              <span>{error || "Erro ao enviar mensagem"}</span>
             </motion.div>
           )}
 
-          {/* Success message */}
+          {/* Success */}
           {status === "success" && (
             <motion.div
               className="flex items-center gap-3 p-4 rounded-xl bg-green-500/15 border border-green-500/40 text-green-300 text-sm"
@@ -258,11 +256,11 @@ export function ContactSection({
               animate={{ opacity: 1, y: 0 }}
             >
               <Check size={18} className="flex-shrink-0" />
-              <span>Message sent successfully! I'll get back to you soon.</span>
+              <span>Mensagem enviada com sucesso! Retornarei em breve.</span>
             </motion.div>
           )}
 
-          {/* Submit button */}
+          {/* Submit */}
           <motion.button
             type="submit"
             disabled={loading}
@@ -277,15 +275,15 @@ export function ContactSection({
             {loading ? (
               <>
                 <Loader2 size={18} className="animate-spin" />
-                <span>Sending...</span>
+                <span>Enviando...</span>
               </>
             ) : status === "success" ? (
               <>
                 <Check size={18} />
-                <span>Message Sent!</span>
+                <span>Mensagem Enviada!</span>
               </>
             ) : (
-              "Send Message"
+              "Enviar Mensagem"
             )}
           </motion.button>
         </motion.form>

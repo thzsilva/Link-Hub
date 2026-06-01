@@ -36,7 +36,7 @@ export function BioSection({
         >
           <div>
             <h2 className="text-xs sm:text-sm uppercase tracking-[0.2em] font-semibold text-white/60 mb-4">
-              About
+              Sobre
             </h2>
             <p className="text-lg sm:text-xl lg:text-2xl text-white/90 leading-relaxed font-light max-w-3xl">
               {bio}
