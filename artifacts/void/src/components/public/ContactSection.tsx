@@ -83,8 +83,10 @@ export function ContactSection({
       setFormData({ name: "", email: "", message: "" });
       setTimeout(() => setStatus("idle"), 3000);
     } catch (err) {
+      console.error("Contact form error:", err);
       setStatus("error");
-      setError(err instanceof Error ? err.message : "Error sending message");
+      const errorMessage = err instanceof Error ? err.message : "Unable to send message. Please try again.";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

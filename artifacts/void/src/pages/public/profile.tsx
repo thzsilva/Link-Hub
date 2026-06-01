@@ -152,23 +152,10 @@ export default function PublicProfileNew() {
           subtitle={profile.bio ? profile.bio.substring(0, 100) + "..." : undefined}
         />
 
-        {/* Bio & Highlights Section */}
+        {/* Bio Section */}
         <BioSection
           displayName={profile.displayName || profile.username || "User"}
           bio={profile.bio ?? undefined}
-          highlights={
-            events && events.length > 0
-              ? (
-                  [
-                    `${events.length} upcoming events`,
-                    `${photos?.length || 0} featured photos`,
-                    regularLinks.length > 0 ? `${regularLinks.length} ways to connect` : undefined,
-                  ]
-                    .filter((x): x is string => Boolean(x))
-                    .slice(0, 3)
-                )
-              : undefined
-          }
           theme={customTheme}
         />
 
@@ -459,8 +446,12 @@ export default function PublicProfileNew() {
                 }),
               });
             } catch (error) {
-              console.error('Erro ao enviar mensagem:', error);
-              throw error;
+              console.error('Error sending message:', error);
+              throw new Error(
+                error instanceof Error
+                  ? error.message
+                  : 'Failed to send message. Please check your connection and try again.'
+              );
             }
           }}
         />
