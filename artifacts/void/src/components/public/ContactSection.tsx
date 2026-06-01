@@ -133,7 +133,7 @@ export function ContactSection({
 
         {/* Contact buttons */}
         <motion.div
-          className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-16"
+          className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-16"
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-50px" }}
@@ -142,7 +142,7 @@ export function ContactSection({
             visible: {
               opacity: 1,
               transition: {
-                staggerChildren: 0.1,
+                staggerChildren: 0.08,
               },
             },
           }}
@@ -155,15 +155,17 @@ export function ContactSection({
                 href={btn.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-6 sm:p-8 border border-white/10 rounded-lg hover:border-white/30 transition-all duration-300 flex flex-col items-center gap-3 text-center group"
+                className="p-8 border border-white/20 rounded-xl hover:border-white/50 hover:bg-white/8 transition-all duration-300 flex flex-col items-center gap-4 text-center group backdrop-blur-sm"
                 variants={{
                   hidden: { opacity: 0, y: 20 },
                   visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
                 }}
-                whileHover={{ backgroundColor: "rgba(255,255,255,0.02)" }}
+                whileHover={{ y: -4, transition: { duration: 0.2 } }}
               >
-                <Icon size={28} className="text-white/70 group-hover:text-white transition-colors" />
-                <h3 className="font-semibold uppercase tracking-widest text-sm text-white">
+                <div className="p-3 rounded-lg bg-white/10 group-hover:bg-white/15 transition-all duration-300">
+                  <Icon size={32} className="text-white/80 group-hover:text-white transition-colors" />
+                </div>
+                <h3 className="font-bold uppercase tracking-wider text-sm text-white group-hover:text-white/90">
                   {btn.label}
                 </h3>
               </motion.a>
@@ -174,26 +176,30 @@ export function ContactSection({
         {/* Contact form */}
         <motion.form
           onSubmit={handleSubmit}
-          className="max-w-2xl space-y-6 p-8 sm:p-10 border border-white/10 rounded-lg"
+          className="max-w-2xl space-y-8 p-10 sm:p-12 border border-white/15 rounded-2xl backdrop-blur-sm"
+          style={{ backgroundColor: "rgba(255, 255, 255, 0.03)" }}
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5, delay: 0.1 }}
         >
-          <h3 className="text-lg uppercase tracking-widest font-semibold text-white/90">
-            Send a Message
-          </h3>
+          <div>
+            <h3 className="text-xl sm:text-2xl uppercase tracking-wider font-bold text-white">
+              Send a Message
+            </h3>
+            <p className="text-white/50 text-sm mt-2">I'll get back to you as soon as possible</p>
+          </div>
 
           {/* Name input */}
           <div>
-            <label className="block text-xs uppercase tracking-widest text-white/60 mb-2">
-              Name
+            <label className="block text-xs uppercase tracking-[0.15em] text-white/70 mb-3 font-medium">
+              Full Name
             </label>
             <input
               type="text"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/30 focus:border-white/30 focus:bg-white/10 transition-all outline-none"
+              className="w-full px-5 py-3.5 bg-white/5 border border-white/20 rounded-xl text-white placeholder-white/40 focus:border-white/50 focus:bg-white/10 transition-all duration-200 outline-none backdrop-blur-sm"
               placeholder="Your name"
               disabled={loading}
             />
@@ -201,14 +207,14 @@ export function ContactSection({
 
           {/* Email input */}
           <div>
-            <label className="block text-xs uppercase tracking-widest text-white/60 mb-2">
-              Email
+            <label className="block text-xs uppercase tracking-[0.15em] text-white/70 mb-3 font-medium">
+              Email Address
             </label>
             <input
               type="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/30 focus:border-white/30 focus:bg-white/10 transition-all outline-none"
+              className="w-full px-5 py-3.5 bg-white/5 border border-white/20 rounded-xl text-white placeholder-white/40 focus:border-white/50 focus:bg-white/10 transition-all duration-200 outline-none backdrop-blur-sm"
               placeholder="your@email.com"
               disabled={loading}
             />
@@ -216,18 +222,18 @@ export function ContactSection({
 
           {/* Message input */}
           <div>
-            <label className="block text-xs uppercase tracking-widest text-white/60 mb-2">
+            <label className="block text-xs uppercase tracking-[0.15em] text-white/70 mb-3 font-medium">
               Message
             </label>
             <textarea
               value={formData.message}
               onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/30 focus:border-white/30 focus:bg-white/10 transition-all outline-none resize-none h-24"
+              className="w-full px-5 py-3.5 bg-white/5 border border-white/20 rounded-xl text-white placeholder-white/40 focus:border-white/50 focus:bg-white/10 transition-all duration-200 outline-none resize-none h-32 backdrop-blur-sm"
               placeholder="Your message..."
               disabled={loading}
               maxLength={1000}
             />
-            <div className="text-xs text-white/40 mt-1 text-right">
+            <div className="text-xs text-white/50 mt-2 text-right">
               {formData.message.length}/1000
             </div>
           </div>
@@ -235,11 +241,11 @@ export function ContactSection({
           {/* Error message */}
           {(error || status === "error") && (
             <motion.div
-              className="flex items-center gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-300 text-sm"
+              className="flex items-center gap-3 p-4 rounded-xl bg-red-500/15 border border-red-500/40 text-red-300 text-sm"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
             >
-              <AlertCircle size={16} />
+              <AlertCircle size={18} className="flex-shrink-0" />
               <span>{error || "Error sending message"}</span>
             </motion.div>
           )}
@@ -247,12 +253,12 @@ export function ContactSection({
           {/* Success message */}
           {status === "success" && (
             <motion.div
-              className="flex items-center gap-2 p-3 rounded-lg bg-green-500/10 border border-green-500/30 text-green-300 text-sm"
+              className="flex items-center gap-3 p-4 rounded-xl bg-green-500/15 border border-green-500/40 text-green-300 text-sm"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
             >
-              <Check size={16} />
-              <span>Message sent successfully!</span>
+              <Check size={18} className="flex-shrink-0" />
+              <span>Message sent successfully! I'll get back to you soon.</span>
             </motion.div>
           )}
 
@@ -260,22 +266,23 @@ export function ContactSection({
           <motion.button
             type="submit"
             disabled={loading}
-            className="w-full py-3 rounded-lg font-semibold uppercase tracking-widest text-sm transition-all flex items-center justify-center gap-2 text-black"
+            className="w-full py-4 rounded-xl font-bold uppercase tracking-wider text-sm transition-all flex items-center justify-center gap-2 text-white"
             style={{
-              backgroundColor: loading ? theme.primary + "80" : theme.primary,
+              backgroundColor: theme.primary,
+              opacity: loading ? 0.7 : 1,
             }}
-            whileHover={{ opacity: loading ? 0.7 : 0.9 }}
+            whileHover={{ y: loading ? 0 : -2, transition: { duration: 0.2 } }}
             whileTap={{ scale: 0.98 }}
           >
             {loading ? (
               <>
-                <Loader2 size={16} className="animate-spin" />
-                Sending...
+                <Loader2 size={18} className="animate-spin" />
+                <span>Sending...</span>
               </>
             ) : status === "success" ? (
               <>
-                <Check size={16} />
-                Sent!
+                <Check size={18} />
+                <span>Message Sent!</span>
               </>
             ) : (
               "Send Message"

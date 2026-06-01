@@ -38,25 +38,25 @@ export function DividerSection({
 
           {/* Text overlay if present */}
           {(title || subtitle) && (
-            <div className="absolute inset-0 flex flex-col items-center justify-end px-4 pb-12 sm:pb-16 lg:pb-20 text-center z-10">
+            <div className="absolute inset-0 flex flex-col items-center justify-end px-4 pb-12 sm:pb-16 lg:pb-24 text-center z-10">
               {title && (
                 <motion.h2
-                  className="text-3xl sm:text-4xl lg:text-5xl font-bold uppercase tracking-tight text-white drop-shadow-lg"
-                  initial={{ opacity: 0, y: 20 }}
+                  className="text-4xl sm:text-5xl lg:text-6xl font-bold uppercase tracking-tight text-white drop-shadow-xl"
+                  initial={{ opacity: 0, y: 30 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: 0.1 }}
+                  transition={{ duration: 0.6, delay: 0.1 }}
                 >
                   {title}
                 </motion.h2>
               )}
               {subtitle && (
                 <motion.p
-                  className="text-sm sm:text-base text-white/80 mt-3 drop-shadow-md max-w-2xl font-light"
-                  initial={{ opacity: 0, y: 10 }}
+                  className="text-base sm:text-lg text-white/70 mt-4 drop-shadow-lg max-w-2xl font-light tracking-wide"
+                  initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: 0.2 }}
+                  transition={{ duration: 0.6, delay: 0.2 }}
                 >
                   {subtitle}
                 </motion.p>

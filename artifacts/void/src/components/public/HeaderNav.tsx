@@ -28,7 +28,7 @@ export function HeaderNav({
 }: HeaderNavProps) {
   return (
     <motion.header
-      className="w-full sticky top-0 z-40 bg-black/60 backdrop-blur-md border-b border-white/5"
+      className="w-full sticky top-0 z-40 bg-black/40 backdrop-blur-xl border-b border-white/10"
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
@@ -36,36 +36,38 @@ export function HeaderNav({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div className="flex items-center justify-between gap-8">
           {/* Logo/Branding */}
-          <motion.div
-            className="flex items-center gap-3 flex-1"
-            whileHover={{ scale: 1.02 }}
+          <motion.a
+            href="/"
+            className="flex items-center gap-4 flex-1 group"
+            whileHover={{ opacity: 0.8 }}
+            transition={{ duration: 0.2 }}
           >
             {avatarUrl ? (
               <img
                 src={avatarUrl}
                 alt={displayName}
-                className="w-10 h-10 rounded-full object-cover border border-white/20"
+                className="w-12 h-12 rounded-full object-cover border border-white/20 group-hover:border-white/40 transition-colors"
                 loading="lazy"
               />
             ) : (
               <div
-                className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white"
+                className="w-12 h-12 rounded-full flex items-center justify-center text-sm font-bold text-white"
                 style={{ backgroundColor: theme.primary }}
               >
                 {displayName.charAt(0).toUpperCase()}
               </div>
             )}
             <div className="min-w-0">
-              <h1 className="font-semibold text-sm uppercase tracking-wider text-white truncate">
+              <h1 className="font-bold text-sm uppercase tracking-wider text-white truncate">
                 {displayName}
               </h1>
-              <p className="text-xs text-white/40">@{username}</p>
+              <p className="text-xs text-white/50 group-hover:text-white/70 transition-colors">@{username}</p>
             </div>
-          </motion.div>
+          </motion.a>
 
           {/* Social Navigation */}
           <motion.nav
-            className="flex items-center gap-3"
+            className="flex items-center gap-4 sm:gap-6"
             initial={{ opacity: 0, x: 10 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.4, delay: 0.1 }}
@@ -77,9 +79,9 @@ export function HeaderNav({
                 target="_blank"
                 rel="noopener noreferrer"
                 title={link.label}
-                className="p-2 text-white/70 hover:text-white transition-colors duration-200"
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
+                className="p-2 text-white/60 hover:text-white transition-colors duration-200 flex items-center justify-center"
+                whileHover={{ scale: 1.15 }}
+                whileTap={{ scale: 0.9 }}
               >
                 {link.icon}
               </motion.a>

@@ -176,14 +176,14 @@ export default function PublicProfileNew() {
         {/* Gallery Section */}
         {photos && photos.length > 0 && (
           <motion.section
-            className="w-full py-16 sm:py-24 border-b border-white/5"
+            className="w-full py-20 sm:py-32 border-b border-white/5"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 0.5 }}
           >
             <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-              <h2 className="text-3xl sm:text-4xl font-bold uppercase tracking-tighter mb-12">
+              <h2 className="text-4xl sm:text-5xl font-bold uppercase tracking-tighter mb-12 sm:mb-16">
                 Gallery
               </h2>
               <GallerySection
@@ -199,14 +199,14 @@ export default function PublicProfileNew() {
         {/* Events Section */}
         {events && events.length > 0 && (
           <motion.section
-            className="w-full py-16 sm:py-24 border-b border-white/5"
+            className="w-full py-20 sm:py-32 border-b border-white/5"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 0.5 }}
           >
             <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-              <h2 className="text-3xl sm:text-4xl font-bold uppercase tracking-tighter mb-12">
+              <h2 className="text-4xl sm:text-5xl font-bold uppercase tracking-tighter mb-12 sm:mb-16">
                 Upcoming Events
               </h2>
               <div>
@@ -309,14 +309,14 @@ export default function PublicProfileNew() {
         {/* Links Section */}
         {regularLinks.length > 0 && (
           <motion.section
-            className="w-full py-16 sm:py-24 border-b border-white/5"
+            className="w-full py-20 sm:py-32 border-b border-white/5"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 0.5 }}
           >
             <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-              <h2 className="text-3xl sm:text-4xl font-bold uppercase tracking-tighter mb-12">
+              <h2 className="text-4xl sm:text-5xl font-bold uppercase tracking-tighter mb-12 sm:mb-16">
                 Links
               </h2>
               <motion.div
@@ -347,18 +347,19 @@ export default function PublicProfileNew() {
                         hidden: { opacity: 0, y: 15 },
                         visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
                       }}
-                      className="p-6 border border-white/10 rounded-lg hover:border-white/30 hover:bg-white/5 transition-all duration-300 text-left group"
+                      className="p-6 sm:p-7 border border-white/15 rounded-xl hover:border-white/40 hover:bg-white/8 transition-all duration-300 text-left group backdrop-blur-sm"
+                      whileHover={{ y: -4, transition: { duration: 0.2 } }}
                     >
                       <div className="flex items-start gap-4">
-                        <div className="p-2 rounded-lg bg-white/5 group-hover:bg-white/10 transition-all">
-                          <platform.Icon size={24} className="text-white/70" />
+                        <div className="p-3 rounded-lg bg-white/10 group-hover:bg-white/15 transition-all flex-shrink-0">
+                          <platform.Icon size={24} className="text-white/80 group-hover:text-white transition-colors" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-white group-hover:text-white/90 transition-colors">
+                          <h3 className="font-bold text-white group-hover:text-white transition-colors text-base">
                             {link.title}
                           </h3>
                           {link.description && (
-                            <p className="text-sm text-white/50 mt-1 line-clamp-2">
+                            <p className="text-sm text-white/60 mt-2 line-clamp-2">
                               {link.description}
                             </p>
                           )}
@@ -375,14 +376,14 @@ export default function PublicProfileNew() {
         {/* Spotify Embeds Section */}
         {spotifyLinks.length > 0 && (
           <motion.section
-            className="w-full py-16 sm:py-24 border-b border-white/5"
+            className="w-full py-20 sm:py-32 border-b border-white/5"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 0.5 }}
           >
             <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-              <h2 className="text-3xl sm:text-4xl font-bold uppercase tracking-tighter mb-12">
+              <h2 className="text-4xl sm:text-5xl font-bold uppercase tracking-tighter mb-12 sm:mb-16">
                 Playlists
               </h2>
               <div className="space-y-8">
@@ -458,47 +459,47 @@ export default function PublicProfileNew() {
 
         {/* Footer Section */}
         <motion.footer
-          className="w-full py-12 sm:py-16 border-t border-white/5"
+          className="w-full py-16 sm:py-24 border-t border-white/5"
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
         >
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center space-y-6">
+            <div className="text-center space-y-8">
               {/* Main CTA */}
               <motion.div
-                initial={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5 }}
-                className="space-y-4"
+                className="space-y-6"
               >
-                <p className="text-sm uppercase tracking-widest text-white/60">
-                  Create your professional hub
-                </p>
-                <motion.a
-                  href="/"
-                  className="inline-block px-8 py-3 border border-white/30 rounded-lg hover:border-white/60 hover:bg-white/5 transition-all duration-300 text-sm uppercase tracking-widest font-semibold"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  Start Now
-                </motion.a>
+                <div>
+                  <p className="text-xs sm:text-sm uppercase tracking-[0.2em] text-white/60 mb-4">
+                    Create your professional hub
+                  </p>
+                  <motion.a
+                    href="/"
+                    className="inline-block px-10 py-4 border border-white/40 rounded-xl hover:border-white/70 hover:bg-white/10 transition-all duration-300 text-xs sm:text-sm uppercase tracking-wider font-bold"
+                    whileHover={{ y: -2, transition: { duration: 0.2 } }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    Start Now
+                  </motion.a>
+                </div>
               </motion.div>
 
               {/* Footer Links */}
-              <nav className="flex items-center justify-center gap-6 text-xs text-white/40 pt-4">
-                <a href="/" className="hover:text-white/70 transition-colors">Home</a>
-                <span>•</span>
-                <a href="/" className="hover:text-white/70 transition-colors">Privacy</a>
-                <span>•</span>
-                <a href="/" className="hover:text-white/70 transition-colors">Terms</a>
+              <nav className="flex items-center justify-center gap-8 text-xs text-white/50 pt-6 border-t border-white/5">
+                <a href="/" className="hover:text-white/80 transition-colors mt-6">Home</a>
+                <a href="/" className="hover:text-white/80 transition-colors mt-6">Privacy</a>
+                <a href="/" className="hover:text-white/80 transition-colors mt-6">Terms</a>
               </nav>
 
               {/* Copyright */}
-              <p className="text-xs text-white/30 font-light">
-                © {new Date().getFullYear()} hubvoid
+              <p className="text-xs text-white/40 font-light tracking-wide">
+                © {new Date().getFullYear()} hubvoid • Crafted with precision
               </p>
             </div>
           </div>
