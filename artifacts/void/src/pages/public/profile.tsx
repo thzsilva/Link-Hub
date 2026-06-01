@@ -1,13 +1,14 @@
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { useGetPublicProfile, useTrackEvent, customFetch } from "@workspace/api-client-react";
-import { Link } from "wouter";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CalendarDays, MapPin, ExternalLink, ChevronRight } from "lucide-react";
+import { CalendarDays, MapPin, ExternalLink, Instagram, Music, Youtube, Mail, MessageCircle } from "lucide-react";
 import { getPlatform, toSpotifyEmbedUrl } from "@/lib/platforms";
 import { getTheme, getCSSVariables } from "@/lib/themes";
 import { LinkButton } from "@/components/LinkButton";
-import { HeroSection } from "@/components/public/HeroSection";
+import { HeaderNav } from "@/components/public/HeaderNav";
+import { BioSection } from "@/components/public/BioSection";
+import { DividerSection } from "@/components/public/DividerSection";
 import { VideoSection } from "@/components/public/VideoSection";
 import { GallerySection } from "@/components/public/GallerySection";
 import { ContactSection } from "@/components/public/ContactSection";
@@ -96,248 +97,340 @@ export default function PublicProfileNew() {
   const regularLinks = links?.filter((l) => l.isVisible && l.cardType !== "spotify") ?? [];
   const spotifyLinks = links?.filter((l) => l.isVisible && l.cardType === "spotify") ?? [];
 
+  // Build social links for header navigation
+  const headerSocialLinks = socialLinks?.map((s) => {
+    const platform = getPlatform(s.platform ?? null);
+    let icon = <Music size={20} />;
+
+    if (s.platform === "instagram") icon = <Instagram size={20} />;
+    else if (s.platform === "youtube") icon = <Youtube size={20} />;
+    else if (s.platform === "spotify") icon = <Music size={20} />;
+
+    return {
+      platform: s.platform || "link",
+      url: s.url,
+      icon,
+      label: platform.name,
+    };
+  }) ?? [];
+
+  // Add contact methods to header
+  if ((profile as any).whatsappNumber) {
+    headerSocialLinks.push({
+      platform: "whatsapp",
+      url: `https://wa.me/${(profile as any).whatsappNumber}`,
+      icon: <MessageCircle size={20} />,
+      label: "WhatsApp",
+    });
+  }
+
+  if ((profile as any).email) {
+    headerSocialLinks.push({
+      platform: "email",
+      url: `mailto:${(profile as any).email}`,
+      icon: <Mail size={20} />,
+      label: "Email",
+    });
+  }
+
   return (
     <div className="min-h-[100dvh] text-white overflow-hidden" style={{ ...cssVars, backgroundColor: customTheme.background } as React.CSSProperties}>
-      {/* Header com capa premium */}
-      <div className="relative h-64 w-full overflow-hidden">
-        {profile.headerImageUrl ? (
+      {/* Sticky Header Navigation */}
+      <HeaderNav
+        avatarUrl={profile.avatarUrl ?? undefined}
+        displayName={profile.displayName || profile.username || "User"}
+        username={profile.username || "user"}
+        socialLinks={headerSocialLinks as any}
+        theme={customTheme}
+      />
+
+      <main className="w-full">
+        {/* Hero Image/Divider */}
+        <DividerSection
+          imageUrl={profile.headerImageUrl ?? undefined}
+          title={profile.displayName || profile.username || "Profile"}
+          subtitle={profile.bio ? profile.bio.substring(0, 100) + "..." : undefined}
+        />
+
+        {/* Bio & Highlights Section */}
+        <BioSection
+          displayName={profile.displayName || profile.username || "User"}
+          bio={profile.bio ?? undefined}
+          highlights={
+            events && events.length > 0
+              ? (
+                  [
+                    `${events.length} upcoming events`,
+                    `${photos?.length || 0} featured photos`,
+                    regularLinks.length > 0 ? `${regularLinks.length} ways to connect` : undefined,
+                  ]
+                    .filter((x): x is string => Boolean(x))
+                    .slice(0, 3)
+                )
+              : undefined
+          }
+          theme={customTheme}
+        />
+
+        {/* Video Divider & Section */}
+        {(profile as any).videoUrl && (
           <>
-            <img src={profile.headerImageUrl} alt="Capa" className="w-full h-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/20 to-black/90" />
+            <DividerSection
+              title="Featured"
+              subtitle="Watch my story"
+            />
+            <VideoSection
+              videoUrl={(profile as any).videoUrl}
+              theme={customTheme}
+            />
           </>
-        ) : (
-          <div
-            className="w-full h-full bg-gradient-to-br"
-            style={{
-              backgroundImage: `linear-gradient(135deg, ${customTheme.primary}40 0%, ${customTheme.secondary}40 100%)`
-            }}
-          />
-        )}
-      </div>
-
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        {/* Hero Section */}
-        <HeroSection
-          avatarUrl={profile.avatarUrl}
-          displayName={profile.displayName || profile.username}
-          username={profile.username}
-          bio={profile.bio}
-          headerImageUrl={profile.headerImageUrl}
-          theme={customTheme}
-          onWatchVideo={() => {
-            const videoSection = document.getElementById('video-section');
-            if (videoSection) {
-              videoSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
-          }}
-          hasVideo={!!(profile as any).videoUrl}
-        />
-
-        {/* Video Section */}
-        <VideoSection
-          videoUrl={(profile as any).videoUrl}
-          theme={customTheme}
-        />
-
-        {/* Links regulares em grid */}
-        {regularLinks.length > 0 && (
-          <motion.div
-            className="mb-16"
-            id="links"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            <motion.div
-              className="grid gap-3 mb-8"
-              style={{
-                gridTemplateColumns: `repeat(${Math.min(layoutColumns, regularLinks.length)}, minmax(0, 1fr))`,
-              }}
-            >
-              {regularLinks.map((link, index) => {
-                const platform = getPlatform(link.icon ?? null);
-                return (
-                  <motion.div
-                    key={link.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3, delay: index * 0.1 }}
-                    whileHover={{ y: -8 }}
-                  >
-                    <LinkButton
-                      icon={<platform.Icon size={20} />}
-                      title={link.title}
-                      description={link.description || undefined}
-                      accentColor={customTheme.accent}
-                      secondaryColor={customTheme.secondary}
-                      backgroundColor={`${customTheme.secondary}20`}
-                      onClick={() => handleLinkClick(link.id, link.url)}
-                    />
-                  </motion.div>
-                );
-              })}
-            </motion.div>
-          </motion.div>
         )}
 
-        {/* Spotify Embeds */}
-        {spotifyLinks.length > 0 && (
-          <div className="space-y-4 mb-12">
-            {spotifyLinks.map((link) => {
-              const embedUrl = toSpotifyEmbedUrl(link.url);
-              if (!embedUrl) return null;
-              return (
-                <div key={link.id}>
-                  {link.title && link.title !== "Spotify" && (
-                    <p className="text-xs uppercase tracking-widest text-muted-foreground mb-2 text-left">
-                      {link.title}
-                    </p>
-                  )}
-                  <iframe
-                    src={embedUrl}
-                    width="100%"
-                    height="152"
-                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                    loading="lazy"
-                    className="border-0"
-                    style={{ borderRadius: "0px" }}
-                  />
-                </div>
-              );
-            })}
-          </div>
+        {/* Gallery Divider & Section */}
+        {photos && photos.length > 0 && (
+          <>
+            <DividerSection
+              imageUrl={photos[0]?.url}
+              title="Gallery"
+            />
+            <GallerySection
+              photos={(photos as any) || []}
+              username={username}
+              theme={customTheme}
+              onSeeAll={() => (window.location.href = `/?user=${username}&photos=true`)}
+            />
+          </>
         )}
 
-        {/* Seção de Eventos */}
+        {/* Events Section */}
         {events && events.length > 0 && (
-          <motion.div
-            className="mb-20"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            viewport={{ once: true }}
-          >
-            <div className="mb-8">
-              <h2
-                className="text-3xl sm:text-4xl font-black tracking-tighter uppercase relative inline-block"
-                style={{ color: customTheme.primary }}
-              >
-                Próximos Eventos
-                <motion.div
-                  className="h-1 absolute -bottom-3 left-0"
-                  style={{ backgroundColor: customTheme.accent }}
-                  initial={{ width: 0 }}
-                  whileInView={{ width: "100%" }}
-                  transition={{ duration: 0.6, delay: 0.2 }}
-                  viewport={{ once: true }}
-                />
-              </h2>
-            </div>
-
-            <div
-              className="grid gap-5 pt-2"
-              style={{
-                gridTemplateColumns: `repeat(${Math.min(layoutColumns, events.length)}, minmax(0, 1fr))`,
-              }}
+          <>
+            <DividerSection
+              title="Próximos Eventos"
+              subtitle={`${events.length} upcoming events`}
+            />
+            <motion.section
+              className="w-full py-12 sm:py-16 border-b border-white/10"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.6 }}
             >
-              {events.map((event, index) => (
-                <motion.div
-                  key={event.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: index * 0.1 }}
-                  viewport={{ once: true }}
-                  whileHover={{ y: -8, transition: { duration: 0.2 } }}
-                  className="group rounded-xl overflow-hidden border border-white/10 backdrop-blur-sm hover:border-white/30 transition-all duration-300"
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div
+                  className="grid gap-5"
                   style={{
-                    backgroundColor: `${customTheme.secondary}08`,
-                    boxShadow: "0 8px 32px rgba(0, 0, 0, 0.2)"
+                    gridTemplateColumns: `repeat(${Math.min(layoutColumns, events.length)}, minmax(0, 1fr))`,
                   }}
                 >
-                  {/* Imagem do evento */}
-                  {event.imageUrl && (
-                    <div className="relative w-full h-48 overflow-hidden">
-                      <img
-                        src={event.imageUrl}
-                        alt={event.title}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                    </div>
-                  )}
-
-                  <div className="p-5">
-                    <h3 className="font-bold text-xl uppercase tracking-tight mb-4 line-clamp-2">
-                      {event.title}
-                    </h3>
-
-                    {event.eventDate && (
-                      <div className="flex items-start gap-3 mb-3">
-                        <CalendarDays size={16} style={{ color: customTheme.accent }} className="mt-1 flex-shrink-0" />
-                        <div>
-                          <p className="text-xs uppercase tracking-widest text-white/50 mb-1">Data & Hora</p>
-                          <p className="text-sm font-light">
-                            {new Date(event.eventDate).toLocaleDateString("pt-BR", {
-                              weekday: "long",
-                              day: "2-digit",
-                              month: "long",
-                              year: "numeric",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                          </p>
+                  {events.map((event, index) => (
+                    <motion.div
+                      key={event.id}
+                      initial={{ opacity: 0, y: 20, scale: 0.9 }}
+                      whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                      transition={{ duration: 0.4, delay: index * 0.05 }}
+                      whileHover={{ y: -8, transition: { duration: 0.2 } }}
+                      className="group rounded-xl overflow-hidden border border-white/10 backdrop-blur-sm hover:border-white/30 transition-all duration-300"
+                      style={{
+                        backgroundColor: `${customTheme.secondary}08`,
+                        boxShadow: "0 8px 32px rgba(0, 0, 0, 0.2)"
+                      }}
+                      viewport={{ once: true }}
+                    >
+                      {event.imageUrl && (
+                        <div className="relative w-full h-48 overflow-hidden">
+                          <img
+                            src={event.imageUrl}
+                            alt={event.title}
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                         </div>
+                      )}
+
+                      <div className="p-5">
+                        <h3 className="font-bold text-xl uppercase tracking-tight mb-4 line-clamp-2">
+                          {event.title}
+                        </h3>
+
+                        {event.eventDate && (
+                          <div className="flex items-start gap-3 mb-3">
+                            <CalendarDays size={16} style={{ color: customTheme.secondary }} className="mt-1 flex-shrink-0" />
+                            <div>
+                              <p className="text-xs uppercase tracking-widest text-white/50 mb-1">Data & Hora</p>
+                              <p className="text-sm font-light">
+                                {new Date(event.eventDate).toLocaleDateString("pt-BR", {
+                                  weekday: "long",
+                                  day: "2-digit",
+                                  month: "long",
+                                  year: "numeric",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+
+                        {event.location && (
+                          <div className="flex items-start gap-3 mb-4">
+                            <MapPin size={16} style={{ color: customTheme.secondary }} className="mt-1 flex-shrink-0" />
+                            <div>
+                              <p className="text-xs uppercase tracking-widest text-white/50 mb-1">Local</p>
+                              <p className="text-sm font-light">{event.location}</p>
+                            </div>
+                          </div>
+                        )}
+
+                        {event.description && (
+                          <p className="text-sm text-white/60 font-light mb-4 line-clamp-2">{event.description}</p>
+                        )}
+
+                        {event.ticketUrl && (
+                          <motion.a
+                            href={event.ticketUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="inline-flex items-center gap-2 text-xs uppercase tracking-widest font-bold px-4 py-3 rounded-lg transition-all"
+                            style={{
+                              backgroundColor: customTheme.secondary,
+                              color: customTheme.background === "#000000" ? "#000" : "#fff",
+                            }}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                          >
+                            <ExternalLink size={14} />
+                            Comprar Ingressos
+                          </motion.a>
+                        )}
                       </div>
-                    )}
-
-                    {event.location && (
-                      <div className="flex items-start gap-3 mb-4">
-                        <MapPin size={16} style={{ color: customTheme.accent }} className="mt-1 flex-shrink-0" />
-                        <div>
-                          <p className="text-xs uppercase tracking-widest text-white/50 mb-1">Local</p>
-                          <p className="text-sm font-light">{event.location}</p>
-                        </div>
-                      </div>
-                    )}
-
-                    {event.description && (
-                      <p className="text-sm text-white/60 font-light mb-4 line-clamp-2">{event.description}</p>
-                    )}
-
-                    {event.ticketUrl && (
-                      <motion.a
-                        href={event.ticketUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={(e) => e.stopPropagation()}
-                        className="inline-flex items-center gap-2 text-xs uppercase tracking-widest font-bold px-4 py-3 rounded-lg transition-all"
-                        style={{
-                          backgroundColor: customTheme.accent,
-                          color: customTheme.background === "#000000" ? "#000" : "#fff",
-                        }}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                      >
-                        <ExternalLink size={14} />
-                        Comprar Ingressos
-                      </motion.a>
-                    )}
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            </motion.section>
+          </>
         )}
 
-        {/* Gallery Section */}
-        <GallerySection
-          photos={photos || []}
-          username={username}
-          theme={customTheme}
-          onSeeAll={() => window.location.href = `/?user=${username}&photos=true`}
-        />
+        {/* Links Divider & Section */}
+        {regularLinks.length > 0 && (
+          <>
+            <DividerSection
+              title="Connect"
+              subtitle="Find me everywhere"
+            />
+            <motion.section
+              className="w-full py-12 sm:py-16 border-b border-white/10"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.6 }}
+            >
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <motion.div
+                  className="grid gap-3"
+                  style={{
+                    gridTemplateColumns: `repeat(${Math.min(layoutColumns, regularLinks.length)}, minmax(0, 1fr))`,
+                  }}
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true, margin: "-50px" }}
+                  variants={{
+                    hidden: { opacity: 0 },
+                    visible: {
+                      opacity: 1,
+                      transition: {
+                        staggerChildren: 0.05,
+                        delayChildren: 0.1,
+                      },
+                    },
+                  }}
+                >
+                  {regularLinks.map((link) => {
+                    const platform = getPlatform(link.icon ?? null);
+                    return (
+                      <motion.div
+                        key={link.id}
+                        variants={{
+                          hidden: { opacity: 0, y: 20 },
+                          visible: { opacity: 1, y: 0, transition: { duration: 0.4 } },
+                        }}
+                        whileHover={{ y: -8 }}
+                      >
+                        <LinkButton
+                          icon={<platform.Icon size={20} />}
+                          title={link.title}
+                          description={link.description || undefined}
+                          accentColor={customTheme.accent}
+                          secondaryColor={customTheme.secondary}
+                          backgroundColor={`${customTheme.secondary}20`}
+                          onClick={() => handleLinkClick(link.id, link.url)}
+                        />
+                      </motion.div>
+                    );
+                  })}
+                </motion.div>
+              </div>
+            </motion.section>
+          </>
+        )}
 
-        {/* Contact Section */}
+        {/* Spotify Embeds Divider & Section */}
+        {spotifyLinks.length > 0 && (
+          <>
+            <DividerSection
+              title="Playlists"
+              subtitle="My favorite tracks"
+            />
+            <motion.section
+              className="w-full py-12 sm:py-16 border-b border-white/10"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.6 }}
+            >
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+                {spotifyLinks.map((link, index) => {
+                  const embedUrl = toSpotifyEmbedUrl(link.url);
+                  if (!embedUrl) return null;
+                  return (
+                    <motion.div
+                      key={link.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.4, delay: index * 0.1 }}
+                    >
+                      {link.title && link.title !== "Spotify" && (
+                        <p className="text-xs uppercase tracking-widest text-white/70 mb-4">
+                          {link.title}
+                        </p>
+                      )}
+                      <div className="rounded-xl overflow-hidden border border-white/10">
+                        <iframe
+                          src={embedUrl}
+                          width="100%"
+                          height="152"
+                          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                          loading="lazy"
+                          className="border-0"
+                          style={{ borderRadius: "0px" }}
+                        />
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            </motion.section>
+          </>
+        )}
+
+        {/* Contact Divider & Section */}
+        <DividerSection
+          title="Let's Connect"
+          subtitle="Get in touch"
+        />
         <ContactSection
           contact={{
             whatsapp: (profile as any).whatsappNumber,
@@ -364,87 +457,67 @@ export default function PublicProfileNew() {
           }}
         />
 
-        {/* Links Sociais */}
-        {socialLinks && socialLinks.length > 0 && (
-          <motion.div
-            className="flex gap-3 justify-center flex-wrap my-16 pb-12"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            viewport={{ once: true }}
-          >
-            {socialLinks.map((s, index) => {
-              const platform = getPlatform(s.platform ?? null);
-              return (
-                <motion.a
-                  key={s.id}
-                  href={s.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition-all border border-white/10 hover:border-white/30"
-                  style={{
-                    backgroundColor: `${customTheme.accent}15`,
-                  }}
-                  title={platform.name}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.3, delay: index * 0.05 }}
-                  viewport={{ once: true }}
-                  whileHover={{ scale: 1.1, backgroundColor: `${customTheme.accent}25` }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <platform.Icon size={18} style={{ color: customTheme.primary }} />
-                  <span className="text-xs font-bold uppercase hidden sm:inline" style={{ color: customTheme.primary }}>
-                    {platform.name}
-                  </span>
-                </motion.a>
-              );
-            })}
-          </motion.div>
-        )}
-
-        {/* CTA Button */}
+        {/* CTA & Footer Section */}
         <motion.div
-          className="py-12 text-center space-y-6"
+          className="w-full py-16 sm:py-20 text-center border-t border-white/10"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          viewport={{ once: true, margin: "-100px" }}
         >
-          <motion.a
-            href="/"
-            className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-lg text-sm uppercase tracking-widest font-bold border-2 transition-all"
-            style={{
-              borderColor: customTheme.primary,
-              color: customTheme.primary,
-              backgroundColor: `${customTheme.primary}10`,
-            }}
-            whileHover={{
-              backgroundColor: `${customTheme.primary}20`,
-              scale: 1.05,
-            }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <ExternalLink size={16} />
-            Crie Seu Próprio Hub
-          </motion.a>
-        </motion.div>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+            {/* CTA Button */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              viewport={{ once: true }}
+            >
+              <p className="text-sm text-white/60 uppercase tracking-widest mb-6">
+                Ready to share your story?
+              </p>
+              <motion.a
+                href="/"
+                className="inline-flex items-center justify-center gap-3 px-8 py-4 rounded-lg text-sm uppercase tracking-widest font-bold border-2 transition-all"
+                style={{
+                  borderColor: customTheme.primary,
+                  color: "white",
+                  backgroundColor: customTheme.primary,
+                }}
+                whileHover={{
+                  scale: 1.05,
+                  boxShadow: `0 20px 40px ${customTheme.primary}40`,
+                }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <ExternalLink size={16} />
+                Create Your Hub
+              </motion.a>
+            </motion.div>
 
-        {/* Footer Premium */}
-        <motion.div
-          className="py-8 text-center border-t-2"
-          style={{ borderColor: `${customTheme.accent}15` }}
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          transition={{ duration: 0.5 }}
-          viewport={{ once: true }}
-        >
-          <p className="text-xs text-white/40 font-light tracking-widest uppercase">
-            Criado com <span style={{ color: customTheme.accent }}>✨</span> por hubvoid
-          </p>
-          <p className="text-xs text-white/30 font-light tracking-widest mt-2">
-            © {new Date().getFullYear()} • Seu perfil profissional em um link
-          </p>
+            {/* Footer */}
+            <motion.div
+              className="pt-8 space-y-4"
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              viewport={{ once: true }}
+            >
+              <p className="text-xs text-white/40 font-light tracking-widest uppercase">
+                Made with <span style={{ color: customTheme.secondary }}>✨</span> by hubvoid
+              </p>
+              <div className="flex items-center justify-center gap-4 text-xs text-white/30 font-light">
+                <a href="/" className="hover:text-white/50 transition-colors">Home</a>
+                <span>•</span>
+                <a href="/" className="hover:text-white/50 transition-colors">Privacy</a>
+                <span>•</span>
+                <a href="/" className="hover:text-white/50 transition-colors">Terms</a>
+              </div>
+              <p className="text-xs text-white/20 font-light">
+                © {new Date().getFullYear()} hubvoid • Your professional hub in one link
+              </p>
+            </motion.div>
+          </div>
         </motion.div>
       </main>
     </div>
