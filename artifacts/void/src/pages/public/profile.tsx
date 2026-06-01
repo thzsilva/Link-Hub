@@ -6,13 +6,10 @@ import { CalendarDays, MapPin, ExternalLink, Instagram, Music, Youtube, Mail, Me
 import { getPlatform, toSpotifyEmbedUrl } from "@/lib/platforms";
 import { getTheme, getCSSVariables } from "@/lib/themes";
 import { LinkButton } from "@/components/LinkButton";
-import { HeaderNav } from "@/components/public/HeaderNav";
 import { BioSection } from "@/components/public/BioSection";
-import { DividerSection } from "@/components/public/DividerSection";
 import { VideoSection } from "@/components/public/VideoSection";
 import { GallerySection } from "@/components/public/GallerySection";
 import { ContactSection } from "@/components/public/ContactSection";
-import { HeroNameSection } from "@/components/public/HeroNameSection";
 
 // ---------------------------------------------------------------------------
 // Skeleton
@@ -134,50 +131,168 @@ export default function PublicProfileNew() {
     });
   }
 
+  const displayName = profile.displayName || profile.username || "User";
+  const hasSocials = headerSocialLinks.length >= 1;
+
   return (
     <div className="min-h-[100dvh] text-white overflow-hidden" style={{ ...cssVars, backgroundColor: customTheme.background } as React.CSSProperties}>
-      {/* Sticky Header Navigation */}
-      <HeaderNav
-        avatarUrl={profile.avatarUrl ?? undefined}
-        displayName={profile.displayName || profile.username || "User"}
-        username={profile.username || "user"}
-        socialLinks={headerSocialLinks as any}
-        theme={customTheme}
-      />
 
       <main className="w-full bg-black">
-        {/* Hero Image/Divider */}
-        <DividerSection
-          imageUrl={profile.headerImageUrl ?? undefined}
-          title={profile.displayName || profile.username || "Profile"}
-          subtitle={profile.bio ? profile.bio.substring(0, 100) + "..." : undefined}
-        />
+        {/* ── HERO ── image + name overlay + social icons */}
+        <motion.section
+          className="relative w-full overflow-hidden"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.6 }}
+        >
+          {/* Hero Image */}
+          {profile.headerImageUrl ? (
+            <div className="relative w-full aspect-[4/5] sm:aspect-[16/10] lg:aspect-[16/8] max-h-[75vh] overflow-hidden">
+              <img
+                src={profile.headerImageUrl}
+                alt={displayName}
+                className="w-full h-full object-cover"
+                loading="eager"
+              />
+              {/* Dark overlay for readability */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black/20" />
 
-        {/* Hero Name Section with Social Icons */}
-        <HeroNameSection
-          displayName={profile.displayName || profile.username || "User"}
-          socialLinks={headerSocialLinks as any}
-        />
+              {/* Name overlay on the image */}
+              <div className="absolute inset-0 flex items-center justify-center z-10">
+                <motion.h1
+                  className="text-[3.5rem] sm:text-[5rem] lg:text-[7rem] font-black uppercase text-white text-center leading-none px-4"
+                  style={{ letterSpacing: "-0.03em" }}
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.7, delay: 0.15 }}
+                >
+                  {displayName}
+                </motion.h1>
+              </div>
 
-        {/* Bio Section */}
+              {/* Small social icons over the bottom of the image */}
+              {hasSocials && (
+                <motion.div
+                  className="absolute bottom-6 sm:bottom-8 left-0 right-0 flex justify-center gap-4 z-10"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.4 }}
+                >
+                  {headerSocialLinks.map((link: any, i: number) => (
+                    <motion.a
+                      key={link.platform}
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title={link.label}
+                      className="w-10 h-10 sm:w-11 sm:h-11 rounded-full border border-white/40 flex items-center justify-center text-white/80 hover:text-white hover:border-white transition-all duration-200 backdrop-blur-sm bg-black/20"
+                      whileHover={{ scale: 1.15 }}
+                      whileTap={{ scale: 0.9 }}
+                      initial={{ opacity: 0, scale: 0.5 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.3, delay: 0.5 + i * 0.06 }}
+                    >
+                      {link.icon}
+                    </motion.a>
+                  ))}
+                </motion.div>
+              )}
+            </div>
+          ) : (
+            /* Fallback: no header image — show name + avatar */
+            <div className="relative w-full py-24 sm:py-36 flex flex-col items-center justify-center gap-6 bg-black">
+              {profile.avatarUrl && (
+                <motion.img
+                  src={profile.avatarUrl}
+                  alt={displayName}
+                  className="w-28 h-28 sm:w-36 sm:h-36 rounded-full object-cover border-2 border-white/20"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.5 }}
+                />
+              )}
+              <motion.h1
+                className="text-[3rem] sm:text-[4.5rem] lg:text-[6rem] font-black uppercase text-white text-center leading-none px-4"
+                style={{ letterSpacing: "-0.03em" }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.1 }}
+              >
+                {displayName}
+              </motion.h1>
+              {hasSocials && (
+                <motion.div
+                  className="flex justify-center gap-4"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.3 }}
+                >
+                  {headerSocialLinks.map((link: any, i: number) => (
+                    <motion.a
+                      key={link.platform}
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title={link.label}
+                      className="w-11 h-11 rounded-full border border-white/40 flex items-center justify-center text-white/80 hover:text-white hover:border-white transition-all duration-200"
+                      whileHover={{ scale: 1.15 }}
+                      whileTap={{ scale: 0.9 }}
+                      initial={{ opacity: 0, scale: 0.5 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.3, delay: 0.4 + i * 0.06 }}
+                    >
+                      {link.icon}
+                    </motion.a>
+                  ))}
+                </motion.div>
+              )}
+            </div>
+          )}
+        </motion.section>
+
+        {/* ── Prominent social bar (orange, below hero) ── */}
+        {headerSocialLinks.length >= 3 && (
+          <motion.div
+            className="w-full py-6 sm:py-8 flex justify-center gap-5 border-b border-white/5"
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.4, delay: 0.1 }}
+          >
+            {headerSocialLinks.map((link: any, i: number) => (
+              <motion.a
+                key={`bar-${link.platform}`}
+                href={link.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                title={link.label}
+                className="w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center text-white transition-all duration-200"
+                style={{ backgroundColor: customTheme.primary || "#f97316" }}
+                whileHover={{ scale: 1.15 }}
+                whileTap={{ scale: 0.9 }}
+                initial={{ opacity: 0, scale: 0 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.3, delay: 0.05 + i * 0.06 }}
+              >
+                {link.icon}
+              </motion.a>
+            ))}
+          </motion.div>
+        )}
+
+        {/* Bio Section — appears only once */}
         <BioSection
-          displayName={profile.displayName || profile.username || "User"}
+          displayName={displayName}
           bio={profile.bio ?? undefined}
           theme={customTheme}
         />
 
-        {/* Video Divider & Section */}
+        {/* Video Section */}
         {(profile as any).videoUrl && (
-          <>
-            <DividerSection
-              title="Featured"
-              subtitle="Watch my story"
-            />
-            <VideoSection
-              videoUrl={(profile as any).videoUrl}
-              theme={customTheme}
-            />
-          </>
+          <VideoSection
+            videoUrl={(profile as any).videoUrl}
+            theme={customTheme}
+          />
         )}
 
         {/* Gallery Section */}
@@ -429,11 +544,7 @@ export default function PublicProfileNew() {
           </motion.section>
         )}
 
-        {/* Contact Divider & Section */}
-        <DividerSection
-          title="Let's Connect"
-          subtitle="Get in touch"
-        />
+        {/* Contact Section */}
         <ContactSection
           contact={{
             whatsapp: (profile as any).whatsappNumber,
