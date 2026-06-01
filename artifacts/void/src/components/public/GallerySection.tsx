@@ -16,26 +16,30 @@ interface GallerySectionProps {
     primary: string;
     secondary: string;
   };
+  layoutColumns?: number;
   onSeeAll?: () => void;
 }
 
-const DISPLAY_LIMIT = 6; // Show 6 photos in gallery preview
+const DISPLAY_LIMIT = 9;
 
 export function GallerySection({
   photos,
   username,
   theme,
+  layoutColumns = 1,
   onSeeAll,
 }: GallerySectionProps) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
 
-  if (!photos || photos.length === 0) {
-    return null;
-  }
+  if (!photos || photos.length === 0) return null;
 
   const displayPhotos = photos.slice(0, DISPLAY_LIMIT);
   const hasMore = photos.length > DISPLAY_LIMIT;
+
+  // Columns for the grid: respect user preference, with smart defaults
+  // Mobile always 1 col, tablet 2 cols, desktop uses layoutColumns (capped at 4)
+  const cols = Math.max(1, Math.min(layoutColumns, 4));
 
   const handlePhotoClick = (index: number) => {
     setSelectedIndex(index);
@@ -43,48 +47,21 @@ export function GallerySection({
   };
 
   const handleNext = () => {
-    if (selectedIndex < photos.length - 1) {
-      setSelectedIndex(selectedIndex + 1);
-    }
+    if (selectedIndex < photos.length - 1) setSelectedIndex(selectedIndex + 1);
   };
 
   const handlePrev = () => {
-    if (selectedIndex > 0) {
-      setSelectedIndex(selectedIndex - 1);
-    }
+    if (selectedIndex > 0) setSelectedIndex(selectedIndex - 1);
   };
 
   return (
-    <motion.section
-      className="mb-16 sm:mb-20"
-      id="gallery"
-      initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-100px" }}
-      transition={{ duration: 0.6, ease: "easeOut" }}
-    >
-      <div className="mb-6 sm:mb-8 flex items-end justify-between">
-        <div>
-          <h2
-            className="text-2xl sm:text-3xl md:text-4xl font-black tracking-tighter uppercase"
-            style={{ color: theme.primary }}
-          >
-            Galeria
-          </h2>
-          <motion.div
-            className="h-1 mt-2"
-            style={{ backgroundColor: theme.secondary }}
-            initial={{ width: 0 }}
-            whileInView={{ width: "40px" }}
-            transition={{ duration: 0.6 }}
-            viewport={{ once: true }}
-          />
-        </div>
-      </div>
-
-      {/* Grid de fotos */}
+    <>
+      {/* Photo grid — respects layoutColumns on desktop */}
       <motion.div
-        className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6 sm:mb-8"
+        className="grid gap-3 sm:gap-4"
+        style={{
+          gridTemplateColumns: `repeat(${Math.min(cols, displayPhotos.length)}, minmax(0, 1fr))`,
+        }}
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, margin: "-50px" }}
@@ -92,10 +69,7 @@ export function GallerySection({
           hidden: { opacity: 0 },
           visible: {
             opacity: 1,
-            transition: {
-              staggerChildren: 0.08,
-              delayChildren: 0.1,
-            },
+            transition: { staggerChildren: 0.06, delayChildren: 0.05 },
           },
         }}
       >
@@ -104,32 +78,25 @@ export function GallerySection({
             key={photo.id}
             className="group relative aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-white/30 transition-all cursor-pointer"
             variants={{
-              hidden: { opacity: 0, y: 20, scale: 0.9 },
-              visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.4, ease: "easeOut" } },
+              hidden: { opacity: 0, y: 20, scale: 0.95 },
+              visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.35 } },
             }}
-            whileHover={{ scale: 1.05, transition: { duration: 0.2 } }}
+            whileHover={{ scale: 1.03, transition: { duration: 0.2 } }}
             onClick={() => handlePhotoClick(index)}
           >
             <img
               src={photo.url}
               alt={photo.caption || `Foto ${index + 1}`}
-              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
               loading="lazy"
             />
 
-            {/* Overlay on hover */}
-            <div
-              className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center"
-              style={{
-                backgroundColor: `${theme.primary}40`,
-              }}
-            >
-              <div className="text-white text-center">
-                <div className="text-sm sm:text-base font-bold">Visualizar</div>
+            {/* Hover overlay */}
+            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+              <div className="text-white text-center px-3">
+                <div className="text-sm font-bold uppercase tracking-wider">Ver</div>
                 {photo.caption && (
-                  <div className="text-xs text-white/70 mt-1 px-2 line-clamp-2">
-                    {photo.caption}
-                  </div>
+                  <div className="text-xs text-white/70 mt-1 line-clamp-2">{photo.caption}</div>
                 )}
               </div>
             </div>
@@ -137,24 +104,20 @@ export function GallerySection({
         ))}
       </motion.div>
 
-      {/* Ver galeria completa */}
+      {/* See all button */}
       {hasMore && onSeeAll && (
         <motion.button
           onClick={onSeeAll}
-          className="w-full sm:w-auto px-6 sm:px-8 py-3 rounded-lg font-bold uppercase tracking-widest text-sm border-2 flex items-center justify-center gap-2 transition-all"
-          style={{
-            borderColor: theme.secondary,
-            color: theme.secondary,
-          }}
-          whileHover={{ scale: 1.05, backgroundColor: `${theme.secondary}10` }}
-          whileTap={{ scale: 0.95 }}
+          className="mt-8 w-full sm:w-auto px-8 py-3 rounded-lg font-bold uppercase tracking-widest text-sm border border-white/30 flex items-center justify-center gap-2 transition-all hover:bg-white/5 hover:border-white/50"
+          whileHover={{ y: -2 }}
+          whileTap={{ scale: 0.97 }}
           initial={{ opacity: 0, y: 10 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.3, delay: 0.3 }}
+          transition={{ duration: 0.3, delay: 0.2 }}
         >
           Ver Galeria Completa ({photos.length})
-          <ChevronRight size={18} />
+          <ChevronRight size={16} />
         </motion.button>
       )}
 
@@ -169,6 +132,6 @@ export function GallerySection({
         hasNext={selectedIndex < photos.length - 1}
         hasPrev={selectedIndex > 0}
       />
-    </motion.section>
+    </>
   );
 }
