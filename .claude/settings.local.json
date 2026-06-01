@@ -153,7 +153,10 @@
       "Bash(findstr :3000)",
       "Bash(wsl -d Bash -e bash -c \"kill -9 17116 2>/dev/null || true\")",
       "Bash(cd /c/Users/Administrador/Projetos/Link-Hub && grep -n 'transition-colors\">' artifacts/void/src/pages/public/profile.tsx | tail -5)",
-      "Bash(cd C:\\\\\\\\Users\\\\\\\\Administrador\\\\\\\\Projetos\\\\\\\\Link-Hub\\\\\\\\artifacts\\\\\\\\void)"
+      "Bash(cd C:\\\\\\\\Users\\\\\\\\Administrador\\\\\\\\Projetos\\\\\\\\Link-Hub\\\\\\\\artifacts\\\\\\\\void)",
+      "Bash(DATABASE_URL=\"postgresql://postgres.zcuehpfnpdaoknywddbh:thzn.av0905@aws-1-us-east-1.pooler.supabase.com:5432/postgres\" npx drizzle-kit push --config ./drizzle.config.ts)",
+      "Bash(DATABASE_URL=\"postgresql://postgres.zcuehpfnpdaoknywddbh:thzn.av0905@aws-1-us-east-1.pooler.supabase.com:5432/postgres\" npx drizzle-kit push --config ./lib/db/drizzle.config.ts)",
+      "Bash(DATABASE_URL=\"postgresql://postgres.zcuehpfnpdaoknywddbh:thzn.av0905@aws-1-us-east-1.pooler.supabase.com:5432/postgres\" npm run push --workspace=lib/db)"
     ]
   }
 }

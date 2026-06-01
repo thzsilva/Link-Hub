@@ -139,6 +139,10 @@ router.put("/me", async (req, res): Promise<void> => {
   if (parsed.data.customSecondaryColor !== undefined) updateData.customSecondaryColor = parsed.data.customSecondaryColor;
   if (parsed.data.backgroundImageUrl !== undefined) updateData.backgroundImageUrl = parsed.data.backgroundImageUrl;
   if (parsed.data.backgroundBlur !== undefined) updateData.backgroundBlur = parsed.data.backgroundBlur;
+  if (parsed.data.videoUrl !== undefined) updateData.videoUrl = parsed.data.videoUrl;
+  if (parsed.data.whatsappNumber !== undefined) updateData.whatsappNumber = parsed.data.whatsappNumber;
+  if (parsed.data.email !== undefined) updateData.email = parsed.data.email;
+  if (parsed.data.instagramHandle !== undefined) updateData.instagramHandle = parsed.data.instagramHandle;
 
   console.log("PUT /api/me - updateData:", JSON.stringify(updateData, null, 2));
 

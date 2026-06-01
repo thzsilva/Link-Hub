@@ -20,6 +20,11 @@ export const profilesTable = pgTable("profiles", {
   customSecondaryColor: text("custom_secondary_color"),
   backgroundImageUrl: text("background_image_url"),
   backgroundBlur: integer("background_blur").default(0),
+  // Video & Contact
+  videoUrl: text("video_url"),
+  whatsappNumber: text("whatsapp_number"),
+  email: text("email"),
+  instagramHandle: text("instagram_handle"),
   // Configurações de seções
   showSections: boolean("show_sections").default(true),
   sectionSettings: jsonb("section_settings").default({}),

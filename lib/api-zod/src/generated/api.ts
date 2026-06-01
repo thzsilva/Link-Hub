@@ -60,7 +60,11 @@ export const UpdateProfileBody = zod.object({
   "customPrimaryColor": zod.string().nullish(),
   "customSecondaryColor": zod.string().nullish(),
   "backgroundImageUrl": zod.string().nullish(),
-  "backgroundBlur": zod.number().optional()
+  "backgroundBlur": zod.number().optional(),
+  "videoUrl": zod.string().nullish(),
+  "whatsappNumber": zod.string().nullish(),
+  "email": zod.string().nullish(),
+  "instagramHandle": zod.string().nullish()
 })
 
 export const UpdateProfileResponse = zod.object({
