@@ -170,7 +170,7 @@ export default function PublicProfileNew() {
                 </motion.h1>
               </div>
 
-              {/* Small social icons over the bottom of the image */}
+              {/* Social icons over the bottom of the image — theme colored */}
               {hasSocials && (
                 <motion.div
                   className="absolute bottom-6 sm:bottom-8 left-0 right-0 flex justify-center gap-4 z-10"
@@ -185,8 +185,9 @@ export default function PublicProfileNew() {
                       target="_blank"
                       rel="noopener noreferrer"
                       title={link.label}
-                      className="w-10 h-10 sm:w-11 sm:h-11 rounded-full border border-white/40 flex items-center justify-center text-white/80 hover:text-white hover:border-white transition-all duration-200 backdrop-blur-sm bg-black/20"
-                      whileHover={{ scale: 1.15 }}
+                      className="w-11 h-11 sm:w-13 sm:h-13 rounded-full flex items-center justify-center text-white transition-all duration-200"
+                      style={{ backgroundColor: customTheme.primary }}
+                      whileHover={{ scale: 1.15, opacity: 0.85 }}
                       whileTap={{ scale: 0.9 }}
                       initial={{ opacity: 0, scale: 0.5 }}
                       animate={{ opacity: 1, scale: 1 }}
@@ -234,8 +235,9 @@ export default function PublicProfileNew() {
                       target="_blank"
                       rel="noopener noreferrer"
                       title={link.label}
-                      className="w-11 h-11 rounded-full border border-white/40 flex items-center justify-center text-white/80 hover:text-white hover:border-white transition-all duration-200"
-                      whileHover={{ scale: 1.15 }}
+                      className="w-11 h-11 sm:w-13 sm:h-13 rounded-full flex items-center justify-center text-white transition-all duration-200"
+                      style={{ backgroundColor: customTheme.primary }}
+                      whileHover={{ scale: 1.15, opacity: 0.85 }}
                       whileTap={{ scale: 0.9 }}
                       initial={{ opacity: 0, scale: 0.5 }}
                       animate={{ opacity: 1, scale: 1 }}
@@ -249,36 +251,6 @@ export default function PublicProfileNew() {
             </div>
           )}
         </motion.section>
-
-        {/* ── Prominent social bar (orange, below hero) ── */}
-        {headerSocialLinks.length >= 3 && (
-          <motion.div
-            className="w-full py-6 sm:py-8 flex justify-center gap-5 border-b border-white/5"
-            initial={{ opacity: 0, y: 10 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.4, delay: 0.1 }}
-          >
-            {headerSocialLinks.map((link: any, i: number) => (
-              <motion.a
-                key={`bar-${link.platform}`}
-                href={link.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                title={link.label}
-                className="w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center text-white transition-all duration-200"
-                style={{ backgroundColor: customTheme.primary || "#f97316" }}
-                whileHover={{ scale: 1.15 }}
-                whileTap={{ scale: 0.9 }}
-                initial={{ opacity: 0, scale: 0 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.3, delay: 0.05 + i * 0.06 }}
-              >
-                {link.icon}
-              </motion.a>
-            ))}
-          </motion.div>
-        )}
 
         {/* Bio Section — appears only once */}
         <BioSection
