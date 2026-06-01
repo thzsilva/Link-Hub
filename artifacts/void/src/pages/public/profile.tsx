@@ -12,6 +12,7 @@ import { DividerSection } from "@/components/public/DividerSection";
 import { VideoSection } from "@/components/public/VideoSection";
 import { GallerySection } from "@/components/public/GallerySection";
 import { ContactSection } from "@/components/public/ContactSection";
+import { HeroNameSection } from "@/components/public/HeroNameSection";
 
 // ---------------------------------------------------------------------------
 // Skeleton
@@ -150,6 +151,12 @@ export default function PublicProfileNew() {
           imageUrl={profile.headerImageUrl ?? undefined}
           title={profile.displayName || profile.username || "Profile"}
           subtitle={profile.bio ? profile.bio.substring(0, 100) + "..." : undefined}
+        />
+
+        {/* Hero Name Section with Social Icons */}
+        <HeroNameSection
+          displayName={profile.displayName || profile.username || "User"}
+          socialLinks={headerSocialLinks as any}
         />
 
         {/* Bio Section */}
