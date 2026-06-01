@@ -144,7 +144,7 @@ export default function PublicProfileNew() {
         theme={customTheme}
       />
 
-      <main className="w-full">
+      <main className="w-full bg-black">
         {/* Hero Image/Divider */}
         <DividerSection
           imageUrl={profile.headerImageUrl ?? undefined}
@@ -186,37 +186,43 @@ export default function PublicProfileNew() {
           </>
         )}
 
-        {/* Gallery Divider & Section */}
+        {/* Gallery Section */}
         {photos && photos.length > 0 && (
-          <>
-            <DividerSection
-              imageUrl={photos[0]?.url}
-              title="Gallery"
-            />
-            <GallerySection
-              photos={(photos as any) || []}
-              username={username}
-              theme={customTheme}
-              onSeeAll={() => (window.location.href = `/?user=${username}&photos=true`)}
-            />
-          </>
+          <motion.section
+            className="w-full py-16 sm:py-24 border-b border-white/5"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.5 }}
+          >
+            <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+              <h2 className="text-3xl sm:text-4xl font-bold uppercase tracking-tighter mb-12">
+                Gallery
+              </h2>
+              <GallerySection
+                photos={(photos as any) || []}
+                username={username}
+                theme={customTheme}
+                onSeeAll={() => (window.location.href = `/?user=${username}&photos=true`)}
+              />
+            </div>
+          </motion.section>
         )}
 
         {/* Events Section */}
         {events && events.length > 0 && (
-          <>
-            <DividerSection
-              title="Próximos Eventos"
-              subtitle={`${events.length} upcoming events`}
-            />
-            <motion.section
-              className="w-full py-12 sm:py-16 border-b border-white/10"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-100px" }}
-              transition={{ duration: 0.6 }}
-            >
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.section
+            className="w-full py-16 sm:py-24 border-b border-white/5"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.5 }}
+          >
+            <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+              <h2 className="text-3xl sm:text-4xl font-bold uppercase tracking-tighter mb-12">
+                Upcoming Events
+              </h2>
+              <div>
                 <div
                   className="grid gap-5"
                   style={{
@@ -313,84 +319,86 @@ export default function PublicProfileNew() {
           </>
         )}
 
-        {/* Links Divider & Section */}
+        {/* Links Section */}
         {regularLinks.length > 0 && (
-          <>
-            <DividerSection
-              title="Connect"
-              subtitle="Find me everywhere"
-            />
-            <motion.section
-              className="w-full py-12 sm:py-16 border-b border-white/10"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-100px" }}
-              transition={{ duration: 0.6 }}
-            >
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <motion.div
-                  className="grid gap-3"
-                  style={{
-                    gridTemplateColumns: `repeat(${Math.min(layoutColumns, regularLinks.length)}, minmax(0, 1fr))`,
-                  }}
-                  initial="hidden"
-                  whileInView="visible"
-                  viewport={{ once: true, margin: "-50px" }}
-                  variants={{
-                    hidden: { opacity: 0 },
-                    visible: {
-                      opacity: 1,
-                      transition: {
-                        staggerChildren: 0.05,
-                        delayChildren: 0.1,
-                      },
+          <motion.section
+            className="w-full py-16 sm:py-24 border-b border-white/5"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.5 }}
+          >
+            <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+              <h2 className="text-3xl sm:text-4xl font-bold uppercase tracking-tighter mb-12">
+                Links
+              </h2>
+              <motion.div
+                className="grid gap-4"
+                style={{
+                  gridTemplateColumns: `repeat(${Math.min(layoutColumns, regularLinks.length)}, minmax(0, 1fr))`,
+                }}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, margin: "-50px" }}
+                variants={{
+                  hidden: { opacity: 0 },
+                  visible: {
+                    opacity: 1,
+                    transition: {
+                      staggerChildren: 0.05,
                     },
-                  }}
-                >
-                  {regularLinks.map((link) => {
-                    const platform = getPlatform(link.icon ?? null);
-                    return (
-                      <motion.div
-                        key={link.id}
-                        variants={{
-                          hidden: { opacity: 0, y: 20 },
-                          visible: { opacity: 1, y: 0, transition: { duration: 0.4 } },
-                        }}
-                        whileHover={{ y: -8 }}
-                      >
-                        <LinkButton
-                          icon={<platform.Icon size={20} />}
-                          title={link.title}
-                          description={link.description || undefined}
-                          accentColor={customTheme.accent}
-                          secondaryColor={customTheme.secondary}
-                          backgroundColor={`${customTheme.secondary}20`}
-                          onClick={() => handleLinkClick(link.id, link.url)}
-                        />
-                      </motion.div>
-                    );
-                  })}
-                </motion.div>
-              </div>
-            </motion.section>
-          </>
+                  },
+                }}
+              >
+                {regularLinks.map((link) => {
+                  const platform = getPlatform(link.icon ?? null);
+                  return (
+                    <motion.button
+                      key={link.id}
+                      onClick={() => handleLinkClick(link.id, link.url)}
+                      variants={{
+                        hidden: { opacity: 0, y: 15 },
+                        visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
+                      }}
+                      className="p-6 border border-white/10 rounded-lg hover:border-white/30 hover:bg-white/5 transition-all duration-300 text-left group"
+                    >
+                      <div className="flex items-start gap-4">
+                        <div className="p-2 rounded-lg bg-white/5 group-hover:bg-white/10 transition-all">
+                          <platform.Icon size={24} className="text-white/70" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-white group-hover:text-white/90 transition-colors">
+                            {link.title}
+                          </h3>
+                          {link.description && (
+                            <p className="text-sm text-white/50 mt-1 line-clamp-2">
+                              {link.description}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </motion.button>
+                  );
+                })}
+              </motion.div>
+            </div>
+          </motion.section>
         )}
 
-        {/* Spotify Embeds Divider & Section */}
+        {/* Spotify Embeds Section */}
         {spotifyLinks.length > 0 && (
-          <>
-            <DividerSection
-              title="Playlists"
-              subtitle="My favorite tracks"
-            />
-            <motion.section
-              className="w-full py-12 sm:py-16 border-b border-white/10"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-100px" }}
-              transition={{ duration: 0.6 }}
-            >
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+          <motion.section
+            className="w-full py-16 sm:py-24 border-b border-white/5"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.5 }}
+          >
+            <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+              <h2 className="text-3xl sm:text-4xl font-bold uppercase tracking-tighter mb-12">
+                Playlists
+              </h2>
+              <div className="space-y-8">
                 {spotifyLinks.map((link, index) => {
                   const embedUrl = toSpotifyEmbedUrl(link.url);
                   if (!embedUrl) return null;
@@ -422,8 +430,8 @@ export default function PublicProfileNew() {
                   );
                 })}
               </div>
-            </motion.section>
-          </>
+            </div>
+          </motion.section>
         )}
 
         {/* Contact Divider & Section */}
@@ -457,97 +465,53 @@ export default function PublicProfileNew() {
           }}
         />
 
-        {/* CTA & Footer Section */}
-        <motion.div
-          className="w-full py-20 sm:py-32 relative overflow-hidden border-t border-white/5"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          viewport={{ once: true, margin: "-100px" }}
+        {/* Footer Section */}
+        <motion.footer
+          className="w-full py-12 sm:py-16 border-t border-white/5"
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
         >
-          {/* Background decorative elements */}
-          <div className="absolute top-0 right-0 w-96 h-96 rounded-full blur-3xl opacity-10" style={{ backgroundColor: customTheme.primary }} />
-          <div className="absolute bottom-0 left-0 w-96 h-96 rounded-full blur-3xl opacity-10" style={{ backgroundColor: customTheme.secondary }} />
-
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 space-y-12 text-center">
-            {/* CTA Section */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              whileInView={{ opacity: 1, scale: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.1 }}
-              viewport={{ once: true }}
-              className="space-y-6"
-            >
-              <h2 className="text-3xl sm:text-4xl font-black uppercase tracking-tighter">
-                <span className="bg-gradient-to-r from-white via-white to-white/70 bg-clip-text text-transparent">
-                  Ready to build your hub?
-                </span>
-              </h2>
-              <p className="text-white/60 text-lg font-light max-w-2xl mx-auto">
-                Join creators who are sharing their story, connecting with audiences, and building their brand all in one place.
-              </p>
-              <motion.a
-                href="/"
-                className="inline-flex items-center justify-center gap-3 px-10 py-5 rounded-2xl text-sm uppercase tracking-widest font-bold transition-all relative group"
-                style={{
-                  background: `linear-gradient(135deg, ${customTheme.primary}, ${customTheme.secondary})`,
-                  color: "white",
-                }}
-                whileHover={{
-                  scale: 1.08,
-                }}
-                whileTap={{ scale: 0.95 }}
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center space-y-6">
+              {/* Main CTA */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5 }}
+                className="space-y-4"
               >
-                <motion.div
-                  className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-xl -z-10"
-                  style={{ background: `linear-gradient(135deg, ${customTheme.primary}60, ${customTheme.secondary}60)` }}
-                />
-                <ExternalLink size={18} />
-                Get Started Today
-              </motion.a>
-            </motion.div>
-
-            {/* Divider */}
-            <motion.div
-              className="h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"
-              initial={{ scaleX: 0 }}
-              whileInView={{ scaleX: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-            />
-
-            {/* Footer */}
-            <motion.div
-              className="space-y-4"
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
-              viewport={{ once: true }}
-            >
-              <div className="flex items-center justify-center gap-2">
-                <span className="text-white/40 text-xs font-light uppercase tracking-widest">Powered by</span>
-                <span
-                  className="font-bold uppercase tracking-tight"
-                  style={{ color: customTheme.primary }}
+                <p className="text-sm uppercase tracking-widest text-white/60">
+                  Create your professional hub
+                </p>
+                <motion.a
+                  href="/"
+                  className="inline-block px-8 py-3 border border-white/30 rounded-lg hover:border-white/60 hover:bg-white/5 transition-all duration-300 text-sm uppercase tracking-widest font-semibold"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                 >
-                  hubvoid
-                </span>
-              </div>
+                  Start Now
+                </motion.a>
+              </motion.div>
 
-              <nav className="flex items-center justify-center gap-6 text-xs text-white/40 font-light">
-                <a href="/" className="hover:text-white/70 transition-colors duration-300">Home</a>
-                <span className="text-white/20">•</span>
-                <a href="/" className="hover:text-white/70 transition-colors duration-300">Privacy Policy</a>
-                <span className="text-white/20">•</span>
-                <a href="/" className="hover:text-white/70 transition-colors duration-300">Terms of Service</a>
+              {/* Footer Links */}
+              <nav className="flex items-center justify-center gap-6 text-xs text-white/40 pt-4">
+                <a href="/" className="hover:text-white/70 transition-colors">Home</a>
+                <span>•</span>
+                <a href="/" className="hover:text-white/70 transition-colors">Privacy</a>
+                <span>•</span>
+                <a href="/" className="hover:text-white/70 transition-colors">Terms</a>
               </nav>
 
-              <p className="text-xs text-white/20 font-light pt-2">
-                © {new Date().getFullYear()} hubvoid. All rights reserved.
+              {/* Copyright */}
+              <p className="text-xs text-white/30 font-light">
+                © {new Date().getFullYear()} hubvoid
               </p>
-            </motion.div>
+            </div>
           </div>
-        </motion.div>
+        </motion.footer>
       </main>
     </div>
   );

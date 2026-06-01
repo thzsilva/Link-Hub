@@ -21,55 +21,42 @@ export function DividerSection({
       initial={{ opacity: 0 }}
       whileInView={{ opacity: 1 }}
       viewport={{ once: true }}
-      transition={{ duration: 0.6 }}
+      transition={{ duration: 0.5 }}
     >
       {imageUrl ? (
-        <div className="relative h-72 sm:h-96 lg:h-[500px] w-full overflow-hidden group">
-          {/* Image with enhanced effects */}
+        <div className="relative w-full aspect-video sm:aspect-auto sm:h-96 lg:h-[500px] overflow-hidden group">
+          {/* Image with subtle zoom on hover */}
           <img
             src={imageUrl}
             alt={title || "Divider"}
-            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             loading="lazy"
           />
 
-          {/* Multiple gradient overlays for premium effect */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/40 to-black/70" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+          {/* Subtle dark overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
 
-          {/* Animated accent light */}
-          <motion.div
-            className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-b from-white/5 to-transparent rounded-full blur-3xl"
-            animate={{
-              y: [0, 20, 0],
-            }}
-            transition={{
-              duration: 6,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-          />
-
+          {/* Text overlay if present */}
           {(title || subtitle) && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4 z-10">
+            <div className="absolute inset-0 flex flex-col items-center justify-end px-4 pb-12 sm:pb-16 lg:pb-20 text-center z-10">
               {title && (
                 <motion.h2
-                  className="text-4xl sm:text-5xl lg:text-6xl font-black uppercase tracking-tighter text-white drop-shadow-2xl"
+                  className="text-3xl sm:text-4xl lg:text-5xl font-bold uppercase tracking-tight text-white drop-shadow-lg"
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  transition={{ duration: 0.6, delay: 0.1 }}
+                  transition={{ duration: 0.5, delay: 0.1 }}
                 >
                   {title}
                 </motion.h2>
               )}
               {subtitle && (
                 <motion.p
-                  className="text-sm sm:text-lg text-white/70 mt-4 drop-shadow-lg max-w-2xl font-light"
+                  className="text-sm sm:text-base text-white/80 mt-3 drop-shadow-md max-w-2xl font-light"
                   initial={{ opacity: 0, y: 10 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  transition={{ duration: 0.6, delay: 0.2 }}
+                  transition={{ duration: 0.5, delay: 0.2 }}
                 >
                   {subtitle}
                 </motion.p>
@@ -78,36 +65,29 @@ export function DividerSection({
           )}
         </div>
       ) : (
-        <div className="py-16 sm:py-20 lg:py-24 text-center relative overflow-hidden">
-          {/* Background gradient */}
-          <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent" />
-
-          <div className="relative z-10">
-            {title && (
-              <motion.h2
-                className="text-3xl sm:text-4xl lg:text-5xl font-black uppercase tracking-tighter mb-4"
-                initial={{ opacity: 0, y: 10 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5 }}
-              >
-                <span className="bg-gradient-to-r from-white via-white to-white/70 bg-clip-text text-transparent">
-                  {title}
-                </span>
-              </motion.h2>
-            )}
-            {subtitle && (
-              <motion.p
-                className="text-white/60 text-lg font-light"
-                initial={{ opacity: 0, y: 10 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: 0.1 }}
-              >
-                {subtitle}
-              </motion.p>
-            )}
-          </div>
+        <div className="py-16 sm:py-20 text-center">
+          {title && (
+            <motion.h2
+              className="text-3xl sm:text-4xl font-bold uppercase tracking-tight"
+              initial={{ opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+            >
+              {title}
+            </motion.h2>
+          )}
+          {subtitle && (
+            <motion.p
+              className="text-white/60 mt-3 font-light"
+              initial={{ opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+            >
+              {subtitle}
+            </motion.p>
+          )}
         </div>
       )}
     </motion.section>
