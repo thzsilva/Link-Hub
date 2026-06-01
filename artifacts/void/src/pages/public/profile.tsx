@@ -315,8 +315,8 @@ export default function PublicProfileNew() {
                   ))}
                 </div>
               </div>
+            </div>
             </motion.section>
-          </>
         )}
 
         {/* Links Section */}
