@@ -459,62 +459,91 @@ export default function PublicProfileNew() {
 
         {/* CTA & Footer Section */}
         <motion.div
-          className="w-full py-16 sm:py-20 text-center border-t border-white/10"
+          className="w-full py-20 sm:py-32 relative overflow-hidden border-t border-white/5"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
           viewport={{ once: true, margin: "-100px" }}
         >
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-            {/* CTA Button */}
+          {/* Background decorative elements */}
+          <div className="absolute top-0 right-0 w-96 h-96 rounded-full blur-3xl opacity-10" style={{ backgroundColor: customTheme.primary }} />
+          <div className="absolute bottom-0 left-0 w-96 h-96 rounded-full blur-3xl opacity-10" style={{ backgroundColor: customTheme.secondary }} />
+
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 space-y-12 text-center">
+            {/* CTA Section */}
             <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              whileInView={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.1 }}
               viewport={{ once: true }}
+              className="space-y-6"
             >
-              <p className="text-sm text-white/60 uppercase tracking-widest mb-6">
-                Ready to share your story?
+              <h2 className="text-3xl sm:text-4xl font-black uppercase tracking-tighter">
+                <span className="bg-gradient-to-r from-white via-white to-white/70 bg-clip-text text-transparent">
+                  Ready to build your hub?
+                </span>
+              </h2>
+              <p className="text-white/60 text-lg font-light max-w-2xl mx-auto">
+                Join creators who are sharing their story, connecting with audiences, and building their brand all in one place.
               </p>
               <motion.a
                 href="/"
-                className="inline-flex items-center justify-center gap-3 px-8 py-4 rounded-lg text-sm uppercase tracking-widest font-bold border-2 transition-all"
+                className="inline-flex items-center justify-center gap-3 px-10 py-5 rounded-2xl text-sm uppercase tracking-widest font-bold transition-all relative group"
                 style={{
-                  borderColor: customTheme.primary,
+                  background: `linear-gradient(135deg, ${customTheme.primary}, ${customTheme.secondary})`,
                   color: "white",
-                  backgroundColor: customTheme.primary,
                 }}
                 whileHover={{
-                  scale: 1.05,
-                  boxShadow: `0 20px 40px ${customTheme.primary}40`,
+                  scale: 1.08,
                 }}
                 whileTap={{ scale: 0.95 }}
               >
-                <ExternalLink size={16} />
-                Create Your Hub
+                <motion.div
+                  className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-xl -z-10"
+                  style={{ background: `linear-gradient(135deg, ${customTheme.primary}60, ${customTheme.secondary}60)` }}
+                />
+                <ExternalLink size={18} />
+                Get Started Today
               </motion.a>
             </motion.div>
 
+            {/* Divider */}
+            <motion.div
+              className="h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"
+              initial={{ scaleX: 0 }}
+              whileInView={{ scaleX: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+            />
+
             {/* Footer */}
             <motion.div
-              className="pt-8 space-y-4"
+              className="space-y-4"
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
               viewport={{ once: true }}
             >
-              <p className="text-xs text-white/40 font-light tracking-widest uppercase">
-                Made with <span style={{ color: customTheme.secondary }}>✨</span> by hubvoid
-              </p>
-              <div className="flex items-center justify-center gap-4 text-xs text-white/30 font-light">
-                <a href="/" className="hover:text-white/50 transition-colors">Home</a>
-                <span>•</span>
-                <a href="/" className="hover:text-white/50 transition-colors">Privacy</a>
-                <span>•</span>
-                <a href="/" className="hover:text-white/50 transition-colors">Terms</a>
+              <div className="flex items-center justify-center gap-2">
+                <span className="text-white/40 text-xs font-light uppercase tracking-widest">Powered by</span>
+                <span
+                  className="font-bold uppercase tracking-tight"
+                  style={{ color: customTheme.primary }}
+                >
+                  hubvoid
+                </span>
               </div>
-              <p className="text-xs text-white/20 font-light">
-                © {new Date().getFullYear()} hubvoid • Your professional hub in one link
+
+              <nav className="flex items-center justify-center gap-6 text-xs text-white/40 font-light">
+                <a href="/" className="hover:text-white/70 transition-colors duration-300">Home</a>
+                <span className="text-white/20">•</span>
+                <a href="/" className="hover:text-white/70 transition-colors duration-300">Privacy Policy</a>
+                <span className="text-white/20">•</span>
+                <a href="/" className="hover:text-white/70 transition-colors duration-300">Terms of Service</a>
+              </nav>
+
+              <p className="text-xs text-white/20 font-light pt-2">
+                © {new Date().getFullYear()} hubvoid. All rights reserved.
               </p>
             </motion.div>
           </div>
