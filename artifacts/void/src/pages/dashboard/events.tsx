@@ -29,6 +29,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 
 const EVENTS_KEY = ["/api/events"];
+const MONETIZATION_KEY = ["/api/dashboard/monetization"];
 
 type EventItem = {
   id: string;
@@ -442,6 +443,7 @@ export default function DashboardEvents() {
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: EVENTS_KEY });
+      queryClient.invalidateQueries({ queryKey: MONETIZATION_KEY });
       setDialogOpen(false);
       setForm(emptyForm);
       toast({ title: "Evento criado!" });
@@ -470,6 +472,7 @@ export default function DashboardEvents() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: EVENTS_KEY });
+      queryClient.invalidateQueries({ queryKey: MONETIZATION_KEY });
       setDialogOpen(false);
       setEditingEvent(null);
       setForm(emptyForm);
@@ -479,7 +482,11 @@ export default function DashboardEvents() {
 
   const deleteEvent = useMutation({
     mutationFn: (id: string) => customFetch(`/api/events/${id}`, { method: "DELETE" }),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: EVENTS_KEY }); toast({ title: "Evento removido." }); },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: EVENTS_KEY });
+      queryClient.invalidateQueries({ queryKey: MONETIZATION_KEY });
+      toast({ title: "Evento removido." });
+    },
   });
 
   const toggleVisibility = (event: EventItem) => {
