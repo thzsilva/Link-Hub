@@ -212,7 +212,7 @@ router.get("/events/public/:username", async (req, res): Promise<void> => {
     .select()
     .from(eventsTable)
     .where(and(eq(eventsTable.profileId, profile.id), eq(eventsTable.isVisible, true)))
-    .orderBy(eventsTable.eventDate);
+    .orderBy(eventsTable.position);
 
   res.json(events);
   } catch {

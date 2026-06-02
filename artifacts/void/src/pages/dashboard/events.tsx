@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { customFetch } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
@@ -6,10 +6,27 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Trash2, Edit2, Plus, CalendarDays, MapPin, ExternalLink, ImageIcon, Upload, Link2, Loader2 } from "lucide-react";
+import { Trash2, Edit2, Plus, CalendarDays, MapPin, ExternalLink, ImageIcon, Upload, Link2, Loader2, GripVertical, DollarSign } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import ImageCropModal from "@/components/ImageCropModal";
 import { uploadImage } from "@/lib/api-base";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 const EVENTS_KEY = ["/api/events"];
 
@@ -54,6 +71,13 @@ const emptyForm: EventFormData = {
   price: "",
   isVisible: true,
 };
+
+function formatCurrency(value: number | string | null | undefined): string {
+  if (value == null || value === "") return "";
+  const num = typeof value === "string" ? parseFloat(value) : value;
+  if (Number.isNaN(num)) return "";
+  return num.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
 
 function formatEventDate(dateStr: string | null | undefined): string {
   if (!dateStr) return "";
@@ -248,6 +272,103 @@ function ImagePicker({
 }
 
 // ---------------------------------------------------------------------------
+// Sortable event card (drag-and-drop)
+// ---------------------------------------------------------------------------
+
+function SortableEventCard({
+  event,
+  onToggleVisibility,
+  onEdit,
+  onDelete,
+}: {
+  event: EventItem;
+  onToggleVisibility: (event: EventItem) => void;
+  onEdit: (event: EventItem) => void;
+  onDelete: (id: string) => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: event.id,
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 10 : 1,
+  };
+
+  return (
+    <Card
+      ref={setNodeRef}
+      style={style}
+      className={`rounded-none bg-black border-border overflow-hidden ${isDragging ? "opacity-50" : ""}`}
+    >
+      <div className="flex">
+        {/* Drag handle */}
+        <button
+          {...attributes}
+          {...listeners}
+          className="cursor-grab active:cursor-grabbing hover:text-white text-muted-foreground px-3 flex items-center flex-shrink-0 touch-none"
+          aria-label="Arrastar para reordenar"
+        >
+          <GripVertical size={20} />
+        </button>
+
+        {/* Image thumbnail */}
+        {event.imageUrl && (
+          <div className="w-24 md:w-32 flex-shrink-0 relative">
+            <img src={event.imageUrl} alt={event.title} className="absolute inset-0 w-full h-full object-cover" />
+          </div>
+        )}
+        <CardContent className="p-4 flex items-start gap-3 flex-1 min-w-0">
+          <div className="flex-1 space-y-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="font-bold text-base leading-tight">{event.title}</h3>
+              {!event.isVisible && (
+                <span className="text-[9px] uppercase tracking-widest text-muted-foreground border border-border px-1 py-0.5">Oculto</span>
+              )}
+            </div>
+            {event.eventDate && (
+              <div className="flex items-center gap-1.5 text-muted-foreground text-xs font-mono">
+                <CalendarDays size={11} /> {formatEventDate(event.eventDate)}
+              </div>
+            )}
+            {(event.street || event.city || event.state) && (
+              <div className="flex items-center gap-1.5 text-muted-foreground text-xs font-mono">
+                <MapPin size={11} />
+                {[event.street, event.city && `${event.city}${event.state ? ` - ${event.state}` : ""}`].filter(Boolean).join(", ")}
+              </div>
+            )}
+            {event.price != null && (
+              <div className="flex items-center gap-1.5 text-green-400/80 text-xs font-mono">
+                <DollarSign size={11} /> {formatCurrency(event.price)}
+              </div>
+            )}
+            {event.description && (
+              <p className="text-muted-foreground text-xs font-mono truncate">{event.description}</p>
+            )}
+            {event.ticketUrl && (
+              <a href={event.ticketUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[10px] uppercase tracking-widest text-white/50 hover:text-white">
+                <ExternalLink size={10} /> Ingressos
+              </a>
+            )}
+          </div>
+
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            <Switch checked={event.isVisible} onCheckedChange={() => onToggleVisibility(event)} className="data-[state=checked]:bg-white scale-75" />
+            <Button variant="ghost" size="icon" onClick={() => onEdit(event)} className="text-muted-foreground hover:text-white rounded-none w-8 h-8">
+              <Edit2 size={14} />
+            </Button>
+            <Button variant="ghost" size="icon" onClick={() => onDelete(event.id)} className="text-muted-foreground hover:text-red-500 rounded-none w-8 h-8">
+              <Trash2 size={14} />
+            </Button>
+          </div>
+        </CardContent>
+      </div>
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Main Page
 // ---------------------------------------------------------------------------
 
@@ -264,6 +385,44 @@ export default function DashboardEvents() {
       return await customFetch<EventItem[]>("/api/events");
     },
   });
+
+  // Local list for drag-and-drop ordering
+  const [items, setItems] = useState<EventItem[]>([]);
+
+  // Keep local list in sync with server data
+  useEffect(() => {
+    if (events) setItems(events);
+  }, [events]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  const reorderEvents = useMutation({
+    mutationFn: (ids: string[]) =>
+      customFetch("/api/events/reorder", {
+        method: "PUT",
+        body: JSON.stringify({ ids }),
+      }),
+    onError: (e: any) => {
+      toast({ title: e.message || "Erro ao reordenar", variant: "destructive" });
+      queryClient.invalidateQueries({ queryKey: EVENTS_KEY });
+    },
+  });
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    setItems((current) => {
+      const oldIndex = current.findIndex((i) => i.id === active.id);
+      const newIndex = current.findIndex((i) => i.id === over.id);
+      if (oldIndex === -1 || newIndex === -1) return current;
+      const reordered = arrayMove(current, oldIndex, newIndex);
+      reorderEvents.mutate(reordered.map((i) => i.id));
+      return reordered;
+    });
+  };
 
   const createEvent = useMutation({
     mutationFn: (data: EventFormData) =>
@@ -404,63 +563,33 @@ export default function DashboardEvents() {
         </Button>
       </div>
 
+      {items.length > 1 && (
+        <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-mono -mt-4">
+          Arraste pelo ícone <GripVertical size={11} className="inline -mt-0.5" /> para definir a ordem de exibição no perfil.
+        </p>
+      )}
+
       <div className="space-y-4">
-        {!events || events.length === 0 ? (
+        {items.length === 0 ? (
           <div className="p-12 border border-border text-center text-muted-foreground font-mono">
             Nenhum evento. Adicione shows, lançamentos ou datas especiais.
           </div>
         ) : (
-          events.map((event) => (
-            <Card key={event.id} className="rounded-none bg-black border-border overflow-hidden">
-              <div className="flex">
-                {/* Image thumbnail */}
-                {event.imageUrl && (
-                  <div className="w-24 md:w-32 flex-shrink-0 relative">
-                    <img src={event.imageUrl} alt={event.title} className="absolute inset-0 w-full h-full object-cover" />
-                  </div>
-                )}
-                <CardContent className="p-4 flex items-start gap-3 flex-1 min-w-0">
-                  <div className="flex-1 space-y-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="font-bold text-base leading-tight">{event.title}</h3>
-                      {!event.isVisible && (
-                        <span className="text-[9px] uppercase tracking-widest text-muted-foreground border border-border px-1 py-0.5">Oculto</span>
-                      )}
-                    </div>
-                    {event.eventDate && (
-                      <div className="flex items-center gap-1.5 text-muted-foreground text-xs font-mono">
-                        <CalendarDays size={11} /> {formatEventDate(event.eventDate)}
-                      </div>
-                    )}
-                    {(event.street || event.city || event.state) && (
-                      <div className="flex items-center gap-1.5 text-muted-foreground text-xs font-mono">
-                        <MapPin size={11} />
-                        {[event.street, event.city && `${event.city}${event.state ? ` - ${event.state}` : ""}`].filter(Boolean).join(", ")}
-                      </div>
-                    )}
-                    {event.description && (
-                      <p className="text-muted-foreground text-xs font-mono truncate">{event.description}</p>
-                    )}
-                    {event.ticketUrl && (
-                      <a href={event.ticketUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[10px] uppercase tracking-widest text-white/50 hover:text-white">
-                        <ExternalLink size={10} /> Ingressos
-                      </a>
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-1.5 flex-shrink-0">
-                    <Switch checked={event.isVisible} onCheckedChange={() => toggleVisibility(event)} className="data-[state=checked]:bg-white scale-75" />
-                    <Button variant="ghost" size="icon" onClick={() => openEdit(event)} className="text-muted-foreground hover:text-white rounded-none w-8 h-8">
-                      <Edit2 size={14} />
-                    </Button>
-                    <Button variant="ghost" size="icon" onClick={() => deleteEvent.mutate(event.id)} className="text-muted-foreground hover:text-red-500 rounded-none w-8 h-8">
-                      <Trash2 size={14} />
-                    </Button>
-                  </div>
-                </CardContent>
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={items.map((i) => i.id)} strategy={verticalListSortingStrategy}>
+              <div className="space-y-4">
+                {items.map((event) => (
+                  <SortableEventCard
+                    key={event.id}
+                    event={event}
+                    onToggleVisibility={toggleVisibility}
+                    onEdit={openEdit}
+                    onDelete={(id) => deleteEvent.mutate(id)}
+                  />
+                ))}
               </div>
-            </Card>
-          ))
+            </SortableContext>
+          </DndContext>
         )}
       </div>
 
