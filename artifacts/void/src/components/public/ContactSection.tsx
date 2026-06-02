@@ -57,39 +57,35 @@ export function ContactSection({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.name.trim() || !formData.email.trim() || !formData.message.trim()) {
-      setError("Preencha todos os campos");
+    if (!formData.name.trim() || !formData.message.trim()) {
+      setError("Preencha seu nome e a mensagem");
       return;
     }
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      setError("Insira um endereço de email válido");
+    if (!contact.whatsapp) {
+      setError("WhatsApp não configurado para este perfil");
       return;
     }
 
-    setLoading(true);
-    setStatus("loading");
     setError("");
 
-    try {
-      if (onSubmit) {
-        await onSubmit(formData);
-      } else {
-        const message = `Nome: ${formData.name}\nEmail: ${formData.email}\nMensagem: ${formData.message}`;
-        await navigator.clipboard.writeText(message);
-      }
+    // Build the WhatsApp message and open the chat with it pre-filled
+    const lines = [
+      `Olá ${displayName}!`,
+      "",
+      `Meu nome é ${formData.name}.`,
+      formData.email.trim() ? `Email: ${formData.email.trim()}` : null,
+      "",
+      formData.message.trim(),
+    ].filter((l) => l !== null) as string[];
 
-      setStatus("success");
-      setFormData({ name: "", email: "", message: "" });
-      setTimeout(() => setStatus("idle"), 3000);
-    } catch (err) {
-      console.error("Contact form error:", err);
-      setStatus("error");
-      const errorMessage = err instanceof Error ? err.message : "Não foi possível enviar a mensagem. Tente novamente.";
-      setError(errorMessage);
-    } finally {
-      setLoading(false);
-    }
+    const waLink = getWhatsAppLink(contact.whatsapp, lines.join("\n"));
+
+    window.open(waLink, "_blank", "noopener,noreferrer");
+
+    setStatus("success");
+    setFormData({ name: "", email: "", message: "" });
+    setTimeout(() => setStatus("idle"), 3000);
   };
 
   const contactButtons = [
@@ -174,7 +170,7 @@ export function ContactSection({
         {/* Contact form */}
         <motion.form
           onSubmit={handleSubmit}
-          className="max-w-2xl space-y-7 p-8 sm:p-10 border border-white/15 rounded-2xl"
+          className="max-w-2xl mx-auto space-y-7 p-8 sm:p-10 border border-white/15 rounded-2xl"
           style={{ backgroundColor: "rgba(255, 255, 255, 0.03)" }}
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -185,7 +181,7 @@ export function ContactSection({
             <h3 className="text-lg sm:text-xl uppercase tracking-wider font-bold text-white">
               Enviar Mensagem
             </h3>
-            <p className="text-white/50 text-sm mt-2">Retornarei assim que possível</p>
+            <p className="text-white/50 text-sm mt-2">Sua mensagem abrirá direto no WhatsApp</p>
           </div>
 
           {/* Name */}
@@ -206,7 +202,7 @@ export function ContactSection({
           {/* Email */}
           <div>
             <label className="block text-xs uppercase tracking-[0.15em] text-white/70 mb-3 font-medium">
-              Endereço de Email
+              Endereço de Email <span className="text-white/40 normal-case tracking-normal">(opcional)</span>
             </label>
             <input
               type="email"
@@ -256,35 +252,22 @@ export function ContactSection({
               animate={{ opacity: 1, y: 0 }}
             >
               <Check size={18} className="flex-shrink-0" />
-              <span>Mensagem enviada com sucesso! Retornarei em breve.</span>
+              <span>Abrindo o WhatsApp com sua mensagem...</span>
             </motion.div>
           )}
 
           {/* Submit */}
           <motion.button
             type="submit"
-            disabled={loading}
             className="w-full py-4 rounded-xl font-bold uppercase tracking-wider text-sm transition-all flex items-center justify-center gap-2 text-white"
             style={{
               backgroundColor: theme.primary,
-              opacity: loading ? 0.7 : 1,
             }}
-            whileHover={{ y: loading ? 0 : -2, transition: { duration: 0.2 } }}
+            whileHover={{ y: -2, transition: { duration: 0.2 } }}
             whileTap={{ scale: 0.98 }}
           >
-            {loading ? (
-              <>
-                <Loader2 size={18} className="animate-spin" />
-                <span>Enviando...</span>
-              </>
-            ) : status === "success" ? (
-              <>
-                <Check size={18} />
-                <span>Mensagem Enviada!</span>
-              </>
-            ) : (
-              "Enviar Mensagem"
-            )}
+            <MessageCircle size={18} />
+            <span>Enviar pelo WhatsApp</span>
           </motion.button>
         </motion.form>
       </div>
