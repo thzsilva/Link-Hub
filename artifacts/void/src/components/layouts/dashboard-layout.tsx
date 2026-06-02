@@ -45,7 +45,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <h2 className="text-2xl font-black tracking-tighter bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">hubvoid</h2>
+          <div className="flex items-center gap-2.5">
+            <img src="/logo.svg" alt="hubvoid" className="w-8 h-8 rounded-lg" />
+            <h2 className="text-2xl font-black tracking-tighter bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">hubvoid</h2>
+          </div>
           <p className="text-xs text-muted-foreground uppercase tracking-widest mt-1">Creator Studio</p>
         </motion.div>
 

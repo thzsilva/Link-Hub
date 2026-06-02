@@ -40,12 +40,15 @@ export default function Home() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
       >
-        <motion.h1
-          className="text-2xl sm:text-3xl font-black tracking-tighter bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent"
+        <motion.div
+          className="flex items-center gap-3"
           whileHover={{ scale: 1.05 }}
         >
-          hubvoid
-        </motion.h1>
+          <img src="/logo.svg" alt="hubvoid" className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl" />
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tighter bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+            hubvoid
+          </h1>
+        </motion.div>
 
         <motion.div
           className="flex gap-3 sm:gap-4"
