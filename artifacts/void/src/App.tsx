@@ -8,6 +8,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import { setAuthTokenGetter } from "@workspace/api-client-react";
+import { setUploadTokenGetter } from "@/lib/api-base";
 import PermissionGate from "@/components/PermissionGate";
 
 import Home from "@/pages/home";
@@ -108,7 +109,7 @@ function ClerkAuthSetup() {
 
   useEffect(() => {
     // Configure the API client to use Clerk's session token
-    setAuthTokenGetter(async () => {
+    const tokenGetter = async () => {
       try {
         const token = await getToken();
         if (!token) {
@@ -124,7 +125,10 @@ function ClerkAuthSetup() {
         console.error('Detalhes:', (error as any)?.message);
         return null;
       }
-    });
+    };
+    setAuthTokenGetter(tokenGetter);
+    // Same getter for raw fetch() uploads (FormData) that bypass customFetch
+    setUploadTokenGetter(tokenGetter);
   }, [getToken]);
 
   return null;

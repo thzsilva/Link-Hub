@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ColorPickerEnhanced } from "@/components/ColorPickerEnhanced";
 import { ThemePreview } from "@/components/ThemePreview";
 import ImageCropModal from "@/components/ImageCropModal";
+import { uploadImage } from "@/lib/api-base";
 
 async function updateProfileCustomization(data: {
   themeId?: string;
@@ -265,25 +266,7 @@ export default function DashboardCustomization() {
       const response = await fetch(croppedImageUrl);
       const blob = await response.blob();
 
-      const fd = new FormData();
-      fd.append("file", blob, "avatar.jpg");
-
-      const res = await fetch("/api/photos/upload", { method: "POST", body: fd });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        console.error("Upload error:", err);
-        toast({ title: err.error || "Erro no upload", variant: "destructive" });
-        setAvatarPreview(profile?.avatarUrl || "");
-        return;
-      }
-
-      const data = await res.json();
-      const { url } = data;
-      if (!url) {
-        toast({ title: "Erro: URL não retornada do servidor", variant: "destructive" });
-        setAvatarPreview(profile?.avatarUrl || "");
-        return;
-      }
+      const url = await uploadImage(blob, "avatar.jpg");
 
       setAvatarPreview(url);
 
@@ -303,9 +286,9 @@ export default function DashboardCustomization() {
           },
         }
       );
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro no upload:", error);
-      toast({ title: "Falha no upload.", variant: "destructive" });
+      toast({ title: error?.message || "Falha no upload.", variant: "destructive" });
       setAvatarPreview(profile?.avatarUrl || "");
     } finally {
       setIsUploadingAvatar(false);
@@ -325,24 +308,7 @@ export default function DashboardCustomization() {
       const response = await fetch(croppedImageUrl);
       const blob = await response.blob();
 
-      const fd = new FormData();
-      fd.append("file", blob, "banner.jpg");
-
-      const res = await fetch("/api/photos/upload", { method: "POST", body: fd });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        toast({ title: err.error || "Erro no upload", variant: "destructive" });
-        setBannerPreview(profile?.headerImageUrl || "");
-        return;
-      }
-
-      const data = await res.json();
-      const { url } = data;
-      if (!url) {
-        toast({ title: "Erro: URL não retornada do servidor", variant: "destructive" });
-        setBannerPreview(profile?.headerImageUrl || "");
-        return;
-      }
+      const url = await uploadImage(blob, "banner.jpg");
 
       setBannerPreview(url);
 
@@ -355,9 +321,9 @@ export default function DashboardCustomization() {
         setBannerPreview(profile?.headerImageUrl || "");
         toast({ title: `Erro ao salvar: ${error.message || "desconhecido"}`, variant: "destructive" });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro no upload:", error);
-      toast({ title: "Falha no upload.", variant: "destructive" });
+      toast({ title: error?.message || "Falha no upload.", variant: "destructive" });
       setBannerPreview(profile?.headerImageUrl || "");
     } finally {
       setIsUploadingBanner(false);

@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Trash2, Edit2, Plus, CalendarDays, MapPin, ExternalLink, ImageIcon, Upload, Link2, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import ImageCropModal from "@/components/ImageCropModal";
+import { uploadImage } from "@/lib/api-base";
 
 const EVENTS_KEY = ["/api/events"];
 
@@ -114,43 +115,17 @@ function ImagePicker({
       const response = await fetch(croppedImageUrl);
       const blob = await response.blob();
 
-      // Create FormData and upload
-      const fd = new FormData();
-      fd.append("file", blob, "event-image.jpg");
-
-      const uploadRes = await fetch("/api/photos/upload", {
-        method: "POST",
-        body: fd
-      });
-
-      if (!uploadRes.ok) {
-        const err = await uploadRes.json().catch(() => ({ error: "Erro no upload" }));
-        toast({
-          title: err.error || "Erro no upload",
-          variant: "destructive"
-        });
-        setPreview(value || null);
-        return;
-      }
-
-      const { url } = await uploadRes.json();
-      if (!url) {
-        toast({
-          title: "Erro: servidor não retornou URL",
-          variant: "destructive"
-        });
-        return;
-      }
+      const url = await uploadImage(blob, "event-image.jpg");
 
       // Update preview and parent
       setPreview(url);
       setUrlInput(url);
       onChange(url);
       toast({ title: "✓ Imagem do evento salva!" });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao processar imagem:", error);
       toast({
-        title: "Falha no upload. Tente novamente.",
+        title: error?.message || "Falha no upload. Tente novamente.",
         variant: "destructive"
       });
       setPreview(value || null);

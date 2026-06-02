@@ -1,4 +1,4 @@
-import { pgTable, text, boolean, integer, timestamp, uuid } from "drizzle-orm/pg-core";
+import { pgTable, text, boolean, integer, timestamp, uuid, numeric } from "drizzle-orm/pg-core";
 import { profilesTable } from "./profiles";
 
 export const eventsTable = pgTable("events", {
@@ -12,6 +12,7 @@ export const eventsTable = pgTable("events", {
   state: text("state"),
   ticketUrl: text("ticket_url"),
   imageUrl: text("image_url"),
+  price: numeric("price", { precision: 10, scale: 2 }),
   position: integer("position").default(0),
   isVisible: boolean("is_visible").default(true),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

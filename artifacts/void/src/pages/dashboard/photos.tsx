@@ -12,6 +12,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useQueryClient } from "@tanstack/react-query";
+import { uploadImage } from "@/lib/api-base";
 import {
   DndContext,
   closestCenter,
@@ -244,36 +245,7 @@ export default function DashboardPhotos() {
     setIsUploading(true);
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-
-      const res = await fetch("/api/photos/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({ error: "Erro no upload" }));
-        const errorMsg = errData.error || "Erro no upload";
-        console.error("Upload error:", errorMsg);
-        toast({
-          title: "Erro no upload",
-          description: errorMsg,
-          variant: "destructive",
-        });
-        setIsUploading(false);
-        setUploadPreview(null);
-        return;
-      }
-
-      const data = await res.json();
-      const { url } = data;
-      if (!url) {
-        toast({ title: "Erro: servidor não retornou URL", variant: "destructive" });
-        setIsUploading(false);
-        setUploadPreview(null);
-        return;
-      }
+      const url = await uploadImage(file, file.name || "photo.jpg");
 
       URL.revokeObjectURL(localUrl);
       savePhoto(url);
