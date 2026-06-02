@@ -371,14 +371,16 @@ export default function PublicProfileNew() {
                         </p>
                       </div>
                     )}
-                    {event.location && (
+                    {(event.street || event.city || event.state) && (
                       <div className="flex items-start gap-3 mb-3">
                         <MapPin
                           size={15}
                           style={{ color: customTheme.secondary }}
                           className="mt-0.5 flex-shrink-0"
                         />
-                        <p className="text-sm text-white/70 font-light">{event.location}</p>
+                        <p className="text-sm text-white/70 font-light">
+                          {[event.street, event.city && `${event.city}${event.state ? ` - ${event.state}` : ""}`].filter(Boolean).join(", ")}
+                        </p>
                       </div>
                     )}
                     {event.description && (

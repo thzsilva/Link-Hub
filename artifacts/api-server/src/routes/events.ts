@@ -11,7 +11,9 @@ const demoEvents = [
     title: "Live Show — São Paulo",
     description: "Uma noite especial de música ao vivo.",
     eventDate: "2024-12-15T20:00:00.000Z",
-    location: "Audio Club, São Paulo",
+    street: "Rua Augusta, 123",
+    city: "São Paulo",
+    state: "SP",
     ticketUrl: "https://example.com/tickets",
     imageUrl: null,
     position: 0,
@@ -24,7 +26,9 @@ const demoEvents = [
     title: "Workshop Criativo",
     description: "Aprenda design thinking na prática.",
     eventDate: "2024-12-22T14:00:00.000Z",
-    location: "Online",
+    street: null,
+    city: "Online",
+    state: null,
     ticketUrl: "https://example.com/workshop",
     imageUrl: null,
     position: 1,
@@ -98,7 +102,7 @@ router.post("/events", async (req, res): Promise<void> => {
       .where(eq(eventsTable.profileId, profileId))
       .then((r) => (r.length > 0 ? Math.max(...r.map((x) => x.pos ?? 0)) + 1 : 0));
 
-    const { title, description, eventDate, location, ticketUrl, imageUrl, isVisible } = req.body;
+    const { title, description, eventDate, street, city, state, ticketUrl, imageUrl, isVisible } = req.body;
     if (!title) { res.status(400).json({ error: "title is required" }); return; }
 
     const [event] = await db
@@ -108,7 +112,9 @@ router.post("/events", async (req, res): Promise<void> => {
         title,
         description: description ?? null,
         eventDate: eventDate ? new Date(eventDate) : null,
-        location: location ?? null,
+        street: street ?? null,
+        city: city ?? null,
+        state: state ?? null,
         ticketUrl: ticketUrl ?? null,
         imageUrl: imageUrl ?? null,
         position: maxPos,
@@ -136,13 +142,15 @@ router.put("/events/:id", async (req, res): Promise<void> => {
 
   try {
     const { db, eventsTable, eq, and } = await getDbModule();
-    const { title, description, eventDate, location, ticketUrl, imageUrl, isVisible } = req.body;
+    const { title, description, eventDate, street, city, state, ticketUrl, imageUrl, isVisible } = req.body;
 
     const updateData: Record<string, unknown> = {};
     if (title !== undefined) updateData.title = title;
     if (description !== undefined) updateData.description = description;
     if (eventDate !== undefined) updateData.eventDate = eventDate ? new Date(eventDate) : null;
-    if (location !== undefined) updateData.location = location;
+    if (street !== undefined) updateData.street = street;
+    if (city !== undefined) updateData.city = city;
+    if (state !== undefined) updateData.state = state;
     if (ticketUrl !== undefined) updateData.ticketUrl = ticketUrl;
     if (imageUrl !== undefined) updateData.imageUrl = imageUrl;
     if (isVisible !== undefined) updateData.isVisible = isVisible;
@@ -210,6 +218,52 @@ router.get("/events/public/:username", async (req, res): Promise<void> => {
   } catch {
     // Tabela ainda não existe — retorna lista vazia silenciosamente no perfil público
     res.json([]);
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Reorder events (drag-and-drop)
+// ---------------------------------------------------------------------------
+
+router.put("/events/reorder", async (req, res): Promise<void> => {
+  if (DEMO_MODE) { res.json({ ok: true }); return; }
+  const { userId } = getAuth(req);
+  if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+
+  const profileId = await getProfileId(userId);
+  if (!profileId) { res.status(404).json({ error: "Profile not found" }); return; }
+
+  try {
+    const { ids } = req.body;
+    if (!Array.isArray(ids)) { res.status(400).json({ error: "ids must be an array" }); return; }
+
+    const { db, eventsTable, eq, and } = await getDbModule();
+
+    // Verify all events belong to this user
+    const events = await db
+      .select({ id: eventsTable.id })
+      .from(eventsTable)
+      .where(eq(eventsTable.profileId, profileId));
+
+    const eventIds = new Set(events.map(e => e.id));
+    for (const id of ids) {
+      if (!eventIds.has(id)) {
+        res.status(403).json({ error: "Forbidden: event not owned by user" });
+        return;
+      }
+    }
+
+    // Update positions
+    for (let i = 0; i < ids.length; i++) {
+      await db
+        .update(eventsTable)
+        .set({ position: i })
+        .where(and(eq(eventsTable.id, ids[i]), eq(eventsTable.profileId, profileId)));
+    }
+
+    res.json({ ok: true });
+  } catch (err: any) {
+    res.status(500).json({ error: "Erro ao reordenar eventos", details: err?.message });
   }
 });
 

@@ -17,9 +17,12 @@ type EventItem = {
   title: string;
   description?: string | null;
   eventDate?: string | null;
-  location?: string | null;
+  street?: string | null;
+  city?: string | null;
+  state?: string | null;
   ticketUrl?: string | null;
   imageUrl?: string | null;
+  price?: number | null;
   isVisible: boolean;
   position: number;
   createdAt: string;
@@ -29,9 +32,12 @@ type EventFormData = {
   title: string;
   description: string;
   eventDate: string;
-  location: string;
+  street: string;
+  city: string;
+  state: string;
   ticketUrl: string;
   imageUrl: string;
+  price: string;
   isVisible: boolean;
 };
 
@@ -39,9 +45,12 @@ const emptyForm: EventFormData = {
   title: "",
   description: "",
   eventDate: "",
-  location: "",
+  street: "",
+  city: "",
+  state: "",
   ticketUrl: "",
   imageUrl: "",
+  price: "",
   isVisible: true,
 };
 
@@ -286,12 +295,15 @@ export default function DashboardEvents() {
       customFetch("/api/events", {
         method: "POST",
         body: JSON.stringify({
-          ...data,
-          eventDate: data.eventDate ? new Date(data.eventDate).toISOString() : null,
+          title: data.title,
           description: data.description || null,
-          location: data.location || null,
+          eventDate: data.eventDate ? new Date(data.eventDate).toISOString() : null,
+          street: data.street || null,
+          city: data.city || null,
+          state: data.state || null,
           ticketUrl: data.ticketUrl || null,
           imageUrl: data.imageUrl || null,
+          price: data.price ? parseFloat(data.price) : null,
         }),
       }),
     onSuccess: () => {
@@ -304,18 +316,24 @@ export default function DashboardEvents() {
   });
 
   const updateEvent = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<EventFormData> }) =>
-      customFetch(`/api/events/${id}`, {
+    mutationFn: ({ id, data }: { id: string; data: Partial<EventFormData> }) => {
+      const body: any = {};
+      if (data.title !== undefined) body.title = data.title;
+      if (data.description !== undefined) body.description = data.description || null;
+      if (data.eventDate !== undefined) body.eventDate = data.eventDate ? new Date(data.eventDate).toISOString() : null;
+      if (data.street !== undefined) body.street = data.street || null;
+      if (data.city !== undefined) body.city = data.city || null;
+      if (data.state !== undefined) body.state = data.state || null;
+      if (data.ticketUrl !== undefined) body.ticketUrl = data.ticketUrl || null;
+      if (data.imageUrl !== undefined) body.imageUrl = data.imageUrl || null;
+      if (data.price !== undefined) body.price = data.price ? parseFloat(data.price) : null;
+      if (data.isVisible !== undefined) body.isVisible = data.isVisible;
+
+      return customFetch(`/api/events/${id}`, {
         method: "PUT",
-        body: JSON.stringify({
-          ...data,
-          eventDate: data.eventDate !== undefined ? (data.eventDate ? new Date(data.eventDate).toISOString() : null) : undefined,
-          description: data.description || null,
-          location: data.location || null,
-          ticketUrl: data.ticketUrl || null,
-          imageUrl: data.imageUrl || null,
-        }),
-      }),
+        body: JSON.stringify(body),
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: EVENTS_KEY });
       setDialogOpen(false);
@@ -342,9 +360,12 @@ export default function DashboardEvents() {
       title: event.title,
       description: event.description ?? "",
       eventDate: toInputDatetime(event.eventDate),
-      location: event.location ?? "",
+      street: event.street ?? "",
+      city: event.city ?? "",
+      state: event.state ?? "",
       ticketUrl: event.ticketUrl ?? "",
       imageUrl: event.imageUrl ?? "",
+      price: event.price ? String(event.price) : "",
       isVisible: event.isVisible,
     });
     setDialogOpen(true);
@@ -378,9 +399,12 @@ export default function DashboardEvents() {
   title text NOT NULL,
   description text,
   event_date timestamptz,
-  location text,
+  street text,
+  city text,
+  state text,
   ticket_url text,
   image_url text,
+  price decimal(10,2),
   position integer DEFAULT 0,
   is_visible boolean DEFAULT true,
   created_at timestamptz NOT NULL DEFAULT now()
@@ -433,9 +457,10 @@ export default function DashboardEvents() {
                         <CalendarDays size={11} /> {formatEventDate(event.eventDate)}
                       </div>
                     )}
-                    {event.location && (
+                    {(event.street || event.city || event.state) && (
                       <div className="flex items-center gap-1.5 text-muted-foreground text-xs font-mono">
-                        <MapPin size={11} /> {event.location}
+                        <MapPin size={11} />
+                        {[event.street, event.city && `${event.city}${event.state ? ` - ${event.state}` : ""}`].filter(Boolean).join(", ")}
                       </div>
                     )}
                     {event.description && (
@@ -485,8 +510,24 @@ export default function DashboardEvents() {
                 <Input type="datetime-local" value={form.eventDate} onChange={(e) => setForm({ ...form, eventDate: e.target.value })} className="rounded-none bg-black border-border" />
               </div>
               <div className="space-y-1">
-                <label className="text-xs uppercase tracking-widest text-muted-foreground">Local</label>
-                <Input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder="São Paulo, SP" className="rounded-none bg-black border-border" />
+                <label className="text-xs uppercase tracking-widest text-muted-foreground">Valor (R$)</label>
+                <Input type="number" step="0.01" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} placeholder="0.00" className="rounded-none bg-black border-border" />
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs uppercase tracking-widest text-muted-foreground">Rua</label>
+              <Input value={form.street} onChange={(e) => setForm({ ...form, street: e.target.value })} placeholder="Rua Augusta, 123" className="rounded-none bg-black border-border" />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-xs uppercase tracking-widest text-muted-foreground">Cidade</label>
+                <Input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} placeholder="São Paulo" className="rounded-none bg-black border-border" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs uppercase tracking-widest text-muted-foreground">Estado</label>
+                <Input value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value })} placeholder="SP" className="rounded-none bg-black border-border" />
               </div>
             </div>
 

@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
-import { analyticsTable, linksTable, photosTable, profilesTable } from "@workspace/db";
-import { eq, and, gte, sql } from "drizzle-orm";
+import { analyticsTable, linksTable, photosTable, profilesTable, eventsTable } from "@workspace/db";
+import { eq, and, gte, sql, isNotNull } from "drizzle-orm";
 import { TrackEventBody } from "@workspace/api-zod";
 import { getAuth } from "@clerk/express";
 
@@ -157,6 +157,89 @@ router.get("/dashboard/stats", async (req, res): Promise<void> => {
     totalClicks: clicks,
     recentActivity: recentActivity.map((r) => ({ date: r.date, count: Number(r.count) })),
   });
+});
+
+router.get("/dashboard/monetization", async (req, res): Promise<void> => {
+  if (DEMO_MODE) {
+    res.json({
+      totalRevenue: 15000.50,
+      upcomingRevenue: 5000,
+      completedRevenue: 10000.50,
+      events: [
+        { id: "event-1", title: "Show 25/06", date: "2024-06-25", price: 5000, status: "upcoming" },
+        { id: "event-2", title: "Show 20/06", date: "2024-06-20", price: 3000, status: "completed" },
+        { id: "event-3", title: "Workshop", date: "2024-06-15", price: 2000, status: "completed" },
+      ],
+      trend: Array.from({ length: 7 }, (_, i) => ({
+        date: new Date(Date.now() - (6 - i) * 86400000).toISOString().slice(0, 10),
+        revenue: Math.floor(Math.random() * 1000) + 100,
+      })),
+    });
+    return;
+  }
+
+  const { userId } = getAuth(req);
+  if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+
+  const profileId = await getProfileId(userId);
+  if (!profileId) {
+    res.json({ totalRevenue: 0, upcomingRevenue: 0, completedRevenue: 0, events: [], trend: [] });
+    return;
+  }
+
+  try {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const now = new Date();
+
+    // Get all events with price
+    const allEvents = await db
+      .select({
+        id: eventsTable.id,
+        title: eventsTable.title,
+        eventDate: eventsTable.eventDate,
+        price: eventsTable.price,
+      })
+      .from(eventsTable)
+      .where(and(eq(eventsTable.profileId, profileId), isNotNull(eventsTable.price)));
+
+    // Categorize as upcoming/completed
+    const events = allEvents.map((e) => ({
+      id: e.id,
+      title: e.title,
+      date: e.eventDate?.toISOString().slice(0, 10) ?? new Date().toISOString().slice(0, 10),
+      price: Number(e.price ?? 0),
+      status: (e.eventDate && new Date(e.eventDate) < now) ? "completed" : "upcoming",
+    }));
+
+    // Calculate totals
+    const totalRevenue = allEvents.reduce((sum, e) => sum + (Number(e.price) || 0), 0);
+    const upcomingRevenue = events.filter(e => e.status === "upcoming").reduce((sum, e) => sum + e.price, 0);
+    const completedRevenue = events.filter(e => e.status === "completed").reduce((sum, e) => sum + e.price, 0);
+
+    // Calculate trend (last 30 days, by event date)
+    const trendRaw = await db
+      .select({
+        date: sql<string>`DATE(${eventsTable.eventDate})::text`,
+        revenue: sql<number>`COALESCE(SUM(${eventsTable.price}), 0)`,
+      })
+      .from(eventsTable)
+      .where(and(eq(eventsTable.profileId, profileId), isNotNull(eventsTable.price), gte(eventsTable.eventDate, thirtyDaysAgo)))
+      .groupBy(sql`DATE(${eventsTable.eventDate})`)
+      .orderBy(sql`DATE(${eventsTable.eventDate})`);
+
+    const trend = trendRaw.map((r) => ({ date: r.date, revenue: Number(r.revenue) }));
+
+    res.json({
+      totalRevenue: Number(totalRevenue.toFixed(2)),
+      upcomingRevenue: Number(upcomingRevenue.toFixed(2)),
+      completedRevenue: Number(completedRevenue.toFixed(2)),
+      events: events.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
+      trend,
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: "Erro ao buscar monetização", details: err?.message });
+  }
 });
 
 export default router;
