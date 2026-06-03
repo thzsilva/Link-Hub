@@ -23,6 +23,8 @@ import DashboardEvents from "@/pages/dashboard/events";
 import Admin from "@/pages/admin";
 import PublicProfile from "@/pages/public/profile";
 import PublicPhotos from "@/pages/public/photos";
+import PrivacyPolicy from "@/pages/legal/privacy";
+import TermsOfUse from "@/pages/legal/terms";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -219,6 +221,10 @@ function ClerkProviderWithRoutes() {
       <ClerkQueryClientCacheInvalidator />
       <Switch>
         <Route path="/" component={HomeRedirect} />
+        <Route path="/privacidade" component={PrivacyPolicy} />
+        <Route path="/privacy" component={PrivacyPolicy} />
+        <Route path="/termos" component={TermsOfUse} />
+        <Route path="/terms" component={TermsOfUse} />
         <Route path="/sign-in/*?" component={SignInPage} />
         <Route path="/sign-up/*?" component={SignUpPage} />
         <Route path="/dashboard" component={DashboardRoutes} />
@@ -247,6 +253,10 @@ function App() {
             ) : (
               <Switch>
                 <Route path="/" component={HomeRedirect} />
+                <Route path="/privacidade" component={PrivacyPolicy} />
+                <Route path="/privacy" component={PrivacyPolicy} />
+                <Route path="/termos" component={TermsOfUse} />
+                <Route path="/terms" component={TermsOfUse} />
                 <Route component={NotFound} />
               </Switch>
             )}

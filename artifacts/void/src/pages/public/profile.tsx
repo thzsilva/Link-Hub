@@ -912,8 +912,8 @@ export default function PublicProfileNew() {
             </div>
             <nav className="flex items-center justify-center gap-6 text-xs text-white/40 pt-4 border-t border-white/5">
               <a href="/" className="hover:text-white/70 transition-colors pt-4">Início</a>
-              <a href="/" className="hover:text-white/70 transition-colors pt-4">Privacidade</a>
-              <a href="/" className="hover:text-white/70 transition-colors pt-4">Termos</a>
+              <a href="/privacidade" className="hover:text-white/70 transition-colors pt-4">Privacidade</a>
+              <a href="/termos" className="hover:text-white/70 transition-colors pt-4">Termos</a>
             </nav>
             <p className="text-xs text-white/30 font-light">
               © {new Date().getFullYear()} hubvoid

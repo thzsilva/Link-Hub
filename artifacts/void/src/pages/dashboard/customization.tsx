@@ -1735,7 +1735,7 @@ export default function DashboardCustomization() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.25 }}
       >
-        {/* Seletor de Temas */}
+        {/* Seletor de Temas 
         <motion.div
           className="bg-white/5 border border-white/10 rounded-xl p-6 sm:p-8 space-y-4 backdrop-blur-sm hover:bg-white/[0.07] transition-all duration-300"
           initial={{ opacity: 0, y: 20 }}
@@ -1764,6 +1764,7 @@ export default function DashboardCustomization() {
             ))}
           </div>
         </motion.div>
+        */}
 
         {/* Layout */}
         <motion.div

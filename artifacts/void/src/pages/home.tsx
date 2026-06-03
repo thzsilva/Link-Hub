@@ -183,6 +183,10 @@ export default function Home() {
         <p className="text-xs text-white/40 font-light uppercase tracking-widest">
           © {new Date().getFullYear()} hubvoid • Seu perfil profissional em um link
         </p>
+        <nav className="flex items-center justify-center gap-5 mt-4 text-[11px] uppercase tracking-widest text-white/40">
+          <a href="/privacidade" className="hover:text-white/70 transition-colors">Privacidade</a>
+          <a href="/termos" className="hover:text-white/70 transition-colors">Termos</a>
+        </nav>
       </motion.footer>
     </div>
   );
