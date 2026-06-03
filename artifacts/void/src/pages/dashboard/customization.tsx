@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useGetMe, customFetch } from "@workspace/api-client-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -259,6 +259,31 @@ export default function DashboardCustomization() {
   const [bannerHeight, setBannerHeight] = useState<string>((profile as any)?.bannerHeight || "normal");
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const logoFileRef = useRef<HTMLInputElement>(null);
+
+  // Hydrate appearance/footer/section state once the profile finishes loading.
+  // Without this, fields initialized while `profile` was still undefined keep
+  // their defaults (e.g. showUsername=true) and a later save would overwrite
+  // the user's saved values. Runs once per profile id.
+  const hydratedRef = useRef<string | null>(null);
+  useEffect(() => {
+    const p = profile as any;
+    if (!p?.id || hydratedRef.current === p.id) return;
+    hydratedRef.current = p.id;
+    setHeroDisplay(p.heroDisplay || "name");
+    setHeroLayout(p.heroLayout || "overlay");
+    setHeroAlign(p.heroAlign || "center");
+    setSocialIconsAlign(p.socialIconsAlign?.includes?.("-") ? p.socialIconsAlign : `bottom-${p.socialIconsAlign || "center"}`);
+    setUsernameFont(p.usernameFont || "default");
+    setLogoUrl(p.logoUrl || "");
+    setLogoSize(Number(p.logoSize) || 128);
+    setShowUsername(p.showUsername !== false);
+    setBannerFit(p.bannerFit || "cover");
+    setBannerHeight(p.bannerHeight || "normal");
+    setSectionOrder(normalizeSectionOrder(p.sectionOrder));
+    setSectionTitles((p.sectionTitles || {}) as Record<string, string>);
+    setSponsors(Array.isArray(p.sponsors) ? p.sponsors : []);
+    setFooterText(p.footerText || "");
+  }, [profile]);
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
