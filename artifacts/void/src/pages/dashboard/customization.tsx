@@ -771,11 +771,11 @@ export default function DashboardCustomization() {
               {isUploadingLogo ? "Enviando..." : logoUrl ? "Trocar Logo" : "Enviar Logo"}
             </Button>
 
-            {/* Logo size slider */}
-            {logoUrl && (
+            {/* Logo/photo size slider — works for both the logo image and the avatar */}
+            {(logoUrl || profile?.avatarUrl) && (
               <div className="space-y-1 pt-1">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs uppercase tracking-widest text-muted-foreground">Tamanho do logo</label>
+                  <label className="text-xs uppercase tracking-widest text-muted-foreground">Tamanho do logo/foto</label>
                   <span className="text-xs font-mono text-white/60">{logoSize}px</span>
                 </div>
                 <input
@@ -789,7 +789,11 @@ export default function DashboardCustomization() {
                 />
                 {/* live preview */}
                 <div className="mt-2 rounded-lg border border-white/10 bg-black/40 p-3 flex items-center justify-center overflow-hidden">
-                  <img src={logoUrl} alt="Preview" style={{ maxHeight: `${Math.min(logoSize, 160)}px` }} className="w-auto max-w-full object-contain" />
+                  {logoUrl ? (
+                    <img src={logoUrl} alt="Preview" style={{ maxHeight: `${Math.min(logoSize, 160)}px` }} className="w-auto max-w-full object-contain" />
+                  ) : (
+                    <img src={profile?.avatarUrl} alt="Preview" style={{ width: `${Math.min(logoSize, 160)}px`, height: `${Math.min(logoSize, 160)}px` }} className="rounded-full object-cover" />
+                  )}
                 </div>
               </div>
             )}

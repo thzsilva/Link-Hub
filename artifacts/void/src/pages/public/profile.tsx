@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { motion } from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { useGetPublicProfile, useTrackEvent, customFetch } from "@workspace/api-client-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CalendarDays, MapPin, ExternalLink, Instagram, Music, Youtube, Mail, MessageCircle } from "lucide-react";
@@ -109,6 +109,11 @@ export default function PublicProfileNew() {
     enabled: !!username,
     staleTime: 60_000,
   });
+
+  // Scroll-driven parallax (hooks must run before any early return)
+  const { scrollY } = useScroll();
+  const bannerY = useTransform(scrollY, [0, 700], [0, 110]);
+  const bannerScale = useTransform(scrollY, [0, 700], [1.1, 1.25]);
 
   if (isLoading) return <ProfileSkeleton />;
 
@@ -234,15 +239,20 @@ export default function PublicProfileNew() {
           ? "min-h-[88vh]"
           : "aspect-[4/5] sm:aspect-[16/10] lg:aspect-[16/7] max-h-[70vh]"; // normal
 
-  // Renders the brand: a wide logo image (size adjustable) when available, otherwise the circular avatar
-  const renderHeroBrand = (avatarSize: string, _logoMaxH: string, extra = "") => {
+  // Parallax/zoom dinâmico no banner conforme rola (motion values criados no topo)
+  const isCover = bannerFitClass === "object-cover";
+  const bannerParallax = isCover ? { y: bannerY, scale: bannerScale } : undefined;
+
+  // Renders the brand: a wide logo image (size adjustable) when available, otherwise
+  // the circular avatar. Both respect the user's logoSize.
+  const renderHeroBrand = (_avatarSize: string, _logoMaxH: string, extra = "") => {
     if (heroLogoUrl) {
       return (
         <motion.img
           src={heroLogoUrl}
           alt={displayName}
           style={{ maxHeight: `${logoSize}px` }}
-          className={`w-auto max-w-[85%] object-contain ${extra}`}
+          className={`w-auto max-w-[90%] object-contain ${extra}`}
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5 }}
@@ -254,7 +264,8 @@ export default function PublicProfileNew() {
         <motion.img
           src={profile.avatarUrl}
           alt={displayName}
-          className={`${avatarSize} rounded-full object-cover border-2 border-white/20 ${extra}`}
+          style={{ width: `${logoSize}px`, height: `${logoSize}px`, maxWidth: "70vw", maxHeight: "70vw" }}
+          className={`rounded-full object-cover border-2 border-white/20 ${extra}`}
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5 }}
@@ -294,14 +305,17 @@ export default function PublicProfileNew() {
           {profile.headerImageUrl && heroLayout === "below" ? (
             /* ── Komi style: banner on top, name/logo + icons BELOW the banner ── */
             <div>
-              <div className={`relative w-full ${bannerSizeClass} overflow-hidden`}>
-                <img
+              <div className={`relative w-full ${bannerSizeClass} overflow-hidden bg-black`}>
+                <motion.img
                   src={profile.headerImageUrl}
                   alt={displayName}
                   className={`w-full h-full ${bannerFitClass}`}
                   loading="eager"
+                  style={bannerParallax}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+                {/* Degradê para fundir o banner no preto abaixo (estilo press-kit) */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/35 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black to-transparent" />
               </div>
 
               <div
@@ -368,12 +382,13 @@ export default function PublicProfileNew() {
               </div>
             </div>
           ) : profile.headerImageUrl ? (
-            <div className={`relative w-full ${bannerSizeClass} overflow-hidden`}>
-              <img
+            <div className={`relative w-full ${bannerSizeClass} overflow-hidden bg-black`}>
+              <motion.img
                 src={profile.headerImageUrl}
                 alt={displayName}
                 className={`w-full h-full ${bannerFitClass}`}
                 loading="eager"
+                style={bannerParallax}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black/10" />
 
