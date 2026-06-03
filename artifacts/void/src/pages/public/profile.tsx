@@ -215,8 +215,39 @@ export default function PublicProfileNew() {
   const socialJustify =
     socialH === "left" ? "justify-start" : socialH === "right" ? "justify-end" : "justify-center";
   const nameFont = getFontStack((profile as any).usernameFont);
-  const showHeroLogo = (heroDisplay === "logo" || heroDisplay === "both") && !!profile.avatarUrl;
+  const heroLogoUrl = (profile as any).logoUrl || null;
+  const showUsername = (profile as any).showUsername !== false; // default true
+  const showHeroLogo = (heroDisplay === "logo" || heroDisplay === "both") && (!!heroLogoUrl || !!profile.avatarUrl);
   const showHeroName = heroDisplay !== "logo";
+
+  // Renders the brand: a wide logo image when available, otherwise the circular avatar
+  const renderHeroBrand = (avatarSize: string, logoMaxH: string, extra = "") => {
+    if (heroLogoUrl) {
+      return (
+        <motion.img
+          src={heroLogoUrl}
+          alt={displayName}
+          className={`${logoMaxH} w-auto object-contain ${extra}`}
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+        />
+      );
+    }
+    if (profile.avatarUrl) {
+      return (
+        <motion.img
+          src={profile.avatarUrl}
+          alt={displayName}
+          className={`${avatarSize} rounded-full object-cover border-2 border-white/20 ${extra}`}
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+        />
+      );
+    }
+    return null;
+  };
   const sectionOrder = normalizeSectionOrder((profile as any).sectionOrder);
   const orderOf = (key: SectionKey) => sectionOrder.indexOf(key);
   // Custom section titles (fallback to default label)
@@ -267,15 +298,9 @@ export default function PublicProfileNew() {
                       : "items-center text-center"
                 }`}
               >
-                {showHeroLogo && (
-                  <motion.img
-                    src={profile.avatarUrl!}
-                    alt={displayName}
-                    className="w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover border-2 border-white/20 -mt-16 sm:-mt-20 relative z-10 shadow-2xl"
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.5 }}
-                  />
+                {showHeroLogo && renderHeroBrand(
+                  "w-24 h-24 sm:w-28 sm:h-28 shadow-2xl",
+                  "max-h-24 sm:max-h-32 lg:max-h-40",
                 )}
                 {showHeroName && (
                   <motion.h1
@@ -288,14 +313,16 @@ export default function PublicProfileNew() {
                     {displayName}
                   </motion.h1>
                 )}
-                <motion.p
-                  className="text-sm sm:text-base text-white/60 font-medium tracking-wide"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.5, delay: 0.2 }}
-                >
-                  @{profile.username}
-                </motion.p>
+                {showUsername && (
+                  <motion.p
+                    className="text-sm sm:text-base text-white/60 font-medium tracking-wide"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.5, delay: 0.2 }}
+                  >
+                    @{profile.username}
+                  </motion.p>
+                )}
                 {hasSocials && (
                   <motion.div
                     className={`flex ${socialJustify} gap-3 sm:gap-4 w-full mt-2`}
@@ -337,15 +364,9 @@ export default function PublicProfileNew() {
 
               {/* Name / Logo */}
               <div className={`absolute inset-0 flex flex-col z-10 px-6 sm:px-12 gap-4 ${heroAlignClasses}`}>
-                {showHeroLogo && (
-                  <motion.img
-                    src={profile.avatarUrl!}
-                    alt={displayName}
-                    className="w-24 h-24 sm:w-32 sm:h-32 lg:w-40 lg:h-40 rounded-full object-cover border-2 border-white/30 shadow-2xl"
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.6, delay: 0.1 }}
-                  />
+                {showHeroLogo && renderHeroBrand(
+                  "w-24 h-24 sm:w-32 sm:h-32 lg:w-40 lg:h-40 border-white/30 shadow-2xl",
+                  "max-h-28 sm:max-h-40 lg:max-h-52 drop-shadow-2xl",
                 )}
                 {showHeroName && (
                   <motion.h1
@@ -359,14 +380,16 @@ export default function PublicProfileNew() {
                   </motion.h1>
                 )}
                 {/* Username — positioned a bit lower, below the name/logo */}
-                <motion.p
-                  className="mt-2 sm:mt-4 text-sm sm:text-base text-white/70 font-medium tracking-wide"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.35 }}
-                >
-                  @{profile.username}
-                </motion.p>
+                {showUsername && (
+                  <motion.p
+                    className="mt-2 sm:mt-4 text-sm sm:text-base text-white/70 font-medium tracking-wide"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.35 }}
+                  >
+                    @{profile.username}
+                  </motion.p>
+                )}
               </div>
 
               {/* Social icons */}
@@ -401,15 +424,9 @@ export default function PublicProfileNew() {
           ) : (
             /* Fallback — no header image */
             <div className={`relative w-full py-20 sm:py-32 lg:py-40 flex flex-col gap-6 bg-black px-6 sm:px-12 ${heroAlign === "left" ? "items-start text-left" : heroAlign === "right" ? "items-end text-right" : "items-center text-center"}`}>
-              {(heroDisplay !== "name" ? !!profile.avatarUrl : !!profile.avatarUrl) && profile.avatarUrl && (
-                <motion.img
-                  src={profile.avatarUrl}
-                  alt={displayName}
-                  className="w-28 h-28 sm:w-36 sm:h-36 rounded-full object-cover border-2 border-white/20"
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.5 }}
-                />
+              {heroDisplay !== "name" && (heroLogoUrl || profile.avatarUrl) && renderHeroBrand(
+                "w-28 h-28 sm:w-36 sm:h-36",
+                "max-h-28 sm:max-h-40 lg:max-h-52",
               )}
               {showHeroName && (
                 <motion.h1
@@ -423,14 +440,16 @@ export default function PublicProfileNew() {
                 </motion.h1>
               )}
               {/* Username — a bit lower */}
-              <motion.p
-                className="-mt-2 text-sm sm:text-base text-white/60 font-medium tracking-wide"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.25 }}
-              >
-                @{profile.username}
-              </motion.p>
+              {showUsername && (
+                <motion.p
+                  className="-mt-2 text-sm sm:text-base text-white/60 font-medium tracking-wide"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.25 }}
+                >
+                  @{profile.username}
+                </motion.p>
+              )}
               {hasSocials && (
                 <motion.div
                   className={`flex ${socialJustify} gap-3 sm:gap-4 w-full`}

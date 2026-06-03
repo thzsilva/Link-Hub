@@ -34,6 +34,8 @@ export const profilesTable = pgTable("profiles", {
   sponsors: jsonb("sponsors"),
   footerText: text("footer_text"),
   // Aparência do hero e fonte do nome
+  logoUrl: text("logo_url"),
+  showUsername: boolean("show_username").default(true),
   heroDisplay: text("hero_display").default("name"),
   heroLayout: text("hero_layout").default("overlay"),
   heroAlign: text("hero_align").default("center"),

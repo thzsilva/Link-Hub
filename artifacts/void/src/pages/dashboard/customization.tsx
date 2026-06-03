@@ -117,6 +117,8 @@ async function updateProfileAppearance(data: {
   heroAlign?: string;
   socialIconsAlign?: string;
   usernameFont?: string;
+  logoUrl?: string | null;
+  showUsername?: boolean;
   sectionOrder?: string[];
   sectionTitles?: Record<string, string>;
 }) {
@@ -247,6 +249,26 @@ export default function DashboardCustomization() {
   // Appearance: hero display, alignment, font, section order
   const [heroDisplay, setHeroDisplay] = useState<string>((profile as any)?.heroDisplay || "name");
   const [heroLayout, setHeroLayout] = useState<string>((profile as any)?.heroLayout || "overlay");
+  const [logoUrl, setLogoUrl] = useState<string>((profile as any)?.logoUrl || "");
+  const [showUsername, setShowUsername] = useState<boolean>((profile as any)?.showUsername !== false);
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+  const logoFileRef = useRef<HTMLInputElement>(null);
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploadingLogo(true);
+    try {
+      const url = await uploadImage(file, file.name || "logo.png");
+      setLogoUrl(url);
+      toast({ title: "✓ Logo enviada! Não esqueça de salvar a aparência." });
+    } catch (err: any) {
+      toast({ title: err?.message || "Falha no upload", variant: "destructive" });
+    } finally {
+      setIsUploadingLogo(false);
+      if (logoFileRef.current) logoFileRef.current.value = "";
+    }
+  };
   const [heroAlign, setHeroAlign] = useState<string>((profile as any)?.heroAlign || "center");
   const [socialIconsAlign, setSocialIconsAlign] = useState<string>(() => {
     const raw = (profile as any)?.socialIconsAlign || "bottom-center";
@@ -326,7 +348,7 @@ export default function DashboardCustomization() {
   const handleSaveAppearance = async () => {
     setIsSavingAppearance(true);
     try {
-      await updateProfileAppearance({ heroDisplay, heroLayout, heroAlign, socialIconsAlign, usernameFont });
+      await updateProfileAppearance({ heroDisplay, heroLayout, heroAlign, socialIconsAlign, usernameFont, logoUrl: logoUrl || null, showUsername });
       queryClient.invalidateQueries({ queryKey: ["useGetMe"] });
       toast({ title: "✓ Aparência atualizada!" });
     } catch (err: any) {
@@ -678,9 +700,61 @@ export default function DashboardCustomization() {
               </button>
             ))}
           </div>
-          {(heroDisplay === "logo" || heroDisplay === "both") && !profile?.avatarUrl && (
-            <p className="text-xs text-amber-400/80">Faça upload de uma foto/logo abaixo para exibi-la.</p>
-          )}
+        </div>
+
+        {/* Logo image upload (wordmark) */}
+        {(heroDisplay === "logo" || heroDisplay === "both") && (
+          <div className="space-y-2">
+            <label className="text-xs uppercase tracking-widest text-muted-foreground">Logo (imagem)</label>
+            <p className="text-[11px] text-muted-foreground">Envie a imagem do seu logo/marca (ex: PNG com fundo transparente). Ela aparece em destaque no lugar do nome.</p>
+
+            {logoUrl ? (
+              <div className="flex items-center gap-3 rounded-lg border border-white/15 bg-black/40 p-3">
+                <div className="flex-1 h-16 flex items-center justify-center overflow-hidden">
+                  <img src={logoUrl} alt="Logo" className="max-h-16 w-auto object-contain" />
+                </div>
+                <button
+                  onClick={() => setLogoUrl("")}
+                  className="text-muted-foreground hover:text-red-400 transition-colors flex-shrink-0 px-2 text-sm"
+                >
+                  Remover
+                </button>
+              </div>
+            ) : null}
+
+            <input
+              ref={logoFileRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleLogoUpload}
+              disabled={isUploadingLogo}
+            />
+            <Button
+              variant="outline"
+              onClick={() => logoFileRef.current?.click()}
+              disabled={isUploadingLogo}
+              className="rounded-lg uppercase text-xs font-bold border-white/20 hover:bg-white/10 gap-2"
+            >
+              {isUploadingLogo ? <Loader2 size={14} className="animate-spin" /> : <UploadIcon size={14} />}
+              {isUploadingLogo ? "Enviando..." : logoUrl ? "Trocar Logo" : "Enviar Logo"}
+            </Button>
+          </div>
+        )}
+
+        {/* Show @username toggle */}
+        <div className="flex items-center justify-between rounded-lg border border-white/15 bg-white/5 px-4 py-3">
+          <div>
+            <span className="text-sm font-medium text-white">Mostrar @username</span>
+            <p className="text-[11px] text-muted-foreground">Desligue para não repetir o nome (ex: quando o logo já é o nome).</p>
+          </div>
+          <button
+            onClick={() => setShowUsername((v) => !v)}
+            className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${showUsername ? "bg-white" : "bg-white/20"}`}
+            aria-label="Mostrar @username"
+          >
+            <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full transition-transform ${showUsername ? "translate-x-5 bg-black" : "bg-white"}`} />
+          </button>
         </div>
 
         {/* Hero layout: overlay vs below banner (Komi style) */}
