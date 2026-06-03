@@ -389,6 +389,20 @@ export default function DashboardCustomization() {
     }
   };
 
+  // Toggle "Mostrar @username" salva imediatamente (switch aplica na hora)
+  const toggleShowUsername = async () => {
+    const next = !showUsername;
+    setShowUsername(next);
+    try {
+      await updateProfileAppearance({ showUsername: next });
+      queryClient.invalidateQueries({ queryKey: ["useGetMe"] });
+      toast({ title: next ? "@username visível" : "@username ocultado" });
+    } catch (err: any) {
+      setShowUsername(!next); // reverte em caso de erro
+      toast({ title: err?.message || "Erro ao salvar", variant: "destructive" });
+    }
+  };
+
   const handleSaveSectionOrder = async () => {
     setIsSavingOrder(true);
     try {
@@ -849,14 +863,14 @@ export default function DashboardCustomization() {
           </div>
         </div>
 
-        {/* Show @username toggle */}
+        {/* Show @username toggle — salva na hora */}
         <div className="flex items-center justify-between rounded-lg border border-white/15 bg-white/5 px-4 py-3">
           <div>
             <span className="text-sm font-medium text-white">Mostrar @username</span>
-            <p className="text-[11px] text-muted-foreground">Desligue para não repetir o nome (ex: quando o logo já é o nome).</p>
+            <p className="text-[11px] text-muted-foreground">Desligue para não repetir o nome (ex: quando o logo já é o nome). Salva automaticamente.</p>
           </div>
           <button
-            onClick={() => setShowUsername((v) => !v)}
+            onClick={toggleShowUsername}
             className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${showUsername ? "bg-white" : "bg-white/20"}`}
             aria-label="Mostrar @username"
           >
