@@ -22,10 +22,10 @@ const DEMO_MODE = process.env.DEMO_MODE === "true";
 // Multer: guarda arquivo em memória (sem salvar em disco)
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB
+  limits: { fileSize: 60 * 1024 * 1024 }, // 60 MB (suporta vídeo curto de banner)
   fileFilter: (_req, file, cb) => {
-    if (file.mimetype.startsWith("image/")) cb(null, true);
-    else cb(new Error("Somente imagens são permitidas"));
+    if (file.mimetype.startsWith("image/") || file.mimetype.startsWith("video/")) cb(null, true);
+    else cb(new Error("Somente imagens ou vídeos são permitidos"));
   },
 });
 

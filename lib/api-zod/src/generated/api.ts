@@ -65,6 +65,8 @@ export const UpdateProfileBody = zod.object({
   "whatsappNumber": zod.string().nullish(),
   "email": zod.string().nullish(),
   "instagramHandle": zod.string().nullish(),
+  "bannerVideoUrl": zod.string().nullish(),
+  "bioImageUrl": zod.string().nullish(),
   "logoUrl": zod.string().nullish(),
   "logoSize": zod.number().nullish(),
   "showUsername": zod.boolean().nullish(),

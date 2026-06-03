@@ -245,6 +245,35 @@ export default function PublicProfileNew() {
   const isCover = bannerFitClass === "object-cover";
   const bannerParallax = isCover ? { scale: bannerScale } : undefined;
 
+  // Banner pode ser vídeo (mp4/webm) ou imagem
+  const bannerVideoUrl = (profile as any).bannerVideoUrl || null;
+  const hasBanner = !!profile.headerImageUrl || !!bannerVideoUrl;
+  const renderBannerMedia = () => {
+    if (bannerVideoUrl) {
+      return (
+        <motion.video
+          src={bannerVideoUrl}
+          className={`w-full h-full ${bannerFitClass}`}
+          autoPlay
+          muted
+          loop
+          playsInline
+          poster={profile.headerImageUrl || undefined}
+          style={bannerParallax}
+        />
+      );
+    }
+    return (
+      <motion.img
+        src={profile.headerImageUrl!}
+        alt={displayName}
+        className={`w-full h-full ${bannerFitClass}`}
+        loading="eager"
+        style={bannerParallax}
+      />
+    );
+  };
+
   // Renders the brand: a wide logo image (size adjustable) when available, otherwise
   // the circular avatar. Both respect the user's logoSize.
   const renderHeroBrand = (_avatarSize: string, _logoMaxH: string, extra = "") => {
@@ -304,17 +333,11 @@ export default function PublicProfileNew() {
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6 }}
         >
-          {profile.headerImageUrl && heroLayout === "below" ? (
+          {hasBanner && heroLayout === "below" ? (
             /* ── Komi style: banner on top, name/logo + icons BELOW the banner ── */
             <div>
               <div className={`relative w-full ${bannerSizeClass} overflow-hidden bg-black`}>
-                <motion.img
-                  src={profile.headerImageUrl}
-                  alt={displayName}
-                  className={`w-full h-full ${bannerFitClass}`}
-                  loading="eager"
-                  style={bannerParallax}
-                />
+                {renderBannerMedia()}
                 {/* Degradê para fundir o banner no preto abaixo (estilo press-kit) */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/35 to-transparent" />
                 <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black to-transparent" />
@@ -383,15 +406,9 @@ export default function PublicProfileNew() {
                 )}
               </div>
             </div>
-          ) : profile.headerImageUrl ? (
+          ) : hasBanner ? (
             <div className={`relative w-full ${bannerSizeClass} overflow-hidden bg-black`}>
-              <motion.img
-                src={profile.headerImageUrl}
-                alt={displayName}
-                className={`w-full h-full ${bannerFitClass}`}
-                loading="eager"
-                style={bannerParallax}
-              />
+              {renderBannerMedia()}
               <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black/10" />
 
               {/* Name / Logo */}
@@ -524,6 +541,7 @@ export default function PublicProfileNew() {
           bio={profile.bio ?? undefined}
           theme={customTheme}
           title={titleFor("bio", "Sobre")}
+          imageUrl={(profile as any).bioImageUrl || profile.avatarUrl || null}
         />
         </div>
 

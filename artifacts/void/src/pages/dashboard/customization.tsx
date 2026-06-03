@@ -277,6 +277,8 @@ export default function DashboardCustomization() {
     setLogoUrl(p.logoUrl || "");
     setLogoSize(Number(p.logoSize) || 128);
     setShowUsername(p.showUsername !== false);
+    setBannerVideoUrl(p.bannerVideoUrl || "");
+    setBioImageUrl(p.bioImageUrl || "");
     setBannerFit(p.bannerFit || "cover");
     setBannerHeight(p.bannerHeight || "normal");
     setSectionOrder(normalizeSectionOrder(p.sectionOrder));
@@ -300,6 +302,74 @@ export default function DashboardCustomization() {
       if (logoFileRef.current) logoFileRef.current.value = "";
     }
   };
+
+  // Banner video + Bio photo (salvam na hora)
+  const [bannerVideoUrl, setBannerVideoUrl] = useState<string>((profile as any)?.bannerVideoUrl || "");
+  const [bioImageUrl, setBioImageUrl] = useState<string>((profile as any)?.bioImageUrl || "");
+  const [isUploadingBannerVideo, setIsUploadingBannerVideo] = useState(false);
+  const [isUploadingBioImage, setIsUploadingBioImage] = useState(false);
+  const bannerVideoRef = useRef<HTMLInputElement>(null);
+  const bioImageRef = useRef<HTMLInputElement>(null);
+
+  const saveMediaField = async (patch: { bannerVideoUrl?: string | null; bioImageUrl?: string | null }) => {
+    await updateProfileFooter(patch as any); // PUT /api/me (aceita os campos do perfil)
+    queryClient.invalidateQueries({ queryKey: ["useGetMe"] });
+  };
+
+  const handleBannerVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploadingBannerVideo(true);
+    try {
+      const url = await uploadImage(file, file.name || "banner.mp4");
+      setBannerVideoUrl(url);
+      await saveMediaField({ bannerVideoUrl: url });
+      toast({ title: "✓ Vídeo do banner salvo!" });
+    } catch (err: any) {
+      toast({ title: err?.message || "Falha no upload do vídeo", variant: "destructive" });
+    } finally {
+      setIsUploadingBannerVideo(false);
+      if (bannerVideoRef.current) bannerVideoRef.current.value = "";
+    }
+  };
+
+  const handleRemoveBannerVideo = async () => {
+    setBannerVideoUrl("");
+    try {
+      await saveMediaField({ bannerVideoUrl: null });
+      toast({ title: "Vídeo do banner removido." });
+    } catch (err: any) {
+      toast({ title: err?.message || "Erro ao remover", variant: "destructive" });
+    }
+  };
+
+  const handleBioImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploadingBioImage(true);
+    try {
+      const url = await uploadImage(file, file.name || "bio.jpg");
+      setBioImageUrl(url);
+      await saveMediaField({ bioImageUrl: url });
+      toast({ title: "✓ Foto da bio salva!" });
+    } catch (err: any) {
+      toast({ title: err?.message || "Falha no upload", variant: "destructive" });
+    } finally {
+      setIsUploadingBioImage(false);
+      if (bioImageRef.current) bioImageRef.current.value = "";
+    }
+  };
+
+  const handleRemoveBioImage = async () => {
+    setBioImageUrl("");
+    try {
+      await saveMediaField({ bioImageUrl: null });
+      toast({ title: "Foto da bio removida." });
+    } catch (err: any) {
+      toast({ title: err?.message || "Erro ao remover", variant: "destructive" });
+    }
+  };
+
   const [heroAlign, setHeroAlign] = useState<string>((profile as any)?.heroAlign || "center");
   const [socialIconsAlign, setSocialIconsAlign] = useState<string>(() => {
     const raw = (profile as any)?.socialIconsAlign || "bottom-center";
@@ -707,6 +777,29 @@ export default function DashboardCustomization() {
             >
               {isSavingBio ? "Salvando..." : "Salvar"}
             </Button>
+          </div>
+
+          {/* Foto da bio (ao lado do texto no perfil) */}
+          <div className="space-y-2 pt-2 border-t border-white/10">
+            <label className="text-xs uppercase tracking-widest text-muted-foreground">Foto da bio</label>
+            <p className="text-[11px] text-muted-foreground">Aparece ao lado da bio no perfil (estilo press kit). Se vazio, usa a foto de perfil.</p>
+            <div className="flex items-center gap-3">
+              {bioImageUrl && (
+                <img src={bioImageUrl} alt="Bio" className="w-16 h-20 object-cover rounded-lg border border-white/15 flex-shrink-0" />
+              )}
+              <div className="flex gap-2">
+                <input ref={bioImageRef} type="file" accept="image/*" className="hidden" onChange={handleBioImageUpload} disabled={isUploadingBioImage} />
+                <Button variant="outline" onClick={() => bioImageRef.current?.click()} disabled={isUploadingBioImage} className="rounded-lg uppercase text-xs font-bold border-white/20 hover:bg-white/10 gap-2">
+                  {isUploadingBioImage ? <Loader2 size={14} className="animate-spin" /> : <UploadIcon size={14} />}
+                  {isUploadingBioImage ? "Enviando..." : bioImageUrl ? "Trocar Foto" : "Enviar Foto"}
+                </Button>
+                {bioImageUrl && (
+                  <Button variant="ghost" onClick={handleRemoveBioImage} className="rounded-lg uppercase text-xs text-muted-foreground hover:text-red-400">
+                    Remover
+                  </Button>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </motion.div>
@@ -1469,6 +1562,29 @@ export default function DashboardCustomization() {
                 Remover Banner
               </Button>
             )}
+          </div>
+
+          {/* Vídeo do banner (mp4/webm) */}
+          <div className="space-y-2 pt-4 mt-2 border-t border-white/10">
+            <label className="text-xs uppercase tracking-widest text-muted-foreground">Vídeo do banner (opcional)</label>
+            <p className="text-[11px] text-muted-foreground">Envie um vídeo curto (MP4/WEBM) — ele toca em loop no topo, no lugar da imagem. A imagem do banner vira o poster (capa). Máx 60MB.</p>
+
+            {bannerVideoUrl && (
+              <video src={bannerVideoUrl} className="w-full h-32 object-cover rounded-lg border border-white/15" muted autoPlay loop playsInline />
+            )}
+
+            <div className="flex gap-2">
+              <input ref={bannerVideoRef} type="file" accept="video/*" className="hidden" onChange={handleBannerVideoUpload} disabled={isUploadingBannerVideo} />
+              <Button variant="outline" onClick={() => bannerVideoRef.current?.click()} disabled={isUploadingBannerVideo} className="rounded-lg uppercase text-xs font-bold border-white/20 hover:bg-white/10 gap-2">
+                {isUploadingBannerVideo ? <Loader2 size={14} className="animate-spin" /> : <UploadIcon size={14} />}
+                {isUploadingBannerVideo ? "Enviando..." : bannerVideoUrl ? "Trocar Vídeo" : "Enviar Vídeo"}
+              </Button>
+              {bannerVideoUrl && (
+                <Button variant="ghost" onClick={handleRemoveBannerVideo} className="rounded-lg uppercase text-xs text-muted-foreground hover:text-red-400">
+                  Remover
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </motion.div>

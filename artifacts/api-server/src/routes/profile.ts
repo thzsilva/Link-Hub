@@ -130,6 +130,8 @@ router.put("/me", async (req, res): Promise<void> => {
     updateData.avatarUrl = parsed.data.avatarUrl;
   }
   if (parsed.data.headerImageUrl !== undefined) updateData.headerImageUrl = parsed.data.headerImageUrl;
+  if (parsed.data.bannerVideoUrl !== undefined) updateData.bannerVideoUrl = parsed.data.bannerVideoUrl;
+  if (parsed.data.bioImageUrl !== undefined) updateData.bioImageUrl = parsed.data.bioImageUrl;
   if (parsed.data.accentColor !== undefined) updateData.accentColor = parsed.data.accentColor;
   if (parsed.data.bgColor !== undefined) updateData.bgColor = parsed.data.bgColor;
   if (parsed.data.cardStyle !== undefined) updateData.cardStyle = parsed.data.cardStyle;

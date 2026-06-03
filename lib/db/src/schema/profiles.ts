@@ -10,6 +10,8 @@ export const profilesTable = pgTable("profiles", {
   bio: text("bio"),
   avatarUrl: text("avatar_url"),
   headerImageUrl: text("header_image_url"),
+  bannerVideoUrl: text("banner_video_url"),
+  bioImageUrl: text("bio_image_url"),
   accentColor: text("accent_color").default("#ffffff"),
   bgColor: text("bg_color").default("#000000"),
   cardStyle: text("card_style").default("glass"),
