@@ -64,7 +64,18 @@ export const UpdateProfileBody = zod.object({
   "videoUrl": zod.string().nullish(),
   "whatsappNumber": zod.string().nullish(),
   "email": zod.string().nullish(),
-  "instagramHandle": zod.string().nullish()
+  "instagramHandle": zod.string().nullish(),
+  "heroDisplay": zod.string().nullish(),
+  "heroAlign": zod.string().nullish(),
+  "socialIconsAlign": zod.string().nullish(),
+  "usernameFont": zod.string().nullish(),
+  "sectionOrder": zod.array(zod.string()).nullish(),
+  "sponsors": zod.array(zod.object({
+    "imageUrl": zod.string(),
+    "name": zod.string().nullish(),
+    "url": zod.string().nullish()
+  })).nullish(),
+  "footerText": zod.string().nullish()
 })
 
 export const UpdateProfileResponse = zod.object({

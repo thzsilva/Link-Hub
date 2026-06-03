@@ -198,6 +198,7 @@ router.put("/events/:id", async (req, res): Promise<void> => {
     if (ticketUrl !== undefined) updateData.ticketUrl = ticketUrl;
     if (imageUrl !== undefined) updateData.imageUrl = imageUrl;
     if (price !== undefined) updateData.price = price;
+    if (req.body.paymentReceived !== undefined) updateData.paymentReceived = req.body.paymentReceived;
     if (isVisible !== undefined) updateData.isVisible = isVisible;
 
     const [updated] = await db

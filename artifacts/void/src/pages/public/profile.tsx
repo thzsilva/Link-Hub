@@ -3,12 +3,31 @@ import { motion } from "framer-motion";
 import { useGetPublicProfile, useTrackEvent, customFetch } from "@workspace/api-client-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CalendarDays, MapPin, ExternalLink, Instagram, Music, Youtube, Mail, MessageCircle } from "lucide-react";
-import { getPlatform, toSpotifyEmbedUrl } from "@/lib/platforms";
+import { getPlatform, toSpotifyEmbedUrl, toMusicEmbedUrl } from "@/lib/platforms";
 import { getTheme, getCSSVariables } from "@/lib/themes";
 import { BioSection } from "@/components/public/BioSection";
 import { VideoSection } from "@/components/public/VideoSection";
 import { GallerySection } from "@/components/public/GallerySection";
 import { ContactSection } from "@/components/public/ContactSection";
+import { getFontStack } from "@/lib/fonts";
+import { normalizeSectionOrder, type SectionKey } from "@/lib/sections";
+
+// Calendar-style date badge shown on top of event images
+function EventDateBadge({ dateStr, theme }: { dateStr: string; theme: { primary: string; secondary: string } }) {
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return null;
+  const month = d.toLocaleDateString("pt-BR", { month: "short" }).replace(".", "").toUpperCase();
+  const day = d.getDate();
+  const year = d.getFullYear();
+  return (
+    <div className="absolute top-3 left-3 z-10 flex flex-col items-center justify-center rounded-xl px-3 py-2 backdrop-blur-md border border-white/20 shadow-lg min-w-[68px]"
+      style={{ backgroundColor: "rgba(0,0,0,0.55)" }}>
+      <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: theme.secondary }}>{month}</span>
+      <span className="text-2xl sm:text-3xl font-black leading-none text-white">{day}</span>
+      <span className="text-[10px] font-medium text-white/60 mt-0.5">{year}</span>
+    </div>
+  );
+}
 
 // ---------------------------------------------------------------------------
 // Skeleton
@@ -132,39 +151,73 @@ export default function PublicProfileNew() {
     window.open(url, "_blank");
   };
 
+  // Links that render as embedded players (Spotify + SoundCloud)
+  const embedLinks =
+    links?.filter((l) => l.isVisible && (l.cardType === "spotify" || l.cardType === "soundcloud")) ?? [];
   const regularLinks =
-    links?.filter((l) => l.isVisible && l.cardType !== "spotify") ?? [];
-  const spotifyLinks =
-    links?.filter((l) => l.isVisible && l.cardType === "spotify") ?? [];
+    links?.filter((l) => l.isVisible && l.cardType !== "spotify" && l.cardType !== "soundcloud") ?? [];
 
-  // ── Social links for hero icons ──
-  const headerSocialLinks =
-    socialLinks?.map((s) => {
-      const platform = getPlatform(s.platform ?? null);
-      let icon = <Music size={18} />;
-      if (s.platform === "instagram") icon = <Instagram size={18} />;
-      else if (s.platform === "youtube") icon = <Youtube size={18} />;
-      else if (s.platform === "spotify") icon = <Music size={18} />;
-      return { platform: s.platform || "link", url: s.url, icon, label: platform.name };
-    }) ?? [];
+  // ── Highlighted social icons (hero) ──
+  // Built from the user's social-platform links + saved social links + contacts.
+  const SOCIAL_ICON_PLATFORMS = new Set([
+    "instagram", "youtube", "tiktok", "twitter", "facebook", "twitch", "linkedin",
+    "github", "telegram", "soundcloud", "spotify", "applemusic", "pinterest",
+    "discord", "patreon", "kick",
+  ]);
 
+  const headerSocialLinks: Array<{ platform: string; url: string; icon: React.ReactNode; label: string }> = [];
+  const seenSocial = new Set<string>();
+  const pushSocial = (platformId: string, url: string) => {
+    if (!url || seenSocial.has(platformId)) return;
+    seenSocial.add(platformId);
+    const p = getPlatform(platformId);
+    headerSocialLinks.push({ platform: platformId, url, icon: <p.Icon size={18} />, label: p.name });
+  };
+
+  // From links with a recognized social platform icon
+  (links ?? [])
+    .filter((l) => l.isVisible && l.icon && SOCIAL_ICON_PLATFORMS.has(l.icon))
+    .forEach((l) => pushSocial(l.icon as string, l.url));
+
+  // From saved social links table (if any)
+  (socialLinks ?? []).forEach((s) => {
+    if (s.platform) pushSocial(s.platform, s.url);
+  });
+
+  // From profile contact fields
   if ((profile as any).whatsappNumber)
-    headerSocialLinks.push({
-      platform: "whatsapp",
-      url: `https://wa.me/${(profile as any).whatsappNumber}`,
-      icon: <MessageCircle size={18} />,
-      label: "WhatsApp",
-    });
+    pushSocial("whatsapp", `https://wa.me/${(profile as any).whatsappNumber}`);
+  if ((profile as any).instagramHandle)
+    pushSocial("instagram", `https://instagram.com/${String((profile as any).instagramHandle).replace(/^@/, "")}`);
   if ((profile as any).email)
-    headerSocialLinks.push({
-      platform: "email",
-      url: `mailto:${(profile as any).email}`,
-      icon: <Mail size={18} />,
-      label: "Email",
-    });
+    pushSocial("email", `mailto:${(profile as any).email}`);
 
   const displayName = profile.displayName || profile.username || "User";
   const hasSocials = headerSocialLinks.length >= 1;
+
+  // Hero appearance + font
+  const heroDisplay = (profile as any).heroDisplay || "name"; // 'name' | 'logo' | 'both'
+  const heroAlign = (profile as any).heroAlign || "center"; // 'top' | 'left' | 'center' | 'right'
+  const heroAlignClasses =
+    heroAlign === "left"
+      ? "items-start text-left justify-center"
+      : heroAlign === "right"
+        ? "items-end text-right justify-center"
+        : heroAlign === "top"
+          ? "items-center text-center justify-start pt-12 sm:pt-20"
+          : "items-center text-center justify-center";
+  // Social icons position: "{top|bottom}-{left|center|right}" (old "left/center/right" → bottom-*)
+  const rawIconsAlign = (profile as any).socialIconsAlign || "bottom-center";
+  const iconsAlign = rawIconsAlign.includes("-") ? rawIconsAlign : `bottom-${rawIconsAlign}`;
+  const [socialV, socialH] = iconsAlign.split("-");
+  const socialIsTop = socialV === "top";
+  const socialJustify =
+    socialH === "left" ? "justify-start" : socialH === "right" ? "justify-end" : "justify-center";
+  const nameFont = getFontStack((profile as any).usernameFont);
+  const showHeroLogo = (heroDisplay === "logo" || heroDisplay === "both") && !!profile.avatarUrl;
+  const showHeroName = heroDisplay !== "logo";
+  const sectionOrder = normalizeSectionOrder((profile as any).sectionOrder);
+  const orderOf = (key: SectionKey) => sectionOrder.indexOf(key);
 
   // ── Grid helper: clamp columns for mobile/desktop ──
   const gridCols = (itemCount: number) =>
@@ -195,23 +248,44 @@ export default function PublicProfileNew() {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black/10" />
 
-              {/* Name */}
-              <div className="absolute inset-0 flex items-center justify-center z-10 px-4">
-                <motion.h1
-                  className="text-[3rem] sm:text-[4.5rem] lg:text-[6.5rem] xl:text-[7.5rem] font-black uppercase text-white text-center leading-[0.9] drop-shadow-2xl"
-                  style={{ letterSpacing: "-0.03em" }}
-                  initial={{ opacity: 0, y: 30 }}
+              {/* Name / Logo */}
+              <div className={`absolute inset-0 flex flex-col z-10 px-6 sm:px-12 gap-4 ${heroAlignClasses}`}>
+                {showHeroLogo && (
+                  <motion.img
+                    src={profile.avatarUrl!}
+                    alt={displayName}
+                    className="w-24 h-24 sm:w-32 sm:h-32 lg:w-40 lg:h-40 rounded-full object-cover border-2 border-white/30 shadow-2xl"
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.6, delay: 0.1 }}
+                  />
+                )}
+                {showHeroName && (
+                  <motion.h1
+                    className="text-[3rem] sm:text-[4.5rem] lg:text-[6.5rem] xl:text-[7.5rem] font-black uppercase text-white text-center leading-[0.9] drop-shadow-2xl"
+                    style={{ letterSpacing: "-0.03em", fontFamily: nameFont }}
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.7, delay: 0.15 }}
+                  >
+                    {displayName}
+                  </motion.h1>
+                )}
+                {/* Username — positioned a bit lower, below the name/logo */}
+                <motion.p
+                  className="mt-2 sm:mt-4 text-sm sm:text-base text-white/70 font-medium tracking-wide"
+                  initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.7, delay: 0.15 }}
+                  transition={{ duration: 0.5, delay: 0.35 }}
                 >
-                  {displayName}
-                </motion.h1>
+                  @{profile.username}
+                </motion.p>
               </div>
 
               {/* Social icons */}
               {hasSocials && (
                 <motion.div
-                  className="absolute bottom-5 sm:bottom-8 left-0 right-0 flex justify-center gap-3 sm:gap-4 z-10"
+                  className={`absolute ${socialIsTop ? "top-5 sm:top-8" : "bottom-5 sm:bottom-8"} left-0 right-0 flex ${socialJustify} gap-3 sm:gap-4 z-20 px-6 sm:px-12`}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, delay: 0.4 }}
@@ -239,8 +313,8 @@ export default function PublicProfileNew() {
             </div>
           ) : (
             /* Fallback — no header image */
-            <div className="relative w-full py-20 sm:py-32 lg:py-40 flex flex-col items-center justify-center gap-6 bg-black">
-              {profile.avatarUrl && (
+            <div className={`relative w-full py-20 sm:py-32 lg:py-40 flex flex-col gap-6 bg-black px-6 sm:px-12 ${heroAlign === "left" ? "items-start text-left" : heroAlign === "right" ? "items-end text-right" : "items-center text-center"}`}>
+              {(heroDisplay !== "name" ? !!profile.avatarUrl : !!profile.avatarUrl) && profile.avatarUrl && (
                 <motion.img
                   src={profile.avatarUrl}
                   alt={displayName}
@@ -250,18 +324,30 @@ export default function PublicProfileNew() {
                   transition={{ duration: 0.5 }}
                 />
               )}
-              <motion.h1
-                className="text-[2.5rem] sm:text-[4rem] lg:text-[5.5rem] font-black uppercase text-white text-center leading-[0.9] px-4"
-                style={{ letterSpacing: "-0.03em" }}
-                initial={{ opacity: 0, y: 20 }}
+              {showHeroName && (
+                <motion.h1
+                  className="text-[2.5rem] sm:text-[4rem] lg:text-[5.5rem] font-black uppercase text-white text-center leading-[0.9] px-4"
+                  style={{ letterSpacing: "-0.03em", fontFamily: nameFont }}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.1 }}
+                >
+                  {displayName}
+                </motion.h1>
+              )}
+              {/* Username — a bit lower */}
+              <motion.p
+                className="-mt-2 text-sm sm:text-base text-white/60 font-medium tracking-wide"
+                initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.1 }}
+                transition={{ duration: 0.5, delay: 0.25 }}
               >
-                {displayName}
-              </motion.h1>
+                @{profile.username}
+              </motion.p>
               {hasSocials && (
                 <motion.div
-                  className="flex justify-center gap-3 sm:gap-4"
+                  className={`flex ${socialJustify} gap-3 sm:gap-4 w-full`}
+                  style={{ order: socialIsTop ? -1 : 1 }}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, delay: 0.3 }}
@@ -290,22 +376,30 @@ export default function PublicProfileNew() {
           )}
         </motion.section>
 
+        {/* ━━━━━ ORDERABLE SECTIONS (CSS order follows profile.sectionOrder) ━━━━━ */}
+        <div className="flex flex-col w-full">
+
         {/* ━━━ BIO ━━━ */}
+        <div style={{ order: orderOf("bio") }}>
         <BioSection
           displayName={displayName}
           bio={profile.bio ?? undefined}
           theme={customTheme}
         />
+        </div>
 
         {/* ━━━ VIDEO ━━━ */}
+        <div style={{ order: orderOf("video") }}>
         {(profile as any).videoUrl && (
           <Section>
             <SectionTitle>Destaque</SectionTitle>
             <VideoSection videoUrl={(profile as any).videoUrl} theme={customTheme} />
           </Section>
         )}
+        </div>
 
         {/* ━━━ GALLERY — columns follow layoutColumns ━━━ */}
+        <div style={{ order: orderOf("gallery") }}>
         {photos && photos.length > 0 && (
           <Section id="gallery">
             <SectionTitle>Galeria</SectionTitle>
@@ -318,8 +412,10 @@ export default function PublicProfileNew() {
             />
           </Section>
         )}
+        </div>
 
         {/* ━━━ EVENTS — columns follow layoutColumns ━━━ */}
+        <div style={{ order: orderOf("events") }}>
         {events && events.length > 0 && (
           <Section id="events">
             <SectionTitle>Próximos Eventos</SectionTitle>
@@ -346,6 +442,7 @@ export default function PublicProfileNew() {
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                      {event.eventDate && <EventDateBadge dateStr={event.eventDate} theme={customTheme} />}
                     </div>
                   )}
                   <div className="p-5">
@@ -412,8 +509,10 @@ export default function PublicProfileNew() {
             </div>
           </Section>
         )}
+        </div>
 
         {/* ━━━ LINKS — columns follow layoutColumns ━━━ */}
+        <div style={{ order: orderOf("links") }}>
         {regularLinks.length > 0 && (
           <Section id="links">
             <SectionTitle>Links</SectionTitle>
@@ -465,18 +564,21 @@ export default function PublicProfileNew() {
             </motion.div>
           </Section>
         )}
+        </div>
 
-        {/* ━━━ SPOTIFY ━━━ */}
-        {spotifyLinks.length > 0 && (
+        {/* ━━━ MÚSICA (Spotify + SoundCloud) ━━━ */}
+        <div style={{ order: orderOf("spotify") }}>
+        {embedLinks.length > 0 && (
           <Section id="playlists">
             <SectionTitle>Playlists</SectionTitle>
             <div
               className="grid gap-6"
-              style={{ gridTemplateColumns: gridCols(spotifyLinks.length) }}
+              style={{ gridTemplateColumns: gridCols(embedLinks.length) }}
             >
-              {spotifyLinks.map((link, index) => {
-                const embedUrl = toSpotifyEmbedUrl(link.url);
-                if (!embedUrl) return null;
+              {embedLinks.map((link, index) => {
+                const embed = toMusicEmbedUrl(link.url);
+                if (!embed) return null;
+                const isSC = embed.provider === "soundcloud";
                 return (
                   <motion.div
                     key={link.id}
@@ -485,16 +587,16 @@ export default function PublicProfileNew() {
                     viewport={{ once: true }}
                     transition={{ duration: 0.4, delay: index * 0.08 }}
                   >
-                    {link.title && link.title !== "Spotify" && (
+                    {link.title && link.title !== "Spotify" && link.title !== "SoundCloud" && (
                       <p className="text-xs uppercase tracking-widest text-white/60 mb-3">
                         {link.title}
                       </p>
                     )}
                     <div className="rounded-xl overflow-hidden border border-white/10">
                       <iframe
-                        src={embedUrl}
+                        src={embed.src}
                         width="100%"
-                        height="152"
+                        height={isSC ? 166 : 152}
                         allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
                         loading="lazy"
                         className="border-0"
@@ -507,8 +609,10 @@ export default function PublicProfileNew() {
             </div>
           </Section>
         )}
+        </div>
 
         {/* ━━━ CONTACT ━━━ */}
+        <div style={{ order: orderOf("contact") }}>
         <ContactSection
           contact={{
             whatsapp: (profile as any).whatsappNumber,
@@ -538,6 +642,10 @@ export default function PublicProfileNew() {
             }
           }}
         />
+        </div>
+
+        </div>
+        {/* ━━━━━ END ORDERABLE SECTIONS ━━━━━ */}
 
         {/* ━━━ FOOTER ━━━ */}
         <motion.footer
@@ -548,6 +656,42 @@ export default function PublicProfileNew() {
           transition={{ duration: 0.5 }}
         >
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-10 text-center space-y-6">
+            {/* Patrocinadores / Parceiros */}
+            {Array.isArray((profile as any).sponsors) && (profile as any).sponsors.length > 0 && (
+              <div className="pb-8 mb-2 border-b border-white/10">
+                <p className="text-[10px] sm:text-xs uppercase tracking-[0.25em] text-white/40 mb-6">
+                  Apoio &amp; Parceiros
+                </p>
+                <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-10">
+                  {((profile as any).sponsors as Array<{ imageUrl: string; name?: string; url?: string }>).map((sp, i) => {
+                    const img = (
+                      <img
+                        src={sp.imageUrl}
+                        alt={sp.name || `Parceiro ${i + 1}`}
+                        title={sp.name || undefined}
+                        className="h-10 sm:h-14 w-auto object-contain opacity-70 hover:opacity-100 transition-opacity duration-300 grayscale hover:grayscale-0"
+                        loading="lazy"
+                      />
+                    );
+                    return sp.url ? (
+                      <a key={i} href={sp.url} target="_blank" rel="noopener noreferrer" className="shrink-0">
+                        {img}
+                      </a>
+                    ) : (
+                      <div key={i} className="shrink-0">{img}</div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Texto customizado do footer */}
+            {(profile as any).footerText && (
+              <p className="text-sm text-white/60 font-light max-w-2xl mx-auto whitespace-pre-line">
+                {(profile as any).footerText}
+              </p>
+            )}
+
             <div>
               <p className="text-xs uppercase tracking-[0.2em] text-white/50 mb-4">
                 Crie seu hub profissional

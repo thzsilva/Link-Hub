@@ -143,6 +143,13 @@ router.put("/me", async (req, res): Promise<void> => {
   if (parsed.data.whatsappNumber !== undefined) updateData.whatsappNumber = parsed.data.whatsappNumber;
   if (parsed.data.email !== undefined) updateData.email = parsed.data.email;
   if (parsed.data.instagramHandle !== undefined) updateData.instagramHandle = parsed.data.instagramHandle;
+  if (parsed.data.heroDisplay !== undefined) updateData.heroDisplay = parsed.data.heroDisplay;
+  if (parsed.data.heroAlign !== undefined) updateData.heroAlign = parsed.data.heroAlign;
+  if (parsed.data.socialIconsAlign !== undefined) updateData.socialIconsAlign = parsed.data.socialIconsAlign;
+  if (parsed.data.usernameFont !== undefined) updateData.usernameFont = parsed.data.usernameFont;
+  if (parsed.data.sectionOrder !== undefined) updateData.sectionOrder = parsed.data.sectionOrder;
+  if (parsed.data.sponsors !== undefined) updateData.sponsors = parsed.data.sponsors;
+  if (parsed.data.footerText !== undefined) updateData.footerText = parsed.data.footerText;
 
   console.log("PUT /api/me - updateData:", JSON.stringify(updateData, null, 2));
 

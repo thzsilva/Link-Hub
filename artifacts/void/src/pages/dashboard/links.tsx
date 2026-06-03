@@ -26,7 +26,7 @@ import { GripVertical, Trash2, Edit2, Check, X, Plus, ChevronDown, LinkIcon } fr
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import {
-  PLATFORMS, detectPlatform, getPlatform, toSpotifyEmbedUrl,
+  PLATFORMS, detectPlatform, getPlatform, toSpotifyEmbedUrl, toSoundCloudEmbedUrl,
   type PlatformId,
 } from "@/lib/platforms";
 import { EmptyState } from "@/components/EmptyState";
@@ -268,12 +268,13 @@ function AddLinkDialog({
 
   const handleSubmit = () => {
     if (!url.trim()) return;
-    const isSpotify = icon === "spotify";
+    // Spotify and SoundCloud render as embedded players
+    const cardType = icon === "spotify" ? "spotify" : icon === "soundcloud" ? "soundcloud" : "default";
     onCreate({
       title: title.trim() || getPlatform(icon).name,
       url: url.trim(),
       icon: icon,
-      cardType: isSpotify ? "spotify" : "default",
+      cardType,
     });
   };
 
@@ -325,6 +326,21 @@ function AddLinkDialog({
                 width="100%"
                 height="100"
                 allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                loading="lazy"
+                className="border-0"
+              />
+            </div>
+          )}
+
+          {/* SoundCloud preview */}
+          {icon === "soundcloud" && url && toSoundCloudEmbedUrl(url) && (
+            <div className="space-y-1">
+              <p className="text-xs uppercase tracking-widest text-muted-foreground">Preview do embed</p>
+              <iframe
+                src={toSoundCloudEmbedUrl(url)!}
+                width="100%"
+                height="120"
+                allow="autoplay"
                 loading="lazy"
                 className="border-0"
               />

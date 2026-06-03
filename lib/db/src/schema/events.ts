@@ -13,6 +13,7 @@ export const eventsTable = pgTable("events", {
   ticketUrl: text("ticket_url"),
   imageUrl: text("image_url"),
   price: numeric("price", { precision: 10, scale: 2 }),
+  paymentReceived: boolean("payment_received").default(false),
   position: integer("position").default(0),
   isVisible: boolean("is_visible").default(true),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

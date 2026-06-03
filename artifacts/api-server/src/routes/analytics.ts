@@ -199,23 +199,27 @@ router.get("/dashboard/monetization", async (req, res): Promise<void> => {
         title: eventsTable.title,
         eventDate: eventsTable.eventDate,
         price: eventsTable.price,
+        paymentReceived: eventsTable.paymentReceived,
       })
       .from(eventsTable)
       .where(and(eq(eventsTable.profileId, profileId), isNotNull(eventsTable.price)));
 
-    // Categorize as upcoming/completed
+    // status: "received" when manually marked as paid, otherwise based on date
     const events = allEvents.map((e) => ({
       id: e.id,
       title: e.title,
       date: e.eventDate?.toISOString().slice(0, 10) ?? new Date().toISOString().slice(0, 10),
       price: Number(e.price ?? 0),
-      status: (e.eventDate && new Date(e.eventDate) < now) ? "completed" : "upcoming",
+      paymentReceived: !!e.paymentReceived,
+      status: e.paymentReceived
+        ? "received"
+        : (e.eventDate && new Date(e.eventDate) < now ? "pending" : "upcoming"),
     }));
 
-    // Calculate totals
+    // Calculate totals based on the manual "received" flag
     const totalRevenue = allEvents.reduce((sum, e) => sum + (Number(e.price) || 0), 0);
-    const upcomingRevenue = events.filter(e => e.status === "upcoming").reduce((sum, e) => sum + e.price, 0);
-    const completedRevenue = events.filter(e => e.status === "completed").reduce((sum, e) => sum + e.price, 0);
+    const completedRevenue = events.filter(e => e.paymentReceived).reduce((sum, e) => sum + e.price, 0);
+    const upcomingRevenue = totalRevenue - completedRevenue;
 
     // Calculate trend (last 30 days, by event date)
     const trendRaw = await db

@@ -6,12 +6,31 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { THEMES, type ThemeId, type LayoutColumns, getTheme, getCSSVariables } from "@/lib/themes";
-import { Palette, Layout, Copy, Check, Upload as UploadIcon, Loader2 } from "lucide-react";
+import { Palette, Layout, Copy, Check, Upload as UploadIcon, Loader2, GripVertical, Type, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ColorPickerEnhanced } from "@/components/ColorPickerEnhanced";
 import { ThemePreview } from "@/components/ThemePreview";
 import ImageCropModal from "@/components/ImageCropModal";
 import { uploadImage } from "@/lib/api-base";
+import { FONT_OPTIONS, getFontStack } from "@/lib/fonts";
+import { SECTION_META, normalizeSectionOrder, type SectionKey } from "@/lib/sections";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 async function updateProfileCustomization(data: {
   themeId?: string;
@@ -76,6 +95,66 @@ async function updateProfileBanner(data: { headerImageUrl: string | null }) {
   } catch (error: any) {
     throw new Error(error.message || "Falha ao atualizar banner");
   }
+}
+
+type Sponsor = { imageUrl: string; name?: string; url?: string };
+
+async function updateProfileFooter(data: { sponsors?: Sponsor[]; footerText?: string | null }) {
+  try {
+    return await customFetch("/api/me", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+  } catch (error: any) {
+    throw new Error(error.message || "Falha ao salvar rodapé");
+  }
+}
+
+async function updateProfileAppearance(data: {
+  heroDisplay?: string;
+  heroAlign?: string;
+  socialIconsAlign?: string;
+  usernameFont?: string;
+  sectionOrder?: string[];
+}) {
+  try {
+    return await customFetch("/api/me", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+  } catch (error: any) {
+    throw new Error(error.message || "Falha ao atualizar aparência");
+  }
+}
+
+// Sortable row for the section-ordering UI
+function SortableSectionRow({ id, label, icon }: { id: string; label: string; icon: string }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 10 : 1,
+  };
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`flex items-center gap-3 rounded-lg border border-white/15 bg-white/5 px-4 py-3 ${isDragging ? "opacity-60" : ""}`}
+    >
+      <button
+        {...attributes}
+        {...listeners}
+        className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-white touch-none"
+        aria-label="Arrastar"
+      >
+        <GripVertical size={18} />
+      </button>
+      <span className="text-lg">{icon}</span>
+      <span className="text-sm font-medium text-white">{label}</span>
+    </div>
+  );
 }
 
 async function updateProfileVideo(data: { videoUrl: string | null }) {
@@ -145,6 +224,107 @@ export default function DashboardCustomization() {
   const [email, setEmail] = useState((profile as any)?.email || "");
   const [instagramHandle, setInstagramHandle] = useState((profile as any)?.instagramHandle || "");
   const [isSavingContact, setIsSavingContact] = useState(false);
+
+  // Appearance: hero display, alignment, font, section order
+  const [heroDisplay, setHeroDisplay] = useState<string>((profile as any)?.heroDisplay || "name");
+  const [heroAlign, setHeroAlign] = useState<string>((profile as any)?.heroAlign || "center");
+  const [socialIconsAlign, setSocialIconsAlign] = useState<string>(() => {
+    const raw = (profile as any)?.socialIconsAlign || "bottom-center";
+    return raw.includes("-") ? raw : `bottom-${raw}`;
+  });
+  const [usernameFont, setUsernameFont] = useState<string>((profile as any)?.usernameFont || "default");
+  const [sectionOrder, setSectionOrder] = useState<SectionKey[]>(
+    normalizeSectionOrder((profile as any)?.sectionOrder)
+  );
+  const [isSavingAppearance, setIsSavingAppearance] = useState(false);
+  const [isSavingOrder, setIsSavingOrder] = useState(false);
+
+  // Footer: sponsors + custom text
+  const [sponsors, setSponsors] = useState<Sponsor[]>(
+    Array.isArray((profile as any)?.sponsors) ? (profile as any).sponsors : []
+  );
+  const [footerText, setFooterText] = useState<string>((profile as any)?.footerText || "");
+  const [isSavingFooter, setIsSavingFooter] = useState(false);
+  const [isUploadingSponsor, setIsUploadingSponsor] = useState(false);
+  const sponsorFileRef = useRef<HTMLInputElement>(null);
+
+  const handleSponsorUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploadingSponsor(true);
+    try {
+      const url = await uploadImage(file, file.name || "sponsor.png");
+      setSponsors((cur) => [...cur, { imageUrl: url, name: "", url: "" }]);
+      toast({ title: "✓ Logo adicionada! Não esqueça de salvar." });
+    } catch (err: any) {
+      toast({ title: err?.message || "Falha no upload", variant: "destructive" });
+    } finally {
+      setIsUploadingSponsor(false);
+      if (sponsorFileRef.current) sponsorFileRef.current.value = "";
+    }
+  };
+
+  const updateSponsor = (index: number, patch: Partial<Sponsor>) => {
+    setSponsors((cur) => cur.map((s, i) => (i === index ? { ...s, ...patch } : s)));
+  };
+  const removeSponsor = (index: number) => {
+    setSponsors((cur) => cur.filter((_, i) => i !== index));
+  };
+
+  const handleSaveFooter = async () => {
+    setIsSavingFooter(true);
+    try {
+      await updateProfileFooter({ sponsors, footerText: footerText.trim() || null });
+      queryClient.invalidateQueries({ queryKey: ["useGetMe"] });
+      toast({ title: "✓ Rodapé atualizado!" });
+    } catch (err: any) {
+      toast({ title: err?.message || "Erro ao salvar", variant: "destructive" });
+    } finally {
+      setIsSavingFooter(false);
+    }
+  };
+
+  const sectionSensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  const handleSectionDragEnd = (e: DragEndEvent) => {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    setSectionOrder((cur) => {
+      const oldIndex = cur.indexOf(active.id as SectionKey);
+      const newIndex = cur.indexOf(over.id as SectionKey);
+      if (oldIndex === -1 || newIndex === -1) return cur;
+      return arrayMove(cur, oldIndex, newIndex);
+    });
+  };
+
+  const handleSaveAppearance = async () => {
+    setIsSavingAppearance(true);
+    try {
+      await updateProfileAppearance({ heroDisplay, heroAlign, socialIconsAlign, usernameFont });
+      queryClient.invalidateQueries({ queryKey: ["useGetMe"] });
+      toast({ title: "✓ Aparência atualizada!" });
+    } catch (err: any) {
+      toast({ title: err?.message || "Erro ao salvar", variant: "destructive" });
+    } finally {
+      setIsSavingAppearance(false);
+    }
+  };
+
+  const handleSaveSectionOrder = async () => {
+    setIsSavingOrder(true);
+    try {
+      await updateProfileAppearance({ sectionOrder });
+      queryClient.invalidateQueries({ queryKey: ["useGetMe"] });
+      toast({ title: "✓ Ordem das seções salva!" });
+    } catch (err: any) {
+      toast({ title: err?.message || "Erro ao salvar", variant: "destructive" });
+    } finally {
+      setIsSavingOrder(false);
+    }
+  };
 
   // Crop modal states
   const [showAvatarCropModal, setShowAvatarCropModal] = useState(false);
@@ -431,6 +611,277 @@ export default function DashboardCustomization() {
               {isSavingBio ? "Salvando..." : "Salvar"}
             </Button>
           </div>
+        </div>
+      </motion.div>
+
+      {/* Aparência do Nome / Hero */}
+      <motion.div
+        className="bg-white/5 border border-white/10 rounded-xl p-6 sm:p-8 space-y-5 backdrop-blur-sm hover:bg-white/[0.07] transition-all duration-300"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.08 }}
+      >
+        <h2 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-cyan-300 to-blue-300 bg-clip-text text-transparent flex items-center gap-2">
+          <User size={18} /> Aparência do Nome
+        </h2>
+
+        {/* Hero display option */}
+        <div className="space-y-2">
+          <label className="text-xs uppercase tracking-widest text-muted-foreground">No topo do perfil, mostrar:</label>
+          <div className="grid grid-cols-3 gap-2">
+            {([
+              { v: "name", label: "Nome" },
+              { v: "logo", label: "Logo/Foto" },
+              { v: "both", label: "Ambos" },
+            ] as const).map((opt) => (
+              <button
+                key={opt.v}
+                onClick={() => setHeroDisplay(opt.v)}
+                className={`rounded-lg border px-3 py-2.5 text-sm font-medium transition-all ${
+                  heroDisplay === opt.v
+                    ? "border-white/60 bg-white/10 text-white"
+                    : "border-white/15 text-muted-foreground hover:border-white/30"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+          {(heroDisplay === "logo" || heroDisplay === "both") && !profile?.avatarUrl && (
+            <p className="text-xs text-amber-400/80">Faça upload de uma foto/logo abaixo para exibi-la.</p>
+          )}
+        </div>
+
+        {/* Hero alignment / position */}
+        <div className="space-y-2">
+          <label className="text-xs uppercase tracking-widest text-muted-foreground">Posição do nome/logo</label>
+          <div className="grid grid-cols-4 gap-2">
+            {([
+              { v: "top", label: "Superior" },
+              { v: "left", label: "Esquerda" },
+              { v: "center", label: "Centro" },
+              { v: "right", label: "Direita" },
+            ] as const).map((opt) => (
+              <button
+                key={opt.v}
+                onClick={() => setHeroAlign(opt.v)}
+                className={`rounded-lg border px-2 py-2.5 text-xs font-medium transition-all ${
+                  heroAlign === opt.v
+                    ? "border-white/60 bg-white/10 text-white"
+                    : "border-white/15 text-muted-foreground hover:border-white/30"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Social icons position (top/bottom × left/center/right) */}
+        <div className="space-y-2">
+          <label className="text-xs uppercase tracking-widest text-muted-foreground">Posição dos ícones</label>
+          <div className="space-y-2">
+            {([
+              { row: "Topo", base: "top" },
+              { row: "Base", base: "bottom" },
+            ] as const).map((group) => (
+              <div key={group.base} className="flex items-center gap-2">
+                <span className="text-[10px] uppercase tracking-widest text-muted-foreground w-10 flex-shrink-0">{group.row}</span>
+                <div className="grid grid-cols-3 gap-2 flex-1">
+                  {([
+                    { h: "left", label: "Esq." },
+                    { h: "center", label: "Centro" },
+                    { h: "right", label: "Dir." },
+                  ] as const).map((opt) => {
+                    const value = `${group.base}-${opt.h}`;
+                    return (
+                      <button
+                        key={value}
+                        onClick={() => setSocialIconsAlign(value)}
+                        className={`rounded-lg border px-2 py-2 text-xs font-medium transition-all ${
+                          socialIconsAlign === value
+                            ? "border-white/60 bg-white/10 text-white"
+                            : "border-white/15 text-muted-foreground hover:border-white/30"
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Font selector */}
+        <div className="space-y-2">
+          <label className="text-xs uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
+            <Type size={13} /> Fonte do nome
+          </label>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {FONT_OPTIONS.map((f) => (
+              <button
+                key={f.id}
+                onClick={() => setUsernameFont(f.id)}
+                style={{ fontFamily: f.stack }}
+                className={`rounded-lg border px-3 py-3 text-lg transition-all truncate ${
+                  usernameFont === f.id
+                    ? "border-white/60 bg-white/10 text-white"
+                    : "border-white/15 text-white/70 hover:border-white/30"
+                }`}
+                title={f.label}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+          <div className="mt-2 rounded-lg border border-white/10 bg-black/40 p-4">
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Prévia</p>
+            <p className="text-3xl sm:text-4xl font-black uppercase text-white leading-none" style={{ fontFamily: getFontStack(usernameFont) }}>
+              {username || profile?.displayName || "Seu Nome"}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex justify-end">
+          <Button
+            onClick={handleSaveAppearance}
+            disabled={isSavingAppearance}
+            className="rounded-lg px-6 uppercase font-bold bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600"
+          >
+            {isSavingAppearance ? "Salvando..." : "Salvar Aparência"}
+          </Button>
+        </div>
+      </motion.div>
+
+      {/* Ordem das Seções */}
+      <motion.div
+        className="bg-white/5 border border-white/10 rounded-xl p-6 sm:p-8 space-y-4 backdrop-blur-sm hover:bg-white/[0.07] transition-all duration-300"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.09 }}
+      >
+        <h2 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-emerald-300 to-teal-300 bg-clip-text text-transparent flex items-center gap-2">
+          <Layout size={18} /> Ordem das Seções
+        </h2>
+        <p className="text-xs text-muted-foreground">Arraste para definir em que ordem as seções aparecem no seu perfil público.</p>
+
+        <DndContext sensors={sectionSensors} collisionDetection={closestCenter} onDragEnd={handleSectionDragEnd}>
+          <SortableContext items={sectionOrder} strategy={verticalListSortingStrategy}>
+            <div className="space-y-2">
+              {sectionOrder.map((key) => {
+                const meta = SECTION_META.find((m) => m.key === key);
+                if (!meta) return null;
+                return <SortableSectionRow key={key} id={key} label={meta.label} icon={meta.icon} />;
+              })}
+            </div>
+          </SortableContext>
+        </DndContext>
+
+        <div className="flex justify-end">
+          <Button
+            onClick={handleSaveSectionOrder}
+            disabled={isSavingOrder}
+            className="rounded-lg px-6 uppercase font-bold bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600"
+          >
+            {isSavingOrder ? "Salvando..." : "Salvar Ordem"}
+          </Button>
+        </div>
+      </motion.div>
+
+      {/* Rodapé / Patrocinadores */}
+      <motion.div
+        className="bg-white/5 border border-white/10 rounded-xl p-6 sm:p-8 space-y-5 backdrop-blur-sm hover:bg-white/[0.07] transition-all duration-300"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.1 }}
+      >
+        <div>
+          <h2 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-amber-300 to-orange-300 bg-clip-text text-transparent">
+            Rodapé &amp; Patrocinadores
+          </h2>
+          <p className="text-xs text-muted-foreground mt-1">Adicione logos de patrocinadores/parceiros e um texto no rodapé do seu perfil.</p>
+        </div>
+
+        {/* Sponsor logos */}
+        <div className="space-y-3">
+          <label className="text-xs uppercase tracking-widest text-muted-foreground">Logos dos parceiros</label>
+
+          {sponsors.length > 0 && (
+            <div className="space-y-3">
+              {sponsors.map((sp, i) => (
+                <div key={i} className="flex items-center gap-3 rounded-lg border border-white/15 bg-black/30 p-3">
+                  <div className="w-16 h-12 flex-shrink-0 rounded bg-white/5 border border-white/10 overflow-hidden flex items-center justify-center">
+                    <img src={sp.imageUrl} alt={sp.name || "Logo"} className="max-w-full max-h-full object-contain" />
+                  </div>
+                  <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2 min-w-0">
+                    <Input
+                      value={sp.name || ""}
+                      onChange={(e) => updateSponsor(i, { name: e.target.value })}
+                      placeholder="Nome (opcional)"
+                      className="h-9 rounded-lg bg-white/5 border-white/20 text-sm"
+                    />
+                    <Input
+                      value={sp.url || ""}
+                      onChange={(e) => updateSponsor(i, { url: e.target.value })}
+                      placeholder="Link (opcional)"
+                      className="h-9 rounded-lg bg-white/5 border-white/20 text-sm font-mono"
+                    />
+                  </div>
+                  <button
+                    onClick={() => removeSponsor(i)}
+                    className="text-muted-foreground hover:text-red-400 transition-colors flex-shrink-0 px-2"
+                    aria-label="Remover"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <input
+            ref={sponsorFileRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleSponsorUpload}
+            disabled={isUploadingSponsor}
+          />
+          <Button
+            variant="outline"
+            onClick={() => sponsorFileRef.current?.click()}
+            disabled={isUploadingSponsor}
+            className="rounded-lg uppercase text-xs font-bold border-white/20 hover:bg-white/10 gap-2"
+          >
+            {isUploadingSponsor ? <Loader2 size={14} className="animate-spin" /> : <UploadIcon size={14} />}
+            {isUploadingSponsor ? "Enviando..." : "Adicionar Logo"}
+          </Button>
+        </div>
+
+        {/* Footer text */}
+        <div className="space-y-2">
+          <label className="text-xs uppercase tracking-widest text-muted-foreground">Texto do rodapé (opcional)</label>
+          <textarea
+            value={footerText}
+            onChange={(e) => setFooterText(e.target.value)}
+            placeholder="Ex: Agradecimento aos patrocinadores, contato de booking, etc."
+            maxLength={300}
+            rows={3}
+            className="w-full rounded-lg bg-white/5 border border-white/20 p-4 text-white text-sm resize-none focus:outline-none focus:border-white/50 focus:bg-white/10 transition-colors"
+          />
+          <p className="text-xs text-muted-foreground text-right">{footerText.length} / 300</p>
+        </div>
+
+        <div className="flex justify-end">
+          <Button
+            onClick={handleSaveFooter}
+            disabled={isSavingFooter}
+            className="rounded-lg px-6 uppercase font-bold bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
+          >
+            {isSavingFooter ? "Salvando..." : "Salvar Rodapé"}
+          </Button>
         </div>
       </motion.div>
 

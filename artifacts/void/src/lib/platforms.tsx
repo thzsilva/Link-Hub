@@ -244,3 +244,28 @@ export function toSpotifyEmbedUrl(url: string): string | null {
     return null;
   }
 }
+
+/** Is this a SoundCloud URL? */
+export function isSoundCloudUrl(url: string): boolean {
+  try {
+    return new URL(url).hostname.includes("soundcloud.com");
+  } catch {
+    return false;
+  }
+}
+
+/** Build a SoundCloud embed (widget) URL from any soundcloud.com track/set/user URL */
+export function toSoundCloudEmbedUrl(url: string): string | null {
+  if (!isSoundCloudUrl(url)) return null;
+  const encoded = encodeURIComponent(url);
+  return `https://w.soundcloud.com/player/?url=${encoded}&color=%23ff5500&auto_play=false&hide_related=true&show_comments=false&show_user=true&show_reposts=false&show_teaser=false&visual=false`;
+}
+
+/** Returns an embeddable music player URL (Spotify or SoundCloud), or null */
+export function toMusicEmbedUrl(url: string): { provider: "spotify" | "soundcloud"; src: string } | null {
+  const sp = toSpotifyEmbedUrl(url);
+  if (sp) return { provider: "spotify", src: sp };
+  const sc = toSoundCloudEmbedUrl(url);
+  if (sc) return { provider: "soundcloud", src: sc };
+  return null;
+}

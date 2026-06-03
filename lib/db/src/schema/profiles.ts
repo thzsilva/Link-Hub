@@ -28,6 +28,15 @@ export const profilesTable = pgTable("profiles", {
   // Configurações de seções
   showSections: boolean("show_sections").default(true),
   sectionSettings: jsonb("section_settings").default({}),
+  sectionOrder: jsonb("section_order"),
+  // Footer: patrocinadores/parceiros (logos) + texto customizado
+  sponsors: jsonb("sponsors"),
+  footerText: text("footer_text"),
+  // Aparência do hero e fonte do nome
+  heroDisplay: text("hero_display").default("name"),
+  heroAlign: text("hero_align").default("center"),
+  socialIconsAlign: text("social_icons_align").default("center"),
+  usernameFont: text("username_font").default("default"),
   isSuperAdmin: boolean("is_super_admin").default(false),
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
