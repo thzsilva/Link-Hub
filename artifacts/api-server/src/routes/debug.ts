@@ -3,6 +3,18 @@ import { logger } from "../lib/logger";
 
 const router: IRouter = Router();
 
+// As rotas de debug ficam DESATIVADAS por padrão (inclusive em produção).
+// Para usá-las em desenvolvimento, defina ENABLE_DEBUG=true no .env.
+// Sem o flag, todas respondem 404 — fechando o vazamento de info/erros.
+const DEBUG_ENABLED = process.env.ENABLE_DEBUG === "true";
+router.use((_req, res, next) => {
+  if (!DEBUG_ENABLED) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+  next();
+});
+
 // Helper para mostrar headers
 function debugHeaders(req: Request) {
   return {

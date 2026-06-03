@@ -384,6 +384,8 @@ Crie um `.env` na raiz (não versionado). Variáveis:
 | `API_PORT` | Backend | Porta da API (default `3001`). |
 | `WEB_PORT` | Frontend | Porta do Vite (default `3000`). |
 | `DEMO_MODE` | Ambos | `true` roda **sem banco** (dados de demonstração em memória). |
+| `ALLOWED_ORIGINS` | Backend (opcional) | Lista separada por vírgula de origens permitidas no CORS. Se **ausente**, mantém o comportamento permissivo atual (reflete qualquer origem). Ex: `https://hubvoid.vercel.app`. |
+| `ENABLE_DEBUG` | Backend (opcional) | `true` ativa as rotas `/api/debug/*`. **Padrão desligado** (inclusive em prod): as rotas respondem 404. |
 
 > **Vercel (frontend):** basta `VITE_CLERK_PUBLISHABLE_KEY` (e opcionalmente
 > `VITE_API_BASE_URL`). **Não** coloque `DATABASE_*`/`SUPABASE_*` no projeto do frontend.
@@ -630,25 +632,26 @@ node ./build.mjs           # (em artifacts/api-server) build só da API
 - **Banco**: SSL forçado fora de localhost; segredos só em variáveis de ambiente;
   `.env*` no `.gitignore`.
 
-### ⚠️ Itens a corrigir / endurecer (recomendado antes de escalar)
-1. **Rotas de debug expostas** — `GET /api/debug/env`, `/api/debug/headers`,
-   `/api/debug/db-connection`, `PUT /api/debug/test-profile-update` estão
-   **públicas e sem auth**. Não vazam valores de segredos (só presença ✅/❌), mas
-   expõem informação e erros do banco. **Ação:** remover o `debugRouter` em
-   produção (ou gateá-lo atrás de `is_super_admin` / `NODE_ENV !== 'production'`).
-2. **CORS `origin: true`** — reflete qualquer origem. Como a auth é por Bearer
-   token (não cookie), o risco é baixo, mas o ideal é **restringir à origem do
-   frontend** (`https://SEU-FRONTEND.vercel.app`).
-3. **`GET /api/proxy-image`** — proxy de imagens pode ser vetor de **SSRF**.
-   Validar/allowlist de hosts e bloquear IPs internos.
-4. **Sem rate limiting** — adicionar `express-rate-limit` (ou limites no
+### ✅ Correções já aplicadas
+1. **Rotas de debug fechadas** — `/api/debug/*` agora ficam **desativadas por
+   padrão** (respondem 404), inclusive em produção. Só ativam com `ENABLE_DEBUG=true`.
+2. **CORS endurecível** — agora aceita `ALLOWED_ORIGINS` (allowlist). Sem a env,
+   mantém o padrão permissivo (sem quebrar nada); defina-a em produção para
+   restringir à origem do frontend.
+3. **proxy-image anti-SSRF** — passou a validar o **hostname real** (precisa
+   terminar em `.supabase.co`) e o protocolo http(s), evitando burlas tipo
+   `supabase.co.evil.com`.
+
+### ⚠️ Itens recomendados (operacionais / próximo passo)
+4. **Definir `ALLOWED_ORIGINS`** em produção (Railway) com o domínio do frontend.
+5. **Rate limiting** — adicionar `express-rate-limit` (ou limites no
    Railway/Cloudflare), principalmente em `/api/analytics`, `/api/photos/upload` e
-   no formulário de contato, para evitar abuso/spam.
-5. **Chaves do Clerk de desenvolvimento** — o app está usando `pk_test`/`sk_test`.
-   Migrar para chaves de produção (`pk_live`/`sk_live`) com o domínio configurado.
-6. **Validação de URL/conteúdo** — campos de URL (links, sponsors, ticketUrl) não
-   são validados como URL nem sanitizados; como são renderizados como `href`,
-   convém validar o esquema (`https:`) para evitar `javascript:`/abuso.
+   no formulário de contato, para evitar abuso/spam. *(Não aplicado ainda para
+   evitar risco de bloquear tráfego legítimo sem monitoramento.)*
+6. **Chaves do Clerk de produção** — migrar de `pk_test`/`sk_test` para
+   `pk_live`/`sk_live` com o domínio configurado.
+7. **Validação de URL/conteúdo** — campos de URL (links, sponsors, ticketUrl) são
+   conteúdo do próprio dono; ainda assim, validar o esquema (`https:`) reforça.
 
 ---
 

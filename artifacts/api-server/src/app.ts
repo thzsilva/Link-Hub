@@ -27,7 +27,27 @@ app.use(
 );
 
 app.use(CLERK_PROXY_PATH, clerkProxyMiddleware());
-app.use(cors({ credentials: true, origin: true }));
+
+// CORS: por padrão mantém o comportamento atual (reflete qualquer origem).
+// Para restringir, defina ALLOWED_ORIGINS no .env (lista separada por vírgula),
+// ex: ALLOWED_ORIGINS="https://hubvoid.vercel.app,https://hubvoid.com".
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || "")
+  .split(",")
+  .map((o) => o.trim())
+  .filter(Boolean);
+app.use(
+  cors({
+    credentials: true,
+    origin:
+      allowedOrigins.length > 0
+        ? (origin, cb) => {
+            // Permite requisições sem Origin (curl, server-to-server) e as da allowlist
+            if (!origin || allowedOrigins.includes(origin)) cb(null, true);
+            else cb(new Error("Origin não permitida pelo CORS"));
+          }
+        : true,
+  }),
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

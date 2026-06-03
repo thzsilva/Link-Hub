@@ -27,8 +27,20 @@ router.get("/proxy-image", async (req, res): Promise<void> => {
     return;
   }
 
-  // Validar que é uma URL do Supabase
-  if (!urlString.includes("supabase.co")) {
+  // Validar que é uma URL do Supabase (anti-SSRF): hostname real precisa
+  // terminar em ".supabase.co" e o protocolo ser http(s). Evita burlas como
+  // "http://supabase.co.evil.com" ou "http://evil.com/?x=supabase.co".
+  let parsedUrl: URL;
+  try {
+    parsedUrl = new URL(urlString);
+  } catch {
+    res.status(400).json({ error: "URL inválida" });
+    return;
+  }
+  const isHttp = parsedUrl.protocol === "https:" || parsedUrl.protocol === "http:";
+  const host = parsedUrl.hostname.toLowerCase();
+  const isSupabaseHost = host === "supabase.co" || host.endsWith(".supabase.co");
+  if (!isHttp || !isSupabaseHost) {
     console.error("URL não é do Supabase:", urlString);
     res.status(403).json({ error: "Apenas URLs do Supabase são permitidas" });
     return;
