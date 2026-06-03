@@ -28,6 +28,8 @@ ver analytics e a contabilidade dos shows.
 11. [Migrar o banco / storage](#-migrar-o-banco--storage)
 12. [Manutenção do código](#-manutenção-do-código)
 13. [Problemas comuns (troubleshooting)](#-problemas-comuns-troubleshooting)
+14. [Segurança](#-segurança)
+15. [Escalabilidade](#-escalabilidade)
 
 ---
 
@@ -185,17 +187,133 @@ URL absoluta da API + token. O backend (multer) sobe para o **Supabase Storage**
 
 ## 🗄 Banco de dados
 
-PostgreSQL (Supabase). Schema em `lib/db/src/schema/`. Tabelas:
+PostgreSQL (Supabase). Schema Drizzle em `lib/db/src/schema/`. Todas as tabelas
+têm `id uuid` (PK, `gen_random_uuid()`). As tabelas filhas referenciam
+`profiles.id` via `profile_id` (FK, `ON DELETE CASCADE`).
 
-| Tabela          | Descrição |
-|-----------------|-----------|
-| `profiles`      | Perfil do usuário (1:1 com Clerk user). Username, bio, avatar, banner, tema, cores, layout, vídeo, contatos, **heroDisplay/heroLayout/heroAlign/socialIconsAlign/usernameFont**, **sectionOrder**, **sponsors**, **footerText**. |
-| `links`         | Links do perfil (icon/plataforma, `cardType` = `default`/`spotify`/`soundcloud`, posição, clickCount). |
-| `photos`        | Galeria (url, caption, posição, isCover). |
-| `social_links`  | Links sociais salvos (opcional; o hero também deriva ícones dos `links`). |
-| `events`        | Shows/eventos: título, descrição, data, **street/city/state**, ticketUrl, imageUrl, **price**, **paymentReceived**, posição, isVisible. |
-| `sections`      | Seções customizadas. |
-| `analytics`     | Page views e cliques em links. |
+### `profiles` — perfil do usuário (1:1 com o usuário do Clerk)
+
+| Coluna | Tipo | Default | Descrição |
+|--------|------|---------|-----------|
+| `id` | uuid | gen_random_uuid() | PK |
+| `clerk_user_id` | text | — | ID do usuário no Clerk (único) |
+| `username` | text | — | Username público (único) |
+| `display_name` | text | null | Nome de exibição |
+| `bio` | text | null | Biografia |
+| `avatar_url` | text | null | Foto de perfil |
+| `header_image_url` | text | null | Imagem do banner |
+| `banner_video_url` | text | null | Vídeo do banner (mp4/webm, loop) |
+| `bio_image_url` | text | null | Foto exibida ao lado da bio |
+| `bio_image_side` | text | 'left' | Lado da foto da bio: `left`/`right` |
+| `logo_url` | text | null | Imagem do logo (wordmark) no hero |
+| `logo_size` | integer | 128 | Tamanho do logo/foto no hero (px) |
+| `accent_color` | text | '#ffffff' | Cor de destaque (legado) |
+| `bg_color` | text | '#000000' | Cor de fundo (legado) |
+| `card_style` | text | 'glass' | Estilo de card (legado) |
+| `theme_id` | text | 'default' | Tema escolhido |
+| `layout_columns` | integer | 1 | Nº de colunas das grades |
+| `custom_primary_color` | text | null | Cor primária custom |
+| `custom_secondary_color` | text | null | Cor secundária custom |
+| `background_image_url` | text | null | Imagem de fundo |
+| `background_blur` | integer | 0 | Blur do fundo |
+| `hero_display` | text | 'name' | `name`/`logo`/`both` no topo |
+| `hero_layout` | text | 'overlay' | `overlay` (sobre o banner) / `below` |
+| `hero_align` | text | 'center' | `top`/`left`/`center`/`right` |
+| `social_icons_align` | text | 'center' | Posição dos ícones: `{top\|bottom}-{left\|center\|right}` |
+| `username_font` | text | 'default' | Fonte do nome (ver `lib/fonts.ts`) |
+| `show_username` | boolean | true | Mostrar `@username` no hero |
+| `banner_fit` | text | 'cover' | `cover` (preenche) / `contain` (mostra inteiro) |
+| `banner_height` | text | 'normal' | `compact`/`normal`/`tall`/`full` |
+| `show_header` | boolean | false | Header de navegação fixo no topo |
+| `video_url` | text | null | Vídeo de destaque (YouTube/Vimeo/mp4) |
+| `whatsapp_number` | text | null | WhatsApp (contato) |
+| `email` | text | null | E-mail (contato) |
+| `instagram_handle` | text | null | Instagram (contato) |
+| `show_sections` | boolean | true | (legado) exibir seções |
+| `section_settings` | jsonb | {} | (legado) configs de seção |
+| `section_order` | jsonb | null | Ordem das seções (array de chaves) |
+| `section_titles` | jsonb | null | Títulos custom das seções (map) |
+| `sponsors` | jsonb | null | Patrocinadores `[{imageUrl,name,url}]` |
+| `footer_text` | text | null | Texto custom do rodapé |
+| `is_super_admin` | boolean | false | Acesso de admin |
+| `is_active` | boolean | true | Perfil ativo |
+| `created_at` / `updated_at` | timestamptz | now() | Timestamps |
+
+### `events` — shows/eventos
+
+| Coluna | Tipo | Default | Descrição |
+|--------|------|---------|-----------|
+| `profile_id` | uuid | — | FK → profiles |
+| `title` | text | — | Título (obrigatório) |
+| `description` | text | null | Descrição |
+| `event_date` | timestamptz | null | Data/hora |
+| `street` / `city` / `state` | text | null | Localização separada |
+| `location` | text | null | (legado) localização única |
+| `ticket_url` | text | null | Link de ingressos |
+| `image_url` | text | null | Imagem do evento |
+| `price` | numeric(10,2) | null | Valor (contabilidade) |
+| `payment_received` | boolean | false | Marcado como recebido |
+| `position` | integer | 0 | Ordem (drag-and-drop) |
+| `is_visible` | boolean | true | Visível no perfil |
+| `created_at` | timestamptz | now() | Timestamp |
+
+### `links` — links do perfil
+
+| Coluna | Tipo | Default | Descrição |
+|--------|------|---------|-----------|
+| `profile_id` | uuid | — | FK → profiles |
+| `title` / `url` | text | — | Título e URL |
+| `description` | text | null | Descrição |
+| `icon` | text | null | Plataforma (spotify, youtube, …) |
+| `thumbnail_url` | text | null | Miniatura |
+| `card_type` | text | 'default' | `default`/`spotify`/`soundcloud` (embed) |
+| `position` | integer | 0 | Ordem |
+| `is_visible` | boolean | true | Visível |
+| `click_count` | integer | 0 | Cliques |
+| `section_id` | uuid | null | Seção associada |
+| `created_at` | timestamptz | now() | Timestamp |
+
+### `photos` — galeria
+
+| Coluna | Tipo | Default | Descrição |
+|--------|------|---------|-----------|
+| `profile_id` | uuid | — | FK → profiles |
+| `url` | text | — | URL da imagem |
+| `caption` | text | null | Legenda |
+| `is_cover` | boolean | false | É capa |
+| `position` | integer | 0 | Ordem |
+| `created_at` | timestamptz | now() | Timestamp |
+
+### `social_links` — links sociais salvos
+
+| Coluna | Tipo | Default | Descrição |
+|--------|------|---------|-----------|
+| `profile_id` | uuid | — | FK → profiles |
+| `platform` | text | — | Plataforma |
+| `url` | text | — | URL |
+| `position` | integer | 0 | Ordem |
+
+### `sections` — seções customizadas
+
+| Coluna | Tipo | Default | Descrição |
+|--------|------|---------|-----------|
+| `profile_id` | uuid | — | FK → profiles |
+| `name` | text | — | Nome da seção |
+| `position` | integer | 0 | Ordem |
+| `is_visible` | boolean | true | Visível |
+| `bg_color` | text | null | Cor de fundo |
+| `created_at` / `updated_at` | timestamptz | now() | Timestamps |
+
+### `analytics` — page views e cliques
+
+| Coluna | Tipo | Default | Descrição |
+|--------|------|---------|-----------|
+| `profile_id` | uuid | — | FK → profiles |
+| `link_id` | uuid | null | Link clicado (se aplicável) |
+| `event_type` | text | — | `page_view` / `link_click` |
+| `referrer` | text | null | Referrer |
+| `user_agent` | text | null | User agent |
+| `created_at` | timestamptz | now() | Timestamp |
 
 > O endpoint público `GET /api/profile/:username` faz `SELECT *` do perfil, então
 > **colunas novas aparecem automaticamente** no payload.
@@ -303,29 +421,78 @@ npm run seed         # popular dados (scripts/src/seed.ts)
 
 ---
 
-## 🚀 Deploy em produção
+## 🚀 Deploy em produção — passo a passo
 
-O deploy é **automático no push para `main`** (GitHub conectado à Vercel e ao Railway).
+A arquitetura usa **3 serviços**: Supabase (banco + storage), Railway (API) e
+Vercel (frontend). O deploy de código é **automático no push para `main`**.
 
-### Frontend → Vercel
-- **Root Directory** do projeto Vercel: `artifacts/void`.
-- Build: `vite build` → saída em `artifacts/void/dist/public`.
-- **SPA fallback:** `artifacts/void/vercel.json` reescreve qualquer rota para
-  `/index.html` (necessário para recarregar sub-rotas sem 404).
-- Env var: `VITE_CLERK_PUBLISHABLE_KEY`.
+### Passo 0 — Pré-requisitos (uma vez)
+1. Conta no **GitHub** com o repositório.
+2. Conta no **Supabase** (banco PostgreSQL + Storage).
+3. Conta no **Clerk** (autenticação).
+4. Conta no **Railway** (backend) e no **Vercel** (frontend).
 
-### Backend → Railway
-- Build: `npm run build -w artifacts/api-server` (esbuild → `dist/index.mjs`).
-- Start: `Procfile` → `node artifacts/api-server/dist/index.mjs`.
-- Escuta em `API_PORT`/`PORT`. CORS já liberado (`origin: true`).
-- Env vars: `DATABASE_URL`, `SUPABASE_*`, `CLERK_*`.
+### Passo 1 — Supabase (banco + storage)
+1. Crie um projeto no Supabase. Em **Project Settings → Database → Connection
+   string**, copie a URI (formato `postgresql://...`). Essa é a `DATABASE_URL`.
+2. Em **Project Settings → API**, copie `Project URL` (`SUPABASE_URL`),
+   `service_role` key (`SUPABASE_SERVICE_ROLE_KEY`) e `anon` key.
+3. Em **Storage**, crie um bucket **público** chamado `linkhub`
+   (`SUPABASE_STORAGE_BUCKET=linkhub`). *(A API tenta criar automaticamente, mas
+   criar manualmente evita problemas de permissão.)*
+4. **Crie as tabelas/colunas**: rode os scripts de migração apontando para o banco
+   (ver seção [Migrações](#migrações)). Para um banco do zero, rode todos os
+   `scripts/migrate-*.mjs` e crie as tabelas base (events/links/photos/etc.) — ou
+   restaure um dump do banco atual.
 
-### Checklist de deploy
+### Passo 2 — Clerk (autenticação)
+1. Crie uma aplicação no Clerk.
+2. Copie a **Publishable key** (`pk_...`) e a **Secret key** (`sk_...`).
+3. Em produção, configure o domínio do frontend nas **allowed origins** do Clerk.
+
+### Passo 3 — Backend no Railway
+1. **New Project → Deploy from GitHub repo** (selecione o repositório).
+2. Em **Settings → Build**: o Railway detecta Node. Garanta:
+   - **Build Command:** `npm install --legacy-peer-deps && npm run build -w artifacts/api-server`
+   - **Start Command:** `node artifacts/api-server/dist/index.mjs` (ou deixe o `Procfile` cuidar disso).
+3. Em **Variables**, adicione: `DATABASE_URL`, `SUPABASE_URL`,
+   `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_ANON_KEY`, `SUPABASE_STORAGE_BUCKET`,
+   `CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`. (Railway injeta `PORT` automaticamente.)
+4. Deploy. Anote a URL pública (ex: `https://SEU-APP.up.railway.app`).
+5. Teste: `GET https://SEU-APP.up.railway.app/api/healthz` → deve responder OK.
+
+### Passo 4 — Frontend no Vercel
+1. **Add New → Project** (importe o mesmo repositório).
+2. **Settings → General → Root Directory:** `artifacts/void` ⚠️ (crítico — é por
+   isso que o `artifacts/void/vercel.json` é o que vale, e não o da raiz).
+3. **Framework Preset:** Vite. **Build Command:** `vite build` →
+   **Output Directory:** `dist/public`.
+4. **Install Command:** `npm install --legacy-peer-deps`.
+5. Em **Environment Variables**, adicione:
+   - `VITE_CLERK_PUBLISHABLE_KEY` = a publishable key do Clerk.
+   - `VITE_API_BASE_URL` = a URL do Railway (Passo 3). *(Se omitir, o frontend usa
+     o fallback em `src/lib/api-base.ts` — atualize-o se a URL do Railway mudar.)*
+6. Deploy. O **SPA fallback** (`artifacts/void/vercel.json`) garante que recarregar
+   qualquer rota sirva o `index.html` (sem 404).
+
+### Passo 5 — Verificação pós-deploy
+1. `GET .../api/healthz` no Railway → OK.
+2. Abrir `https://SEU-FRONTEND.vercel.app` → landing carrega.
+3. Login (Clerk) → dashboard.
+4. Abrir um perfil público `?user=USERNAME` e **recarregar** (testa SPA fallback).
+5. Testar upload de imagem (avatar/banner) → confirma Storage + token.
+
+### Fluxo de deploy contínuo (dia a dia)
 1. `npm run build` passa localmente.
-2. Migrações novas aplicadas no banco (rode os `scripts/*.mjs`).
-3. Commit + push para `main`.
-4. Aguardar Vercel e Railway ficarem **Ready**.
-5. Testar `https://hubvoid.vercel.app` (hard refresh se favicon/cache antigo).
+2. **Migrações novas aplicadas no banco** (rode os `scripts/*.mjs` — eles agem
+   direto no Supabase, então valem para todos os ambientes).
+3. `git commit` + `git push origin main`.
+4. Vercel e Railway reconstroem sozinhos; aguardar ficarem **Ready**.
+5. Testar em produção (hard refresh `Ctrl+Shift+R` se houver cache).
+
+> ⚠️ Como o banco é compartilhado (Supabase), **rodar a migração já reflete em
+> produção** — faça o `ALTER TABLE` antes/junto do deploy do código que usa a coluna,
+> senão a API pode dar 500 ("column does not exist").
 
 ---
 
@@ -442,6 +609,86 @@ node ./build.mjs           # (em artifacts/api-server) build só da API
 | **`npm install` falha por peer deps** | Use `--legacy-peer-deps` (já no `.npmrc`). |
 | **Sem banco para testar** | `DEMO_MODE=true` no `.env` (dados em memória). |
 | **Favicon/logo antigo** | Cache agressivo do navegador — hard refresh (Ctrl+Shift+R). |
+
+---
+
+## 🔒 Segurança
+
+### O que já está bem feito
+- **Autenticação** via Clerk: todas as rotas privadas exigem `Authorization:
+  Bearer <jwt>`, validado por `@clerk/express`.
+- **Autorização / isolamento por dono**: as operações de `links`, `photos`,
+  `events`, `sections` resolvem o `profileId` a partir do `userId` do token e
+  filtram/atualizam sempre por `and(eq(id), eq(profileId))` — um usuário não
+  consegue ler/editar dados de outro. Os endpoints `*/reorder` validam que todos
+  os ids pertencem ao usuário.
+- **Admin** (`/api/admin/*`): checa `is_super_admin` → 403 se não for.
+- **Validação de entrada** com Zod (`UpdateProfileBody`, etc.).
+- **Uploads**: validação de tipo (image/video) e limite de tamanho (60MB) no
+  Multer; o `SUPABASE_SERVICE_ROLE_KEY` fica **só no servidor** (nunca exposto ao
+  cliente).
+- **Banco**: SSL forçado fora de localhost; segredos só em variáveis de ambiente;
+  `.env*` no `.gitignore`.
+
+### ⚠️ Itens a corrigir / endurecer (recomendado antes de escalar)
+1. **Rotas de debug expostas** — `GET /api/debug/env`, `/api/debug/headers`,
+   `/api/debug/db-connection`, `PUT /api/debug/test-profile-update` estão
+   **públicas e sem auth**. Não vazam valores de segredos (só presença ✅/❌), mas
+   expõem informação e erros do banco. **Ação:** remover o `debugRouter` em
+   produção (ou gateá-lo atrás de `is_super_admin` / `NODE_ENV !== 'production'`).
+2. **CORS `origin: true`** — reflete qualquer origem. Como a auth é por Bearer
+   token (não cookie), o risco é baixo, mas o ideal é **restringir à origem do
+   frontend** (`https://SEU-FRONTEND.vercel.app`).
+3. **`GET /api/proxy-image`** — proxy de imagens pode ser vetor de **SSRF**.
+   Validar/allowlist de hosts e bloquear IPs internos.
+4. **Sem rate limiting** — adicionar `express-rate-limit` (ou limites no
+   Railway/Cloudflare), principalmente em `/api/analytics`, `/api/photos/upload` e
+   no formulário de contato, para evitar abuso/spam.
+5. **Chaves do Clerk de desenvolvimento** — o app está usando `pk_test`/`sk_test`.
+   Migrar para chaves de produção (`pk_live`/`sk_live`) com o domínio configurado.
+6. **Validação de URL/conteúdo** — campos de URL (links, sponsors, ticketUrl) não
+   são validados como URL nem sanitizados; como são renderizados como `href`,
+   convém validar o esquema (`https:`) para evitar `javascript:`/abuso.
+
+---
+
+## 📈 Escalabilidade
+
+### Como está hoje
+- **Frontend**: estático na Vercel (CDN global) — escala praticamente sem limite.
+- **Backend**: processo Node único no Railway, **stateless** (sem estado em
+  memória) → dá para **escalar horizontalmente** (mais réplicas) sem mudança de
+  código.
+- **Banco**: Supabase Postgres com **pool de conexões** (`pg.Pool`).
+- **Storage**: Supabase Storage (bucket público) servido por CDN.
+
+### O que segura o crescimento (e como resolver)
+1. **Conexões do Postgres** — cada réplica do backend abre um pool. Postgres tem
+   limite de conexões. **Ação ao escalar réplicas:** usar o **pooler do Supabase
+   (pgbouncer, porta 6543, `?pgbouncer=true`)** — já existe uma linha comentada no
+   `.env` para isso. Essencial se um dia migrar a API para serverless.
+2. **`bundle` único / cold start** — no Railway (long-running) não há cold start.
+   Se migrar para serverless (Vercel Functions/Lambda), some o pgbouncer e cuidar
+   do cold start.
+3. **Analytics gravando em tabela** — cada page view/click faz um `INSERT`. Em
+   escala alta isso pesa. **Ação:** índices em `analytics(profile_id, event_type,
+   created_at)`, e eventualmente agregar (rollup) por dia ou usar um serviço de
+   analytics dedicado.
+4. **Índices** — garantir índices em todas as FKs `profile_id` (links, photos,
+   events, sections, analytics) e em `profiles.username` / `profiles.clerk_user_id`
+   (já únicos → indexados). Isso mantém as queries do perfil público rápidas.
+5. **Uploads grandes (vídeo 60MB)** passam pelo backend (memória do Multer). Em
+   escala, considerar **upload direto ao Storage via presigned URL**
+   (já existe o esboço em `POST /api/storage/uploads/request-url`) para não
+   carregar o arquivo na RAM da API.
+6. **Cache do perfil público** — `GET /api/profile/:username` é o endpoint mais
+   acessado. Adicionar `Cache-Control`/CDN (ou um cache curto) reduz carga no banco.
+7. **Imagens** — servir via CDN do Supabase (ok) e considerar transformações/
+   `srcset` para não baixar imagens enormes no mobile.
+
+**Resumo:** a base é sólida e escala bem para milhares de perfis sem mudanças
+estruturais. Antes de um volume alto, priorize: **pgbouncer**, **índices em
+`analytics` e FKs**, **rate limiting** e **remover as rotas de debug**.
 
 ---
 
