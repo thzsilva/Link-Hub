@@ -27,6 +27,7 @@ interface ContactSectionProps {
     secondary: string;
   };
   displayName: string;
+  title?: string;
   onSubmit?: (data: {
     name: string;
     email: string;
@@ -38,6 +39,7 @@ export function ContactSection({
   contact,
   theme,
   displayName,
+  title = "Contato",
   onSubmit,
 }: ContactSectionProps) {
   const [formData, setFormData] = useState({
@@ -124,7 +126,7 @@ export function ContactSection({
     >
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-10">
         <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold uppercase tracking-tight mb-8 sm:mb-10 lg:mb-12">
-          Contato
+          {title}
         </h2>
 
         {/* Contact buttons */}

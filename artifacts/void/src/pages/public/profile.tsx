@@ -197,6 +197,7 @@ export default function PublicProfileNew() {
 
   // Hero appearance + font
   const heroDisplay = (profile as any).heroDisplay || "name"; // 'name' | 'logo' | 'both'
+  const heroLayout = (profile as any).heroLayout || "overlay"; // 'overlay' | 'below'
   const heroAlign = (profile as any).heroAlign || "center"; // 'top' | 'left' | 'center' | 'right'
   const heroAlignClasses =
     heroAlign === "left"
@@ -218,6 +219,12 @@ export default function PublicProfileNew() {
   const showHeroName = heroDisplay !== "logo";
   const sectionOrder = normalizeSectionOrder((profile as any).sectionOrder);
   const orderOf = (key: SectionKey) => sectionOrder.indexOf(key);
+  // Custom section titles (fallback to default label)
+  const sectionTitles = ((profile as any).sectionTitles || {}) as Record<string, string>;
+  const titleFor = (key: SectionKey, fallback: string) => {
+    const t = sectionTitles[key];
+    return t && t.trim() ? t : fallback;
+  };
 
   // ── Grid helper: clamp columns for mobile/desktop ──
   const gridCols = (itemCount: number) =>
@@ -238,7 +245,87 @@ export default function PublicProfileNew() {
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6 }}
         >
-          {profile.headerImageUrl ? (
+          {profile.headerImageUrl && heroLayout === "below" ? (
+            /* ── Komi style: banner on top, name/logo + icons BELOW the banner ── */
+            <div>
+              <div className="relative w-full aspect-[4/5] sm:aspect-[16/10] lg:aspect-[16/7] max-h-[70vh] overflow-hidden">
+                <img
+                  src={profile.headerImageUrl}
+                  alt={displayName}
+                  className="w-full h-full object-cover"
+                  loading="eager"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+              </div>
+
+              <div
+                className={`w-full bg-black px-6 sm:px-12 py-8 sm:py-10 flex flex-col gap-4 ${
+                  heroAlign === "left"
+                    ? "items-start text-left"
+                    : heroAlign === "right"
+                      ? "items-end text-right"
+                      : "items-center text-center"
+                }`}
+              >
+                {showHeroLogo && (
+                  <motion.img
+                    src={profile.avatarUrl!}
+                    alt={displayName}
+                    className="w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover border-2 border-white/20 -mt-16 sm:-mt-20 relative z-10 shadow-2xl"
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.5 }}
+                  />
+                )}
+                {showHeroName && (
+                  <motion.h1
+                    className="text-[2.5rem] sm:text-[4rem] lg:text-[5.5rem] font-black uppercase text-white leading-[0.9]"
+                    style={{ letterSpacing: "-0.03em", fontFamily: nameFont }}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, delay: 0.1 }}
+                  >
+                    {displayName}
+                  </motion.h1>
+                )}
+                <motion.p
+                  className="text-sm sm:text-base text-white/60 font-medium tracking-wide"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.5, delay: 0.2 }}
+                >
+                  @{profile.username}
+                </motion.p>
+                {hasSocials && (
+                  <motion.div
+                    className={`flex ${socialJustify} gap-3 sm:gap-4 w-full mt-2`}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.3 }}
+                  >
+                    {headerSocialLinks.map((link: any, i: number) => (
+                      <motion.a
+                        key={link.platform}
+                        href={link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title={link.label}
+                        className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center text-white transition-all duration-200"
+                        style={{ backgroundColor: customTheme.primary }}
+                        whileHover={{ scale: 1.15, opacity: 0.85 }}
+                        whileTap={{ scale: 0.9 }}
+                        initial={{ opacity: 0, scale: 0.5 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.3, delay: 0.4 + i * 0.06 }}
+                      >
+                        {link.icon}
+                      </motion.a>
+                    ))}
+                  </motion.div>
+                )}
+              </div>
+            </div>
+          ) : profile.headerImageUrl ? (
             <div className="relative w-full aspect-[4/5] sm:aspect-[16/10] lg:aspect-[16/7] max-h-[70vh] overflow-hidden">
               <img
                 src={profile.headerImageUrl}
@@ -385,6 +472,7 @@ export default function PublicProfileNew() {
           displayName={displayName}
           bio={profile.bio ?? undefined}
           theme={customTheme}
+          title={titleFor("bio", "Sobre")}
         />
         </div>
 
@@ -392,7 +480,7 @@ export default function PublicProfileNew() {
         <div style={{ order: orderOf("video") }}>
         {(profile as any).videoUrl && (
           <Section>
-            <SectionTitle>Destaque</SectionTitle>
+            <SectionTitle>{titleFor("video", "Destaque")}</SectionTitle>
             <VideoSection videoUrl={(profile as any).videoUrl} theme={customTheme} />
           </Section>
         )}
@@ -402,7 +490,7 @@ export default function PublicProfileNew() {
         <div style={{ order: orderOf("gallery") }}>
         {photos && photos.length > 0 && (
           <Section id="gallery">
-            <SectionTitle>Galeria</SectionTitle>
+            <SectionTitle>{titleFor("gallery", "Galeria")}</SectionTitle>
             <GallerySection
               photos={(photos as any) || []}
               username={username}
@@ -418,7 +506,7 @@ export default function PublicProfileNew() {
         <div style={{ order: orderOf("events") }}>
         {events && events.length > 0 && (
           <Section id="events">
-            <SectionTitle>Próximos Eventos</SectionTitle>
+            <SectionTitle>{titleFor("events", "Próximos Eventos")}</SectionTitle>
             <div
               className="grid gap-4 sm:gap-5"
               style={{ gridTemplateColumns: gridCols(events.length) }}
@@ -515,7 +603,7 @@ export default function PublicProfileNew() {
         <div style={{ order: orderOf("links") }}>
         {regularLinks.length > 0 && (
           <Section id="links">
-            <SectionTitle>Links</SectionTitle>
+            <SectionTitle>{titleFor("links", "Links")}</SectionTitle>
             <motion.div
               className="grid gap-3 sm:gap-4"
               style={{ gridTemplateColumns: gridCols(regularLinks.length) }}
@@ -570,7 +658,7 @@ export default function PublicProfileNew() {
         <div style={{ order: orderOf("spotify") }}>
         {embedLinks.length > 0 && (
           <Section id="playlists">
-            <SectionTitle>Playlists</SectionTitle>
+            <SectionTitle>{titleFor("spotify", "Playlists")}</SectionTitle>
             <div
               className="grid gap-6"
               style={{ gridTemplateColumns: gridCols(embedLinks.length) }}
@@ -621,6 +709,7 @@ export default function PublicProfileNew() {
           }}
           theme={customTheme}
           displayName={profile.displayName || profile.username}
+          title={titleFor("contact", "Contato")}
           onSubmit={async (formData) => {
             try {
               await customFetch(`/api/contact-messages`, {

@@ -113,10 +113,12 @@ async function updateProfileFooter(data: { sponsors?: Sponsor[]; footerText?: st
 
 async function updateProfileAppearance(data: {
   heroDisplay?: string;
+  heroLayout?: string;
   heroAlign?: string;
   socialIconsAlign?: string;
   usernameFont?: string;
   sectionOrder?: string[];
+  sectionTitles?: Record<string, string>;
 }) {
   try {
     return await customFetch("/api/me", {
@@ -129,8 +131,20 @@ async function updateProfileAppearance(data: {
   }
 }
 
-// Sortable row for the section-ordering UI
-function SortableSectionRow({ id, label, icon }: { id: string; label: string; icon: string }) {
+// Sortable row for the section-ordering UI (drag + rename)
+function SortableSectionRow({
+  id,
+  label,
+  icon,
+  value,
+  onChange,
+}: {
+  id: string;
+  label: string;
+  icon: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -141,18 +155,23 @@ function SortableSectionRow({ id, label, icon }: { id: string; label: string; ic
     <div
       ref={setNodeRef}
       style={style}
-      className={`flex items-center gap-3 rounded-lg border border-white/15 bg-white/5 px-4 py-3 ${isDragging ? "opacity-60" : ""}`}
+      className={`flex items-center gap-3 rounded-lg border border-white/15 bg-white/5 px-3 py-2.5 ${isDragging ? "opacity-60" : ""}`}
     >
       <button
         {...attributes}
         {...listeners}
-        className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-white touch-none"
+        className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-white touch-none flex-shrink-0"
         aria-label="Arrastar"
       >
         <GripVertical size={18} />
       </button>
-      <span className="text-lg">{icon}</span>
-      <span className="text-sm font-medium text-white">{label}</span>
+      <span className="text-lg flex-shrink-0">{icon}</span>
+      <Input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={label}
+        className="h-9 rounded-lg bg-black/30 border-white/15 text-sm"
+      />
     </div>
   );
 }
@@ -227,6 +246,7 @@ export default function DashboardCustomization() {
 
   // Appearance: hero display, alignment, font, section order
   const [heroDisplay, setHeroDisplay] = useState<string>((profile as any)?.heroDisplay || "name");
+  const [heroLayout, setHeroLayout] = useState<string>((profile as any)?.heroLayout || "overlay");
   const [heroAlign, setHeroAlign] = useState<string>((profile as any)?.heroAlign || "center");
   const [socialIconsAlign, setSocialIconsAlign] = useState<string>(() => {
     const raw = (profile as any)?.socialIconsAlign || "bottom-center";
@@ -235,6 +255,9 @@ export default function DashboardCustomization() {
   const [usernameFont, setUsernameFont] = useState<string>((profile as any)?.usernameFont || "default");
   const [sectionOrder, setSectionOrder] = useState<SectionKey[]>(
     normalizeSectionOrder((profile as any)?.sectionOrder)
+  );
+  const [sectionTitles, setSectionTitles] = useState<Record<string, string>>(
+    ((profile as any)?.sectionTitles || {}) as Record<string, string>
   );
   const [isSavingAppearance, setIsSavingAppearance] = useState(false);
   const [isSavingOrder, setIsSavingOrder] = useState(false);
@@ -303,7 +326,7 @@ export default function DashboardCustomization() {
   const handleSaveAppearance = async () => {
     setIsSavingAppearance(true);
     try {
-      await updateProfileAppearance({ heroDisplay, heroAlign, socialIconsAlign, usernameFont });
+      await updateProfileAppearance({ heroDisplay, heroLayout, heroAlign, socialIconsAlign, usernameFont });
       queryClient.invalidateQueries({ queryKey: ["useGetMe"] });
       toast({ title: "✓ Aparência atualizada!" });
     } catch (err: any) {
@@ -316,7 +339,12 @@ export default function DashboardCustomization() {
   const handleSaveSectionOrder = async () => {
     setIsSavingOrder(true);
     try {
-      await updateProfileAppearance({ sectionOrder });
+      // Only persist non-empty custom titles
+      const cleanTitles: Record<string, string> = {};
+      for (const [k, v] of Object.entries(sectionTitles)) {
+        if (v && v.trim()) cleanTitles[k] = v.trim();
+      }
+      await updateProfileAppearance({ sectionOrder, sectionTitles: cleanTitles });
       queryClient.invalidateQueries({ queryKey: ["useGetMe"] });
       toast({ title: "✓ Ordem das seções salva!" });
     } catch (err: any) {
@@ -544,7 +572,7 @@ export default function DashboardCustomization() {
       </div>
 
       {/* Content with relative positioning */}
-      <div className="relative z-10 space-y-8 px-4 sm:px-6 lg:px-8 pt-8 pb-12">
+      <div className="relative z-10 flex flex-col gap-8 px-4 sm:px-6 lg:px-8 pt-8 pb-12">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -558,6 +586,7 @@ export default function DashboardCustomization() {
 
       {/* Nome de Usuário */}
       <motion.div
+        style={{ order: 1 }}
         className="bg-white/5 border border-white/10 rounded-xl p-6 sm:p-8 space-y-4 backdrop-blur-sm hover:bg-white/[0.07] transition-all duration-300"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -585,6 +614,7 @@ export default function DashboardCustomization() {
 
       {/* Descrição / Bio */}
       <motion.div
+        style={{ order: 2 }}
         className="bg-white/5 border border-white/10 rounded-xl p-6 sm:p-8 space-y-4 backdrop-blur-sm hover:bg-white/[0.07] transition-all duration-300"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -616,6 +646,7 @@ export default function DashboardCustomization() {
 
       {/* Aparência do Nome / Hero */}
       <motion.div
+        style={{ order: 5 }}
         className="bg-white/5 border border-white/10 rounded-xl p-6 sm:p-8 space-y-5 backdrop-blur-sm hover:bg-white/[0.07] transition-all duration-300"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -652,6 +683,31 @@ export default function DashboardCustomization() {
           )}
         </div>
 
+        {/* Hero layout: overlay vs below banner (Komi style) */}
+        <div className="space-y-2">
+          <label className="text-xs uppercase tracking-widest text-muted-foreground">Layout do topo</label>
+          <div className="grid grid-cols-2 gap-2">
+            {([
+              { v: "overlay", label: "Sobre o banner", desc: "Nome em cima da imagem" },
+              { v: "below", label: "Abaixo do banner", desc: "Banner, depois nome/logo" },
+            ] as const).map((opt) => (
+              <button
+                key={opt.v}
+                onClick={() => setHeroLayout(opt.v)}
+                className={`rounded-lg border px-3 py-2.5 text-left transition-all ${
+                  heroLayout === opt.v
+                    ? "border-white/60 bg-white/10 text-white"
+                    : "border-white/15 text-muted-foreground hover:border-white/30"
+                }`}
+              >
+                <span className="block text-sm font-medium">{opt.label}</span>
+                <span className="block text-[10px] opacity-70">{opt.desc}</span>
+              </button>
+            ))}
+          </div>
+          <p className="text-[11px] text-muted-foreground">Requer um banner. "Abaixo do banner" mostra o nome/logo embaixo da imagem (estilo Komi).</p>
+        </div>
+
         {/* Hero alignment / position */}
         <div className="space-y-2">
           <label className="text-xs uppercase tracking-widest text-muted-foreground">Posição do nome/logo</label>
@@ -679,7 +735,7 @@ export default function DashboardCustomization() {
 
         {/* Social icons position (top/bottom × left/center/right) */}
         <div className="space-y-2">
-          <label className="text-xs uppercase tracking-widest text-muted-foreground">Posição dos ícones</label>
+          <label className="text-xs uppercase tracking-widest text-muted-foreground">Posição dos ícones das redes</label>
           <div className="space-y-2">
             {([
               { row: "Topo", base: "top" },
@@ -757,15 +813,16 @@ export default function DashboardCustomization() {
 
       {/* Ordem das Seções */}
       <motion.div
+        style={{ order: 10 }}
         className="bg-white/5 border border-white/10 rounded-xl p-6 sm:p-8 space-y-4 backdrop-blur-sm hover:bg-white/[0.07] transition-all duration-300"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.09 }}
       >
         <h2 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-emerald-300 to-teal-300 bg-clip-text text-transparent flex items-center gap-2">
-          <Layout size={18} /> Ordem das Seções
+          <Layout size={18} /> Seções (ordem e nomes)
         </h2>
-        <p className="text-xs text-muted-foreground">Arraste para definir em que ordem as seções aparecem no seu perfil público.</p>
+        <p className="text-xs text-muted-foreground">Arraste para reordenar e edite o texto para renomear cada seção no seu perfil público. Deixe em branco para usar o nome padrão.</p>
 
         <DndContext sensors={sectionSensors} collisionDetection={closestCenter} onDragEnd={handleSectionDragEnd}>
           <SortableContext items={sectionOrder} strategy={verticalListSortingStrategy}>
@@ -773,7 +830,16 @@ export default function DashboardCustomization() {
               {sectionOrder.map((key) => {
                 const meta = SECTION_META.find((m) => m.key === key);
                 if (!meta) return null;
-                return <SortableSectionRow key={key} id={key} label={meta.label} icon={meta.icon} />;
+                return (
+                  <SortableSectionRow
+                    key={key}
+                    id={key}
+                    label={meta.label}
+                    icon={meta.icon}
+                    value={sectionTitles[key] ?? ""}
+                    onChange={(v) => setSectionTitles((cur) => ({ ...cur, [key]: v }))}
+                  />
+                );
               })}
             </div>
           </SortableContext>
@@ -785,13 +851,14 @@ export default function DashboardCustomization() {
             disabled={isSavingOrder}
             className="rounded-lg px-6 uppercase font-bold bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600"
           >
-            {isSavingOrder ? "Salvando..." : "Salvar Ordem"}
+            {isSavingOrder ? "Salvando..." : "Salvar Seções"}
           </Button>
         </div>
       </motion.div>
 
       {/* Rodapé / Patrocinadores */}
       <motion.div
+        style={{ order: 11 }}
         className="bg-white/5 border border-white/10 rounded-xl p-6 sm:p-8 space-y-5 backdrop-blur-sm hover:bg-white/[0.07] transition-all duration-300"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -887,6 +954,7 @@ export default function DashboardCustomization() {
 
       {/* Vídeo */}
       <motion.div
+        style={{ order: 8 }}
         className="bg-white/5 border border-white/10 rounded-xl p-6 sm:p-8 space-y-4 backdrop-blur-sm hover:bg-white/[0.07] transition-all duration-300"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -955,6 +1023,7 @@ export default function DashboardCustomization() {
 
       {/* Informações de Contato */}
       <motion.div
+        style={{ order: 9 }}
         className="bg-white/5 border border-white/10 rounded-xl p-6 sm:p-8 space-y-4 backdrop-blur-sm hover:bg-white/[0.07] transition-all duration-300"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -1025,6 +1094,7 @@ export default function DashboardCustomization() {
 
       {/* Upload de Foto de Perfil */}
       <motion.div
+        style={{ order: 3 }}
         className="bg-white/5 border border-white/10 rounded-xl p-6 sm:p-8 space-y-4 backdrop-blur-sm hover:bg-white/[0.07] transition-all duration-300"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -1122,6 +1192,7 @@ export default function DashboardCustomization() {
 
       {/* Upload de Banner/Imagem de Fundo */}
       <motion.div
+        style={{ order: 4 }}
         className="bg-white/5 border border-white/10 rounded-xl p-6 sm:p-8 space-y-4 backdrop-blur-sm hover:bg-white/[0.07] transition-all duration-300"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -1209,6 +1280,7 @@ export default function DashboardCustomization() {
 
       {/* Preview do Perfil */}
       <motion.div
+        style={{ order: 6 }}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.15 }}
@@ -1361,6 +1433,7 @@ export default function DashboardCustomization() {
 
       {/* Cores Customizadas */}
       <motion.div
+        style={{ order: 7 }}
         className="bg-white/5 border border-white/10 rounded-xl p-6 sm:p-8 space-y-4 backdrop-blur-sm hover:bg-white/[0.07] transition-all duration-300"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

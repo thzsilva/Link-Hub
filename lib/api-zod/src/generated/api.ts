@@ -66,10 +66,12 @@ export const UpdateProfileBody = zod.object({
   "email": zod.string().nullish(),
   "instagramHandle": zod.string().nullish(),
   "heroDisplay": zod.string().nullish(),
+  "heroLayout": zod.string().nullish(),
   "heroAlign": zod.string().nullish(),
   "socialIconsAlign": zod.string().nullish(),
   "usernameFont": zod.string().nullish(),
   "sectionOrder": zod.array(zod.string()).nullish(),
+  "sectionTitles": zod.record(zod.string(), zod.string()).nullish(),
   "sponsors": zod.array(zod.object({
     "imageUrl": zod.string(),
     "name": zod.string().nullish(),

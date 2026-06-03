@@ -29,11 +29,13 @@ export const profilesTable = pgTable("profiles", {
   showSections: boolean("show_sections").default(true),
   sectionSettings: jsonb("section_settings").default({}),
   sectionOrder: jsonb("section_order"),
+  sectionTitles: jsonb("section_titles"),
   // Footer: patrocinadores/parceiros (logos) + texto customizado
   sponsors: jsonb("sponsors"),
   footerText: text("footer_text"),
   // Aparência do hero e fonte do nome
   heroDisplay: text("hero_display").default("name"),
+  heroLayout: text("hero_layout").default("overlay"),
   heroAlign: text("hero_align").default("center"),
   socialIconsAlign: text("social_icons_align").default("center"),
   usernameFont: text("username_font").default("default"),
