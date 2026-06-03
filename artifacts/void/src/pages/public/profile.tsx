@@ -344,7 +344,7 @@ export default function PublicProfileNew() {
               </div>
 
               <div
-                className={`w-full bg-black px-6 sm:px-12 py-8 sm:py-10 flex flex-col gap-4 ${
+                className={`relative z-10 -mt-12 sm:-mt-20 lg:-mt-24 w-full px-6 sm:px-12 pb-8 sm:pb-10 flex flex-col gap-3 sm:gap-4 ${
                   heroAlign === "left"
                     ? "items-start text-left"
                     : heroAlign === "right"
@@ -542,6 +542,7 @@ export default function PublicProfileNew() {
           theme={customTheme}
           title={titleFor("bio", "Sobre")}
           imageUrl={(profile as any).bioImageUrl || profile.avatarUrl || null}
+          imageSide={(profile as any).bioImageSide === "right" ? "right" : "left"}
         />
         </div>
 
