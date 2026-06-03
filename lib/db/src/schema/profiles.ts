@@ -12,6 +12,7 @@ export const profilesTable = pgTable("profiles", {
   headerImageUrl: text("header_image_url"),
   bannerVideoUrl: text("banner_video_url"),
   bioImageUrl: text("bio_image_url"),
+  bioImageSide: text("bio_image_side").default("left"),
   accentColor: text("accent_color").default("#ffffff"),
   bgColor: text("bg_color").default("#000000"),
   cardStyle: text("card_style").default("glass"),
@@ -27,6 +28,8 @@ export const profilesTable = pgTable("profiles", {
   whatsappNumber: text("whatsapp_number"),
   email: text("email"),
   instagramHandle: text("instagram_handle"),
+  // Header de navegação no perfil público
+  showHeader: boolean("show_header").default(false),
   // Configurações de seções
   showSections: boolean("show_sections").default(true),
   sectionSettings: jsonb("section_settings").default({}),

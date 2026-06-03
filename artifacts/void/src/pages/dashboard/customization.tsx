@@ -120,6 +120,7 @@ async function updateProfileAppearance(data: {
   logoUrl?: string | null;
   logoSize?: number;
   showUsername?: boolean;
+  showHeader?: boolean;
   bannerFit?: string;
   bannerHeight?: string;
   sectionOrder?: string[];
@@ -279,6 +280,8 @@ export default function DashboardCustomization() {
     setShowUsername(p.showUsername !== false);
     setBannerVideoUrl(p.bannerVideoUrl || "");
     setBioImageUrl(p.bioImageUrl || "");
+    setBioImageSide(p.bioImageSide || "left");
+    setShowHeader(!!p.showHeader);
     setBannerFit(p.bannerFit || "cover");
     setBannerHeight(p.bannerHeight || "normal");
     setSectionOrder(normalizeSectionOrder(p.sectionOrder));
@@ -306,14 +309,39 @@ export default function DashboardCustomization() {
   // Banner video + Bio photo (salvam na hora)
   const [bannerVideoUrl, setBannerVideoUrl] = useState<string>((profile as any)?.bannerVideoUrl || "");
   const [bioImageUrl, setBioImageUrl] = useState<string>((profile as any)?.bioImageUrl || "");
+  const [bioImageSide, setBioImageSide] = useState<string>((profile as any)?.bioImageSide || "left");
+  const [showHeader, setShowHeader] = useState<boolean>(!!(profile as any)?.showHeader);
+
+  const toggleShowHeader = async () => {
+    const next = !showHeader;
+    setShowHeader(next);
+    try {
+      await updateProfileAppearance({ showHeader: next });
+      queryClient.invalidateQueries({ queryKey: ["useGetMe"] });
+      toast({ title: next ? "Header habilitado" : "Header desabilitado" });
+    } catch (err: any) {
+      setShowHeader(!next);
+      toast({ title: err?.message || "Erro ao salvar", variant: "destructive" });
+    }
+  };
   const [isUploadingBannerVideo, setIsUploadingBannerVideo] = useState(false);
   const [isUploadingBioImage, setIsUploadingBioImage] = useState(false);
   const bannerVideoRef = useRef<HTMLInputElement>(null);
   const bioImageRef = useRef<HTMLInputElement>(null);
 
-  const saveMediaField = async (patch: { bannerVideoUrl?: string | null; bioImageUrl?: string | null }) => {
+  const saveMediaField = async (patch: { bannerVideoUrl?: string | null; bioImageUrl?: string | null; bioImageSide?: string }) => {
     await updateProfileFooter(patch as any); // PUT /api/me (aceita os campos do perfil)
     queryClient.invalidateQueries({ queryKey: ["useGetMe"] });
+  };
+
+  const handleBioImageSide = async (side: string) => {
+    setBioImageSide(side);
+    try {
+      await saveMediaField({ bioImageSide: side });
+      toast({ title: side === "right" ? "Foto à direita" : "Foto à esquerda" });
+    } catch (err: any) {
+      toast({ title: err?.message || "Erro ao salvar", variant: "destructive" });
+    }
   };
 
   const handleBannerVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -800,6 +828,27 @@ export default function DashboardCustomization() {
                 )}
               </div>
             </div>
+
+            {/* Lado da foto */}
+            <div className="flex items-center gap-2 pt-1">
+              <span className="text-[11px] uppercase tracking-widest text-muted-foreground">Lado:</span>
+              {([
+                { v: "left", label: "Esquerda" },
+                { v: "right", label: "Direita" },
+              ] as const).map((opt) => (
+                <button
+                  key={opt.v}
+                  onClick={() => handleBioImageSide(opt.v)}
+                  className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-all ${
+                    bioImageSide === opt.v
+                      ? "border-white/60 bg-white/10 text-white"
+                      : "border-white/15 text-muted-foreground hover:border-white/30"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </motion.div>
@@ -968,6 +1017,21 @@ export default function DashboardCustomization() {
             aria-label="Mostrar @username"
           >
             <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full transition-transform ${showUsername ? "translate-x-5 bg-black" : "bg-white"}`} />
+          </button>
+        </div>
+
+        {/* Header de navegação toggle — salva na hora */}
+        <div className="flex items-center justify-between rounded-lg border border-white/15 bg-white/5 px-4 py-3">
+          <div>
+            <span className="text-sm font-medium text-white">Header de navegação</span>
+            <p className="text-[11px] text-muted-foreground">Barra fixa no topo com logo, links das seções e ícones (estilo press kit).</p>
+          </div>
+          <button
+            onClick={toggleShowHeader}
+            className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${showHeader ? "bg-white" : "bg-white/20"}`}
+            aria-label="Habilitar header"
+          >
+            <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full transition-transform ${showHeader ? "translate-x-5 bg-black" : "bg-white"}`} />
           </button>
         </div>
 

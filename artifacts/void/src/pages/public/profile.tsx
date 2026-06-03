@@ -12,6 +12,7 @@ import { ContactSection } from "@/components/public/ContactSection";
 import { getFontStack } from "@/lib/fonts";
 import { normalizeSectionOrder, type SectionKey } from "@/lib/sections";
 import { BackToTop } from "@/components/BackToTop";
+import { ProfileHeader, type HeaderNavItem } from "@/components/public/ProfileHeader";
 
 // Calendar-style date badge shown on top of event images
 function EventDateBadge({ dateStr, theme }: { dateStr: string; theme: { primary: string; secondary: string } }) {
@@ -314,6 +315,41 @@ export default function PublicProfileNew() {
     return t && t.trim() ? t : fallback;
   };
 
+  // Header de navegação (opcional)
+  const showHeader = !!(profile as any).showHeader;
+  const hasContacts =
+    !!(profile as any).whatsappNumber || !!(profile as any).email || !!(profile as any).instagramHandle;
+  const sectionVisible: Record<SectionKey, boolean> = {
+    bio: !!profile.bio,
+    video: !!(profile as any).videoUrl,
+    gallery: !!(photos && photos.length > 0),
+    events: !!(events && events.length > 0),
+    links: regularLinks.length > 0,
+    spotify: embedLinks.length > 0,
+    contact: hasContacts,
+  };
+  const sectionDefaultLabel: Record<SectionKey, string> = {
+    bio: "Sobre",
+    video: "Destaque",
+    gallery: "Galeria",
+    events: "Eventos",
+    links: "Links",
+    spotify: "Playlists",
+    contact: "Contato",
+  };
+  const sectionAnchor: Record<SectionKey, string> = {
+    bio: "bio",
+    video: "video",
+    gallery: "gallery",
+    events: "events",
+    links: "links",
+    spotify: "playlists",
+    contact: "contact",
+  };
+  const navItems: HeaderNavItem[] = sectionOrder
+    .filter((k) => sectionVisible[k])
+    .map((k) => ({ label: titleFor(k, sectionDefaultLabel[k]), anchor: sectionAnchor[k] }));
+
   // ── Grid helper: clamp columns for mobile/desktop ──
   const gridCols = (itemCount: number) =>
     `repeat(${Math.min(layoutColumns, itemCount)}, minmax(0, 1fr))`;
@@ -323,6 +359,16 @@ export default function PublicProfileNew() {
       className="min-h-[100dvh] text-white overflow-hidden"
       style={{ ...cssVars, backgroundColor: customTheme.background } as React.CSSProperties}
     >
+      {showHeader && (
+        <ProfileHeader
+          displayName={displayName}
+          logoUrl={heroLogoUrl}
+          navItems={navItems}
+          socials={headerSocialLinks}
+          theme={customTheme}
+        />
+      )}
+
       <main className="w-full bg-black">
         {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
             HERO — full-bleed image + name overlay + social icons
@@ -535,7 +581,7 @@ export default function PublicProfileNew() {
         <div className="flex flex-col w-full">
 
         {/* ━━━ BIO ━━━ */}
-        <div style={{ order: orderOf("bio") }}>
+        <div id="bio" style={{ order: orderOf("bio") }}>
         <BioSection
           displayName={displayName}
           bio={profile.bio ?? undefined}
@@ -547,7 +593,7 @@ export default function PublicProfileNew() {
         </div>
 
         {/* ━━━ VIDEO ━━━ */}
-        <div style={{ order: orderOf("video") }}>
+        <div id="video" style={{ order: orderOf("video") }}>
         {(profile as any).videoUrl && (
           <Section>
             <SectionTitle>{titleFor("video", "Destaque")}</SectionTitle>

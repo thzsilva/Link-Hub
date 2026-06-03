@@ -132,6 +132,8 @@ router.put("/me", async (req, res): Promise<void> => {
   if (parsed.data.headerImageUrl !== undefined) updateData.headerImageUrl = parsed.data.headerImageUrl;
   if (parsed.data.bannerVideoUrl !== undefined) updateData.bannerVideoUrl = parsed.data.bannerVideoUrl;
   if (parsed.data.bioImageUrl !== undefined) updateData.bioImageUrl = parsed.data.bioImageUrl;
+  if (parsed.data.bioImageSide !== undefined) updateData.bioImageSide = parsed.data.bioImageSide;
+  if (parsed.data.showHeader !== undefined) updateData.showHeader = parsed.data.showHeader;
   if (parsed.data.accentColor !== undefined) updateData.accentColor = parsed.data.accentColor;
   if (parsed.data.bgColor !== undefined) updateData.bgColor = parsed.data.bgColor;
   if (parsed.data.cardStyle !== undefined) updateData.cardStyle = parsed.data.cardStyle;
@@ -162,11 +164,28 @@ router.put("/me", async (req, res): Promise<void> => {
 
   console.log("PUT /api/me - updateData:", JSON.stringify(updateData, null, 2));
 
-  const [updated] = await db
-    .update(profilesTable)
-    .set(updateData)
-    .where(eq(profilesTable.id, profile.id))
-    .returning();
+  // Nada para atualizar — evita o erro do Drizzle "No values to set" (500)
+  if (Object.keys(updateData).length === 0) {
+    res.json({
+      ...profile,
+      createdAt: profile.createdAt?.toISOString?.() ?? profile.createdAt,
+      updatedAt: profile.updatedAt?.toISOString?.() ?? profile.updatedAt,
+    });
+    return;
+  }
+
+  let updated;
+  try {
+    [updated] = await db
+      .update(profilesTable)
+      .set(updateData)
+      .where(eq(profilesTable.id, profile.id))
+      .returning();
+  } catch (err: any) {
+    console.error("PUT /api/me - erro no update:", err?.message, "campos:", Object.keys(updateData));
+    res.status(500).json({ error: "Erro ao atualizar perfil", details: err?.message, fields: Object.keys(updateData) });
+    return;
+  }
 
   console.log("PUT /api/me - resultado:", JSON.stringify({ id: updated.id, username: updated.username, avatarUrl: updated.avatarUrl }, null, 2));
 
