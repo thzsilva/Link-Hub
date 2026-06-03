@@ -48,10 +48,10 @@ export const GetMeResponse = zod.object({
  */
 export const UpdateProfileBody = zod.object({
   "username": zod.string().optional(),
-  "displayName": zod.string().optional(),
-  "bio": zod.string().optional(),
-  "avatarUrl": zod.string().optional(),
-  "headerImageUrl": zod.string().optional(),
+  "displayName": zod.string().nullish(),
+  "bio": zod.string().nullish(),
+  "avatarUrl": zod.string().nullish(),
+  "headerImageUrl": zod.string().nullish(),
   "accentColor": zod.string().optional(),
   "bgColor": zod.string().optional(),
   "cardStyle": zod.string().optional(),
