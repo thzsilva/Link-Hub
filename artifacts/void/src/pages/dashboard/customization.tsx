@@ -937,7 +937,7 @@ export default function DashboardCustomization() {
                 <input
                   type="range"
                   min={48}
-                  max={400}
+                  max={600}
                   step={4}
                   value={logoSize}
                   onChange={(e) => setLogoSize(Number(e.target.value))}
