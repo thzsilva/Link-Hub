@@ -5,9 +5,16 @@ const router: IRouter = Router();
 
 // As rotas de debug ficam DESATIVADAS por padrão (inclusive em produção).
 // Para usá-las em desenvolvimento, defina ENABLE_DEBUG=true no .env.
-// Sem o flag, todas respondem 404 — fechando o vazamento de info/erros.
+// IMPORTANTE: este router é montado na raiz (router.use(debugRouter) sem
+// prefixo), então o guard SÓ pode bloquear caminhos que comecem com /debug —
+// caso contrário ele interceptaria TODA a API. Para qualquer outra rota,
+// chamamos next() para deixar passar.
 const DEBUG_ENABLED = process.env.ENABLE_DEBUG === "true";
-router.use((_req, res, next) => {
+router.use((req, res, next) => {
+  if (!req.path.startsWith("/debug")) {
+    next();
+    return;
+  }
   if (!DEBUG_ENABLED) {
     res.status(404).json({ error: "Not found" });
     return;
