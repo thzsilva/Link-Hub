@@ -11,6 +11,7 @@ import { GallerySection } from "@/components/public/GallerySection";
 import { ContactSection } from "@/components/public/ContactSection";
 import { getFontStack } from "@/lib/fonts";
 import { normalizeSectionOrder, type SectionKey } from "@/lib/sections";
+import { BackToTop } from "@/components/BackToTop";
 
 // Calendar-style date badge shown on top of event images
 function EventDateBadge({ dateStr, theme }: { dateStr: string; theme: { primary: string; secondary: string } }) {
@@ -838,6 +839,9 @@ export default function PublicProfileNew() {
           </div>
         </motion.footer>
       </main>
+
+      {/* Botão flutuante de voltar ao topo */}
+      <BackToTop color={customTheme.primary} />
     </div>
   );
 }
