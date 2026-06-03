@@ -144,7 +144,10 @@ router.put("/me", async (req, res): Promise<void> => {
   if (parsed.data.email !== undefined) updateData.email = parsed.data.email;
   if (parsed.data.instagramHandle !== undefined) updateData.instagramHandle = parsed.data.instagramHandle;
   if (parsed.data.logoUrl !== undefined) updateData.logoUrl = parsed.data.logoUrl;
+  if (parsed.data.logoSize !== undefined) updateData.logoSize = parsed.data.logoSize;
   if (parsed.data.showUsername !== undefined) updateData.showUsername = parsed.data.showUsername;
+  if (parsed.data.bannerFit !== undefined) updateData.bannerFit = parsed.data.bannerFit;
+  if (parsed.data.bannerHeight !== undefined) updateData.bannerHeight = parsed.data.bannerHeight;
   if (parsed.data.heroDisplay !== undefined) updateData.heroDisplay = parsed.data.heroDisplay;
   if (parsed.data.heroLayout !== undefined) updateData.heroLayout = parsed.data.heroLayout;
   if (parsed.data.heroAlign !== undefined) updateData.heroAlign = parsed.data.heroAlign;

@@ -216,18 +216,32 @@ export default function PublicProfileNew() {
     socialH === "left" ? "justify-start" : socialH === "right" ? "justify-end" : "justify-center";
   const nameFont = getFontStack((profile as any).usernameFont);
   const heroLogoUrl = (profile as any).logoUrl || null;
+  const logoSize = Number((profile as any).logoSize) || 128; // px max-height
   const showUsername = (profile as any).showUsername !== false; // default true
   const showHeroLogo = (heroDisplay === "logo" || heroDisplay === "both") && (!!heroLogoUrl || !!profile.avatarUrl);
   const showHeroName = heroDisplay !== "logo";
 
-  // Renders the brand: a wide logo image when available, otherwise the circular avatar
-  const renderHeroBrand = (avatarSize: string, logoMaxH: string, extra = "") => {
+  // Banner sizing (adjustable)
+  const bannerFitClass = (profile as any).bannerFit === "contain" ? "object-contain" : "object-cover";
+  const bannerHeightKey = (profile as any).bannerHeight || "normal";
+  const bannerSizeClass =
+    bannerHeightKey === "compact"
+      ? "aspect-[16/7] sm:aspect-[16/6] max-h-[45vh]"
+      : bannerHeightKey === "tall"
+        ? "aspect-[3/4] sm:aspect-[16/12] max-h-[85vh]"
+        : bannerHeightKey === "full"
+          ? "min-h-[88vh]"
+          : "aspect-[4/5] sm:aspect-[16/10] lg:aspect-[16/7] max-h-[70vh]"; // normal
+
+  // Renders the brand: a wide logo image (size adjustable) when available, otherwise the circular avatar
+  const renderHeroBrand = (avatarSize: string, _logoMaxH: string, extra = "") => {
     if (heroLogoUrl) {
       return (
         <motion.img
           src={heroLogoUrl}
           alt={displayName}
-          className={`${logoMaxH} w-auto object-contain ${extra}`}
+          style={{ maxHeight: `${logoSize}px` }}
+          className={`w-auto max-w-[85%] object-contain ${extra}`}
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5 }}
@@ -279,11 +293,11 @@ export default function PublicProfileNew() {
           {profile.headerImageUrl && heroLayout === "below" ? (
             /* ── Komi style: banner on top, name/logo + icons BELOW the banner ── */
             <div>
-              <div className="relative w-full aspect-[4/5] sm:aspect-[16/10] lg:aspect-[16/7] max-h-[70vh] overflow-hidden">
+              <div className={`relative w-full ${bannerSizeClass} overflow-hidden`}>
                 <img
                   src={profile.headerImageUrl}
                   alt={displayName}
-                  className="w-full h-full object-cover"
+                  className={`w-full h-full ${bannerFitClass}`}
                   loading="eager"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
@@ -353,11 +367,11 @@ export default function PublicProfileNew() {
               </div>
             </div>
           ) : profile.headerImageUrl ? (
-            <div className="relative w-full aspect-[4/5] sm:aspect-[16/10] lg:aspect-[16/7] max-h-[70vh] overflow-hidden">
+            <div className={`relative w-full ${bannerSizeClass} overflow-hidden`}>
               <img
                 src={profile.headerImageUrl}
                 alt={displayName}
-                className="w-full h-full object-cover"
+                className={`w-full h-full ${bannerFitClass}`}
                 loading="eager"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black/10" />

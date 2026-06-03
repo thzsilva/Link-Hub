@@ -35,7 +35,10 @@ export const profilesTable = pgTable("profiles", {
   footerText: text("footer_text"),
   // Aparência do hero e fonte do nome
   logoUrl: text("logo_url"),
+  logoSize: integer("logo_size").default(128),
   showUsername: boolean("show_username").default(true),
+  bannerFit: text("banner_fit").default("cover"),
+  bannerHeight: text("banner_height").default("normal"),
   heroDisplay: text("hero_display").default("name"),
   heroLayout: text("hero_layout").default("overlay"),
   heroAlign: text("hero_align").default("center"),

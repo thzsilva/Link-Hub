@@ -118,7 +118,10 @@ async function updateProfileAppearance(data: {
   socialIconsAlign?: string;
   usernameFont?: string;
   logoUrl?: string | null;
+  logoSize?: number;
   showUsername?: boolean;
+  bannerFit?: string;
+  bannerHeight?: string;
   sectionOrder?: string[];
   sectionTitles?: Record<string, string>;
 }) {
@@ -250,7 +253,10 @@ export default function DashboardCustomization() {
   const [heroDisplay, setHeroDisplay] = useState<string>((profile as any)?.heroDisplay || "name");
   const [heroLayout, setHeroLayout] = useState<string>((profile as any)?.heroLayout || "overlay");
   const [logoUrl, setLogoUrl] = useState<string>((profile as any)?.logoUrl || "");
+  const [logoSize, setLogoSize] = useState<number>(Number((profile as any)?.logoSize) || 128);
   const [showUsername, setShowUsername] = useState<boolean>((profile as any)?.showUsername !== false);
+  const [bannerFit, setBannerFit] = useState<string>((profile as any)?.bannerFit || "cover");
+  const [bannerHeight, setBannerHeight] = useState<string>((profile as any)?.bannerHeight || "normal");
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const logoFileRef = useRef<HTMLInputElement>(null);
 
@@ -348,7 +354,7 @@ export default function DashboardCustomization() {
   const handleSaveAppearance = async () => {
     setIsSavingAppearance(true);
     try {
-      await updateProfileAppearance({ heroDisplay, heroLayout, heroAlign, socialIconsAlign, usernameFont, logoUrl: logoUrl || null, showUsername });
+      await updateProfileAppearance({ heroDisplay, heroLayout, heroAlign, socialIconsAlign, usernameFont, logoUrl: logoUrl || null, logoSize, showUsername, bannerFit, bannerHeight });
       queryClient.invalidateQueries({ queryKey: ["useGetMe"] });
       toast({ title: "✓ Aparência atualizada!" });
     } catch (err: any) {
@@ -739,8 +745,80 @@ export default function DashboardCustomization() {
               {isUploadingLogo ? <Loader2 size={14} className="animate-spin" /> : <UploadIcon size={14} />}
               {isUploadingLogo ? "Enviando..." : logoUrl ? "Trocar Logo" : "Enviar Logo"}
             </Button>
+
+            {/* Logo size slider */}
+            {logoUrl && (
+              <div className="space-y-1 pt-1">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs uppercase tracking-widest text-muted-foreground">Tamanho do logo</label>
+                  <span className="text-xs font-mono text-white/60">{logoSize}px</span>
+                </div>
+                <input
+                  type="range"
+                  min={48}
+                  max={400}
+                  step={4}
+                  value={logoSize}
+                  onChange={(e) => setLogoSize(Number(e.target.value))}
+                  className="w-full accent-white cursor-pointer"
+                />
+                {/* live preview */}
+                <div className="mt-2 rounded-lg border border-white/10 bg-black/40 p-3 flex items-center justify-center overflow-hidden">
+                  <img src={logoUrl} alt="Preview" style={{ maxHeight: `${Math.min(logoSize, 160)}px` }} className="w-auto max-w-full object-contain" />
+                </div>
+              </div>
+            )}
           </div>
         )}
+
+        {/* Banner: fit + height */}
+        <div className="space-y-3">
+          <div className="space-y-2">
+            <label className="text-xs uppercase tracking-widest text-muted-foreground">Ajuste do banner</label>
+            <div className="grid grid-cols-2 gap-2">
+              {([
+                { v: "cover", label: "Preencher", desc: "Cobre todo o espaço (pode cortar)" },
+                { v: "contain", label: "Conter", desc: "Mostra a imagem inteira" },
+              ] as const).map((opt) => (
+                <button
+                  key={opt.v}
+                  onClick={() => setBannerFit(opt.v)}
+                  className={`rounded-lg border px-3 py-2.5 text-left transition-all ${
+                    bannerFit === opt.v
+                      ? "border-white/60 bg-white/10 text-white"
+                      : "border-white/15 text-muted-foreground hover:border-white/30"
+                  }`}
+                >
+                  <span className="block text-sm font-medium">{opt.label}</span>
+                  <span className="block text-[10px] opacity-70">{opt.desc}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="space-y-2">
+            <label className="text-xs uppercase tracking-widest text-muted-foreground">Altura do banner</label>
+            <div className="grid grid-cols-4 gap-2">
+              {([
+                { v: "compact", label: "Baixo" },
+                { v: "normal", label: "Normal" },
+                { v: "tall", label: "Alto" },
+                { v: "full", label: "Tela cheia" },
+              ] as const).map((opt) => (
+                <button
+                  key={opt.v}
+                  onClick={() => setBannerHeight(opt.v)}
+                  className={`rounded-lg border px-2 py-2.5 text-xs font-medium transition-all ${
+                    bannerHeight === opt.v
+                      ? "border-white/60 bg-white/10 text-white"
+                      : "border-white/15 text-muted-foreground hover:border-white/30"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
 
         {/* Show @username toggle */}
         <div className="flex items-center justify-between rounded-lg border border-white/15 bg-white/5 px-4 py-3">
