@@ -110,10 +110,11 @@ export default function PublicProfileNew() {
     staleTime: 60_000,
   });
 
-  // Scroll-driven parallax (hooks must run before any early return)
+  // Scroll-driven zoom (hooks must run before any early return).
+  // Scale-only (starts at 1 = no baseline zoom) so the banner never crops/gaps,
+  // especially on mobile. Gentle "Ken Burns" zoom as you scroll.
   const { scrollY } = useScroll();
-  const bannerY = useTransform(scrollY, [0, 700], [0, 110]);
-  const bannerScale = useTransform(scrollY, [0, 700], [1.1, 1.25]);
+  const bannerScale = useTransform(scrollY, [0, 600], [1, 1.12]);
 
   if (isLoading) return <ProfileSkeleton />;
 
@@ -230,18 +231,19 @@ export default function PublicProfileNew() {
   // Banner sizing (adjustable)
   const bannerFitClass = (profile as any).bannerFit === "contain" ? "object-contain" : "object-cover";
   const bannerHeightKey = (profile as any).bannerHeight || "normal";
+  // Mobile usa proporções mais "landscape" para a imagem não ficar cortada demais
   const bannerSizeClass =
     bannerHeightKey === "compact"
-      ? "aspect-[16/7] sm:aspect-[16/6] max-h-[45vh]"
+      ? "aspect-[16/9] sm:aspect-[16/6] max-h-[45vh]"
       : bannerHeightKey === "tall"
-        ? "aspect-[3/4] sm:aspect-[16/12] max-h-[85vh]"
+        ? "aspect-[4/3] sm:aspect-[16/12] max-h-[85vh]"
         : bannerHeightKey === "full"
-          ? "min-h-[88vh]"
-          : "aspect-[4/5] sm:aspect-[16/10] lg:aspect-[16/7] max-h-[70vh]"; // normal
+          ? "min-h-[70vh] sm:min-h-[88vh]"
+          : "aspect-[3/2] sm:aspect-[16/10] lg:aspect-[16/7] max-h-[60vh] sm:max-h-[70vh]"; // normal
 
-  // Parallax/zoom dinâmico no banner conforme rola (motion values criados no topo)
+  // Zoom dinâmico no banner conforme rola (motion values criados no topo)
   const isCover = bannerFitClass === "object-cover";
-  const bannerParallax = isCover ? { y: bannerY, scale: bannerScale } : undefined;
+  const bannerParallax = isCover ? { scale: bannerScale } : undefined;
 
   // Renders the brand: a wide logo image (size adjustable) when available, otherwise
   // the circular avatar. Both respect the user's logoSize.
