@@ -5,6 +5,7 @@ import {
   UpdateProfileBody,
   CheckUsernameAvailabilityQueryParams,
 } from "@workspace/api-zod";
+import { computeAccess } from "./subscription";
 
 const router = Router();
 
@@ -78,9 +79,11 @@ async function getOrCreateProfile(clerkUserId: string, email?: string) {
   if (!profile) {
     const base = email ? email.split("@")[0].toLowerCase().replace(/[^a-z0-9-]/g, "-") : `user${Date.now()}`;
     const username = `${base}-${Math.random().toString(36).slice(2, 6)}`.slice(0, 30);
+    // Trial de 3 dias ao criar a conta
+    const trialEndsAt = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
     [profile] = await db
       .insert(profilesTable)
-      .values({ clerkUserId, username })
+      .values({ clerkUserId, username, subscriptionStatus: "trialing", trialEndsAt })
       .returning();
   }
 
@@ -273,7 +276,10 @@ router.get("/profile/:username", async (req, res): Promise<void> => {
     db.select().from(socialLinksTable).where(eq(socialLinksTable.profileId, profile.id)).orderBy(socialLinksTable.position),
   ]);
 
-  res.json({ profile, links, photos, socialLinks });
+  // Flag de acesso da assinatura (NÃO bloqueia ainda — só informa.
+  // O bloqueio do hub só será ligado quando o checkout estiver no ar).
+  const access = computeAccess(profile);
+  res.json({ profile, links, photos, socialLinks, subscriptionActive: access.active });
 });
 
 export default router;

@@ -10,6 +10,7 @@ import eventsRouter from "./events";
 import sectionsRouter from "./sections";
 import proxyRouter from "./proxy";
 import debugRouter from "./debug";
+import subscriptionRouter from "./subscription";
 
 const router: IRouter = Router();
 
@@ -24,5 +25,6 @@ router.use(adminRouter);
 router.use(eventsRouter);
 router.use(sectionsRouter);
 router.use(proxyRouter);
+router.use(subscriptionRouter);
 
 export default router;

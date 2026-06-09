@@ -386,6 +386,8 @@ Crie um `.env` na raiz (não versionado). Variáveis:
 | `DEMO_MODE` | Ambos | `true` roda **sem banco** (dados de demonstração em memória). |
 | `ALLOWED_ORIGINS` | Backend (opcional) | Lista separada por vírgula de origens permitidas no CORS. Se **ausente**, mantém o comportamento permissivo atual (reflete qualquer origem). Ex: `https://hubvoid.vercel.app`. |
 | `ENABLE_DEBUG` | Backend (opcional) | `true` ativa as rotas `/api/debug/*`. **Padrão desligado** (inclusive em prod): as rotas respondem 404. |
+| `ASAAS_API_KEY` | Backend (assinatura) | Chave de API do Asaas (sandbox ou produção) — usada para criar clientes/assinaturas (etapa do checkout). |
+| `ASAAS_WEBHOOK_TOKEN` | Backend (assinatura) | Token configurado no painel do Asaas (Webhooks); o backend valida o header `asaas-access-token` contra ele. |
 
 > **Vercel (frontend):** basta `VITE_CLERK_PUBLISHABLE_KEY` (e opcionalmente
 > `VITE_API_BASE_URL`). **Não** coloque `DATABASE_*`/`SUPABASE_*` no projeto do frontend.

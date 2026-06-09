@@ -51,6 +51,12 @@ export const profilesTable = pgTable("profiles", {
   usernameFont: text("username_font").default("default"),
   isSuperAdmin: boolean("is_super_admin").default(false),
   isActive: boolean("is_active").default(true),
+  // Assinatura / pagamento (Asaas)
+  subscriptionStatus: text("subscription_status").default("trialing"), // trialing | active | past_due | canceled
+  trialEndsAt: timestamp("trial_ends_at", { withTimezone: true }),
+  currentPeriodEnd: timestamp("current_period_end", { withTimezone: true }),
+  asaasCustomerId: text("asaas_customer_id"),
+  asaasSubscriptionId: text("asaas_subscription_id"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });
