@@ -13,6 +13,7 @@ import { getFontStack } from "@/lib/fonts";
 import { normalizeSectionOrder, type SectionKey } from "@/lib/sections";
 import { BackToTop } from "@/components/BackToTop";
 import { ProfileHeader, type HeaderNavItem } from "@/components/public/ProfileHeader";
+import { InactiveHub } from "@/components/public/InactiveHub";
 
 // Calendar-style date badge shown on top of event images
 function EventDateBadge({ dateStr, theme }: { dateStr: string; theme: { primary: string; secondary: string } }) {
@@ -132,6 +133,16 @@ export default function PublicProfileNew() {
           Criar o meu perfil →
         </a>
       </div>
+    );
+  }
+
+  // Hub inativo (assinatura expirada): tela elegante, sem expor o conteúdo
+  if ((data as any).subscriptionActive === false) {
+    return (
+      <InactiveHub
+        displayName={data.profile.displayName}
+        username={data.profile.username}
+      />
     );
   }
 

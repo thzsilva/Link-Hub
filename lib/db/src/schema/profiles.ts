@@ -57,6 +57,7 @@ export const profilesTable = pgTable("profiles", {
   currentPeriodEnd: timestamp("current_period_end", { withTimezone: true }),
   asaasCustomerId: text("asaas_customer_id"),
   asaasSubscriptionId: text("asaas_subscription_id"),
+  subscriptionExempt: boolean("subscription_exempt").default(false), // isento de pagamento (nunca bloqueia)
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

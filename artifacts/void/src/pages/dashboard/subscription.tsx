@@ -30,6 +30,7 @@ const STATUS_LABEL: Record<string, string> = {
   active: "Ativa",
   past_due: "Pagamento pendente",
   canceled: "Cancelada",
+  exempt: "Cortesia (isento)",
   none: "Sem assinatura",
 };
 

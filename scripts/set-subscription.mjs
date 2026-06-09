@@ -7,6 +7,8 @@
 //   node scripts/set-subscription.mjs <username> active    # ativa por 31 dias
 //   node scripts/set-subscription.mjs <username> hide      # is_active=false (some do público / 404)
 //   node scripts/set-subscription.mjs <username> show      # is_active=true
+//   node scripts/set-subscription.mjs <username> exempt    # CORTESIA: nunca bloqueia, não paga
+//   node scripts/set-subscription.mjs <username> unexempt  # remove a cortesia
 //   node scripts/set-subscription.mjs <username> status    # só mostra o estado atual
 import pg from "pg";
 import { readFileSync } from "node:fs";
@@ -39,6 +41,8 @@ const SQL = {
   active: "subscription_status='active', current_period_end = now() + interval '31 days'",
   hide: "is_active = false",
   show: "is_active = true",
+  exempt: "subscription_exempt = true",
+  unexempt: "subscription_exempt = false",
 };
 
 const c = new pg.Client({ connectionString: loadDatabaseUrl(), ssl: { rejectUnauthorized: false } });
@@ -53,7 +57,7 @@ async function main() {
     console.log(`✓ '${action}' aplicado em '${username}'`);
   }
   const r = await c.query(
-    "SELECT username, is_active, subscription_status, trial_ends_at, current_period_end FROM profiles WHERE username=$1",
+    "SELECT username, is_active, subscription_exempt, subscription_status, trial_ends_at, current_period_end FROM profiles WHERE username=$1",
     [username],
   );
   console.table(r.rows);

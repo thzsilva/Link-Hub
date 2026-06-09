@@ -699,6 +699,7 @@ estruturais. Antes de um volume alto, priorize: **pgbouncer**, **índices em
 
 ## 📄 Documentos relacionados
 
+- `ASSINATURA.md` — **sistema de assinatura/pagamento (Asaas): como funciona, isenções, taxas, riscos, manutenção**
 - `DEPLOYMENT_CHECKLIST.md` — checklist de deploy
 - `SETUP_VERCEL.md` — setup da Vercel
 - `LIBERAR_PORTAS_WINDOWS.md` — liberar portas no Windows

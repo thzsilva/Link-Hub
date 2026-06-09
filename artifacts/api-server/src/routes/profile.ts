@@ -270,16 +270,37 @@ router.get("/profile/:username", async (req, res): Promise<void> => {
 
   if (!profile) { res.status(404).json({ error: "Profile not found" }); return; }
 
+  // Gating por assinatura. Ligado por padrão; desative com ENFORCE_SUBSCRIPTION=false.
+  const enforce = process.env.ENFORCE_SUBSCRIPTION !== "false";
+  const access = computeAccess(profile);
+
+  if (enforce && !access.active) {
+    // Hub inativo: não expõe o conteúdo, só o mínimo para uma tela elegante.
+    res.json({
+      profile: {
+        username: profile.username,
+        displayName: profile.displayName,
+        avatarUrl: profile.avatarUrl,
+        logoUrl: profile.logoUrl,
+        themeId: profile.themeId,
+        customPrimaryColor: profile.customPrimaryColor,
+        customSecondaryColor: profile.customSecondaryColor,
+      },
+      links: [],
+      photos: [],
+      socialLinks: [],
+      subscriptionActive: false,
+    });
+    return;
+  }
+
   const [links, photos, socialLinks] = await Promise.all([
     db.select().from(linksTable).where(and(eq(linksTable.profileId, profile.id), eq(linksTable.isVisible, true))).orderBy(linksTable.position),
     db.select().from(photosTable).where(eq(photosTable.profileId, profile.id)).orderBy(photosTable.position),
     db.select().from(socialLinksTable).where(eq(socialLinksTable.profileId, profile.id)).orderBy(socialLinksTable.position),
   ]);
 
-  // Flag de acesso da assinatura (NÃO bloqueia ainda — só informa.
-  // O bloqueio do hub só será ligado quando o checkout estiver no ar).
-  const access = computeAccess(profile);
-  res.json({ profile, links, photos, socialLinks, subscriptionActive: access.active });
+  res.json({ profile, links, photos, socialLinks, subscriptionActive: true });
 });
 
 export default router;

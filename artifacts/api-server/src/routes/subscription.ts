@@ -56,26 +56,30 @@ export function computeAccess(profile: any): {
   currentPeriodEnd: string | null;
   daysLeft: number;
   inTrial: boolean;
+  exempt: boolean;
 } {
   const now = Date.now();
   const status = profile?.subscriptionStatus || "trialing";
   const trialEnds = profile?.trialEndsAt ? new Date(profile.trialEndsAt).getTime() : 0;
   const periodEnds = profile?.currentPeriodEnd ? new Date(profile.currentPeriodEnd).getTime() : 0;
 
+  // Isenção: perfis marcados como isentos ou super admin nunca bloqueiam (o "burlar").
+  const exempt = profile?.subscriptionExempt === true || profile?.isSuperAdmin === true;
   const inTrial = status === "trialing" && trialEnds > now;
   const paidActive = status === "active" && (periodEnds === 0 || periodEnds > now);
-  const active = inTrial || paidActive;
+  const active = exempt || inTrial || paidActive;
 
   const ref = inTrial ? trialEnds : periodEnds;
   const daysLeft = ref > now ? Math.ceil((ref - now) / (24 * 60 * 60 * 1000)) : 0;
 
   return {
     active,
-    status,
+    status: exempt ? "exempt" : status,
     trialEndsAt: profile?.trialEndsAt ? new Date(profile.trialEndsAt).toISOString() : null,
     currentPeriodEnd: profile?.currentPeriodEnd ? new Date(profile.currentPeriodEnd).toISOString() : null,
     daysLeft,
     inTrial,
+    exempt,
   };
 }
 
