@@ -6,6 +6,38 @@ const DEMO_MODE = process.env.DEMO_MODE === "true";
 
 const PLAN_PRICE = 20; // R$ 20/mês
 
+// ---------------------------------------------------------------------------
+// Cliente Asaas (sandbox por padrão; produção quando ASAAS_ENV=production)
+// ---------------------------------------------------------------------------
+const ASAAS_BASE =
+  process.env.ASAAS_ENV === "production"
+    ? "https://api.asaas.com/v3"
+    : "https://sandbox.asaas.com/api/v3";
+
+async function asaas(path: string, method: string, body?: unknown): Promise<any> {
+  const key = process.env.ASAAS_API_KEY;
+  if (!key) throw new Error("ASAAS_API_KEY não configurada");
+  const resp = await fetch(`${ASAAS_BASE}${path}`, {
+    method,
+    headers: {
+      "Content-Type": "application/json",
+      access_token: key,
+      "User-Agent": "hubvoid",
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const data = await resp.json().catch(() => ({}));
+  if (!resp.ok) {
+    const msg = data?.errors?.[0]?.description || `Asaas HTTP ${resp.status}`;
+    throw new Error(msg);
+  }
+  return data;
+}
+
+function todayYMD(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
 async function getDbModule() {
   const { db, profilesTable } = await import("@workspace/db");
   const { eq, or } = await import("drizzle-orm");
@@ -71,6 +103,88 @@ router.get("/me/subscription", async (req, res): Promise<void> => {
     res.json({ ...computeAccess(profile), price: PLAN_PRICE });
   } catch (err: any) {
     res.status(500).json({ error: "Erro ao consultar assinatura", details: err?.message });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// POST /api/subscription/checkout — cria cliente + assinatura no Asaas e
+// retorna a página de pagamento (invoiceUrl) e o QR Code PIX (quando PIX).
+// Não coletamos dados de cartão: o cartão é pago na página hospedada do Asaas.
+// ---------------------------------------------------------------------------
+router.post("/subscription/checkout", async (req, res): Promise<void> => {
+  if (DEMO_MODE) {
+    res.json({ invoiceUrl: "https://sandbox.asaas.com/i/demo", pix: null, subscriptionId: "demo" });
+    return;
+  }
+  const { userId } = getAuth(req);
+  if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+
+  const { name, email, cpfCnpj, billingType } = req.body || {};
+  if (!name || !email || !cpfCnpj) {
+    res.status(400).json({ error: "Nome, e-mail e CPF/CNPJ são obrigatórios." });
+    return;
+  }
+  const method = ["PIX", "CREDIT_CARD", "BOLETO"].includes(billingType) ? billingType : "UNDEFINED";
+
+  try {
+    const { db, profilesTable, eq } = await getDbModule();
+    const profile = await db
+      .select()
+      .from(profilesTable)
+      .where(eq(profilesTable.clerkUserId, userId))
+      .limit(1)
+      .then((r: any[]) => r[0]);
+    if (!profile) { res.status(404).json({ error: "Perfil não encontrado" }); return; }
+
+    // 1) Cliente Asaas (reusa se já existir)
+    let customerId: string | undefined = profile.asaasCustomerId || undefined;
+    if (!customerId) {
+      const customer = await asaas("/customers", "POST", {
+        name,
+        email,
+        cpfCnpj: String(cpfCnpj).replace(/\D/g, ""),
+      });
+      customerId = customer.id;
+      await db.update(profilesTable).set({ asaasCustomerId: customerId }).where(eq(profilesTable.id, profile.id));
+    }
+
+    // 2) Assinatura mensal de R$20 (reusa se já existir)
+    let subscriptionId: string | undefined = profile.asaasSubscriptionId || undefined;
+    if (!subscriptionId) {
+      const sub = await asaas("/subscriptions", "POST", {
+        customer: customerId,
+        billingType: method,
+        value: PLAN_PRICE,
+        nextDueDate: todayYMD(),
+        cycle: "MONTHLY",
+        description: "hubvoid — assinatura mensal",
+      });
+      subscriptionId = sub.id;
+      await db.update(profilesTable).set({ asaasSubscriptionId: subscriptionId }).where(eq(profilesTable.id, profile.id));
+    }
+
+    // 3) Primeira cobrança → página de pagamento + (se PIX) QR Code
+    const payments = await asaas(`/subscriptions/${subscriptionId}/payments`, "GET");
+    const firstPayment = payments?.data?.[0];
+    let pix: { encodedImage: string; payload: string } | null = null;
+    if (firstPayment?.id) {
+      try {
+        const qr = await asaas(`/payments/${firstPayment.id}/pixQrCode`, "GET");
+        if (qr?.encodedImage && qr?.payload) pix = { encodedImage: qr.encodedImage, payload: qr.payload };
+      } catch {
+        // Cobrança pode não ter PIX (ex.: método cartão) — segue só com invoiceUrl
+      }
+    }
+
+    res.json({
+      subscriptionId,
+      invoiceUrl: firstPayment?.invoiceUrl || null,
+      pix,
+      value: PLAN_PRICE,
+    });
+  } catch (err: any) {
+    console.error("Erro no checkout Asaas:", err?.message);
+    res.status(502).json({ error: err?.message || "Falha ao iniciar assinatura" });
   }
 });
 

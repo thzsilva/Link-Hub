@@ -34,6 +34,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     { href: "/dashboard/events", label: "Events" },
     { href: "/dashboard/customization", label: "Customização" },
     { href: "/dashboard/analytics", label: "Analytics" },
+    { href: "/dashboard/assinatura", label: "Assinatura" },
   ];
 
   return (

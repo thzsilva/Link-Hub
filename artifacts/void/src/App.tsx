@@ -20,6 +20,7 @@ import DashboardAppearance from "@/pages/dashboard/appearance";
 import DashboardCustomization from "@/pages/dashboard/customization";
 import DashboardAnalytics from "@/pages/dashboard/analytics";
 import DashboardEvents from "@/pages/dashboard/events";
+import DashboardSubscription from "@/pages/dashboard/subscription";
 import Admin from "@/pages/admin";
 import PublicProfile from "@/pages/public/profile";
 import PublicPhotos from "@/pages/public/photos";
@@ -193,6 +194,7 @@ function DashboardRoutes() {
             <Route path="/dashboard/appearance" component={DashboardAppearance} />
             <Route path="/dashboard/analytics" component={DashboardAnalytics} />
             <Route path="/dashboard/events" component={DashboardEvents} />
+            <Route path="/dashboard/assinatura" component={DashboardSubscription} />
             <Route path="/admin" component={Admin} />
           </Switch>
         </DashboardLayout>
