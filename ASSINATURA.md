@@ -147,15 +147,71 @@ Outros pontos:
 | `ASAAS_ENV` | `sandbox` (padrão) ou `production`. |
 | `ENFORCE_SUBSCRIPTION` | `false` desliga o bloqueio para todos. Ausente/`true` = ligado. |
 
-### Passar de sandbox para produção
-1. Crie a conta de **produção** no Asaas e gere a **API key de produção**.
-2. No Railway, troque `ASAAS_API_KEY` pela de produção e defina `ASAAS_ENV=production`.
-3. Reconfigure o **Webhook** no painel de produção do Asaas:
-   - URL: `https://link-hub-production.up.railway.app/api/webhooks/asaas`
-   - Token: o mesmo do `ASAAS_WEBHOOK_TOKEN`.
-   - Eventos: `PAYMENT_CONFIRMED`, `PAYMENT_RECEIVED`, `PAYMENT_OVERDUE`,
-     `PAYMENT_REFUNDED`, e eventos de `SUBSCRIPTION`.
-4. (Opcional) Reveja as isenções: quem deve continuar de cortesia.
+### ✅ Checklist: ativar em PRODUÇÃO 100% (passo a passo)
+
+Siga na ordem. Tempo estimado: ~20-30 min.
+
+**1. Conta e verificação no Asaas (produção)**
+- [ ] Crie/abra a conta de **produção** em https://www.asaas.com (a de sandbox é separada).
+- [ ] Complete a **verificação de identidade/empresa** (KYC) — sem isso o Asaas
+      não libera saques nem alguns recebimentos. Tenha CPF/CNPJ, dados bancários.
+- [ ] Cadastre a **conta bancária** que receberá os repasses.
+
+**2. Pegue a API key de produção**
+- [ ] No painel (produção): **Configurações → Integrações → API Key** → copie a chave.
+      (É diferente da de sandbox e começa diferente.)
+
+**3. Configure as variáveis no Railway (backend)**
+- [ ] `ASAAS_API_KEY` = a **chave de produção**.
+- [ ] `ASAAS_ENV` = `production`.
+- [ ] `ASAAS_WEBHOOK_TOKEN` = um **token secreto forte** (invente um, ex: 32+ caracteres).
+- [ ] `ENFORCE_SUBSCRIPTION` = deixe **sem definir** (ou `true`) para o bloqueio ficar ativo.
+- [ ] Salve → o Railway reinicia o serviço.
+
+**4. Configure o Webhook no Asaas (produção)**
+- [ ] Painel (produção) → **Configurações → Webhooks → Adicionar**.
+- [ ] URL: `https://link-hub-production.up.railway.app/api/webhooks/asaas`
+- [ ] Tipo de envio: **Sequencial** (recomendado).
+- [ ] **Token de autenticação:** exatamente o mesmo valor de `ASAAS_WEBHOOK_TOKEN`.
+- [ ] Eventos a marcar: `PAYMENT_CONFIRMED`, `PAYMENT_RECEIVED`, `PAYMENT_OVERDUE`,
+      `PAYMENT_REFUNDED`, `PAYMENT_DELETED`, `SUBSCRIPTION_DELETED`,
+      `SUBSCRIPTION_INACTIVATED`.
+- [ ] Ative o webhook.
+
+**5. Frontend (Vercel)**
+- [ ] Nada obrigatório de pagamento aqui (o front só chama a API). Confirme apenas
+      que `VITE_API_BASE_URL` aponta para o Railway de produção.
+
+**6. Teste de ponta a ponta (com dinheiro real, valor baixo)**
+- [ ] Crie uma conta nova de teste → confirme o **trial de 3 dias** no dashboard.
+- [ ] Vá em **Assinatura** → assine via **PIX** → pague o QR de verdade (R$20).
+- [ ] Confirme que o status vira **"Hub ativo"** automaticamente (webhook).
+- [ ] No painel do Asaas, confira que o pagamento entrou e o webhook foi entregue
+      (há um log de entregas do webhook).
+- [ ] Force um cenário inativo: `node scripts/set-subscription.mjs <user> expire`
+      → o perfil público deve mostrar **"Hub indisponível"**. Depois `... exempt`
+      ou `... active` para reativar.
+
+**7. Fiscal e legal (importante)**
+- [ ] Defina como vai **emitir Nota Fiscal** (o Asaas tem emissão automática de NF —
+      ative se necessário). Verifique sua situação tributária (MEI/empresa).
+- [ ] Revise os e-mails de contato na **Política de Privacidade** e **Termos de Uso**
+      (hoje estão como `privacidade@hubvoid.com` / `contato@hubvoid.com`).
+- [ ] Confirme que a Política de Privacidade cita o tratamento de **CPF/CNPJ**.
+
+**8. Revisar isenções (cortesias)**
+- [ ] Todos os perfis antigos foram marcados como **isentos** no rollout. Decida
+      quem deve continuar de cortesia e remova os demais:
+      `node scripts/set-subscription.mjs <user> unexempt`.
+- [ ] Garanta que **você** (e sócios) estão `exempt` ou são `is_super_admin`.
+
+**9. Monitoramento contínuo**
+- [ ] Acompanhe o **log de webhooks** no Asaas (entregas com falha).
+- [ ] Acompanhe **inadimplência** (status `past_due`) e cobre/avise os usuários.
+- [ ] Tenha um e-mail/canal de suporte para problemas de pagamento.
+
+> Pronto: com os passos 1–4 o sistema já **cobra de verdade**; os passos 6–9
+> garantem que está **100% e seguro** para escalar.
 
 ### Operações do dia a dia (script)
 ```bash

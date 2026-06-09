@@ -152,14 +152,20 @@ router.post("/subscription/checkout", async (req, res): Promise<void> => {
       await db.update(profilesTable).set({ asaasCustomerId: customerId }).where(eq(profilesTable.id, profile.id));
     }
 
-    // 2) Assinatura mensal de R$20 (reusa se já existir)
+    // 2) Assinatura mensal de R$20 (reusa se já existir).
+    // Se ainda está no trial, a 1ª cobrança é agendada para o fim do trial
+    // (aproveita os 3 dias grátis e só paga depois). Caso contrário, hoje.
     let subscriptionId: string | undefined = profile.asaasSubscriptionId || undefined;
     if (!subscriptionId) {
+      const trialEnds = profile.trialEndsAt ? new Date(profile.trialEndsAt) : null;
+      const firstDue = trialEnds && trialEnds.getTime() > Date.now()
+        ? trialEnds.toISOString().slice(0, 10)
+        : todayYMD();
       const sub = await asaas("/subscriptions", "POST", {
         customer: customerId,
         billingType: method,
         value: PLAN_PRICE,
-        nextDueDate: todayYMD(),
+        nextDueDate: firstDue,
         cycle: "MONTHLY",
         description: "hubvoid — assinatura mensal",
       });

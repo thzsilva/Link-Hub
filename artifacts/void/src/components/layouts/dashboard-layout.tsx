@@ -7,6 +7,7 @@ import { ExternalLink, Copy, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { SubscriptionBanner } from "@/components/SubscriptionBanner";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
@@ -153,6 +154,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       <main className="flex-1 p-6 md:p-12 overflow-y-auto">
         <div className="max-w-5xl mx-auto">
+          <SubscriptionBanner />
           {children}
         </div>
       </main>
