@@ -105,63 +105,99 @@ export default function Home() {
         <div className="max-w-4xl mx-auto">
           <SectionTitle kicker="O problema">Você sofre com isso?</SectionTitle>
           <motion.div
-            className="grid grid-cols-1 sm:grid-cols-2 gap-4"
+            className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5"
             initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-80px" }}
             variants={{ visible: { transition: { staggerChildren: 0.08 } } }}
           >
             {[
-              "Contratantes perdidos no WhatsApp",
-              "Agenda de shows desorganizada",
-              "Links espalhados em mil lugares",
-              "Falta de presença profissional",
-            ].map((problem) => (
+              { title: "Contratantes perdidos no WhatsApp", text: "Propostas se perdem no meio de mil conversas." },
+              { title: "Agenda de shows desorganizada", text: "Você não tem clareza do que vem pela frente." },
+              { title: "Links espalhados em mil lugares", text: "Spotify, Instagram, contato… tudo separado." },
+              { title: "Falta de presença profissional", text: "Sua marca não transmite a credibilidade que merece." },
+            ].map((p) => (
               <motion.div
-                key={problem}
+                key={p.title}
                 variants={fadeUp}
-                className="flex items-center gap-4 p-5 rounded-xl border border-red-500/20 bg-red-500/[0.04]"
+                whileHover={{ y: -4 }}
+                className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] p-6 transition-colors duration-300 hover:border-red-500/40"
               >
-                <div className="w-9 h-9 rounded-full bg-red-500/15 flex items-center justify-center flex-shrink-0">
-                  <X size={18} className="text-red-400" />
+                {/* barra de acento à esquerda */}
+                <span className="absolute left-0 top-0 h-full w-1 bg-gradient-to-b from-red-500 to-rose-600 opacity-70" />
+                <div className="flex items-start gap-4">
+                  <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-red-500/20 to-rose-600/10 border border-red-500/20 flex items-center justify-center flex-shrink-0">
+                    <X size={20} className="text-red-400" strokeWidth={2.5} />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-base sm:text-lg leading-snug">{p.title}</h3>
+                    <p className="text-sm text-white/50 font-light mt-1 leading-relaxed">{p.text}</p>
+                  </div>
                 </div>
-                <p className="text-white/80 text-sm sm:text-base">{problem}</p>
               </motion.div>
             ))}
           </motion.div>
         </div>
       </section>
 
-      {/* SOLUÇÃO */}
+      {/* SOLUÇÃO / BENEFÍCIOS */}
       <section className="relative z-10 px-4 sm:px-6 lg:px-8 py-16 sm:py-24 border-t border-white/5">
-        <div className="max-w-5xl mx-auto">
-          <SectionTitle kicker="A solução">Tudo em um só lugar com o hubvoid</SectionTitle>
+        <div className="max-w-6xl mx-auto">
+          <SectionTitle kicker="A solução">
+            Tudo que você precisa,{" "}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400">
+              em um só lugar
+            </span>
+          </SectionTitle>
+
           <motion.div
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6"
             initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-80px" }}
-            variants={{ visible: { transition: { staggerChildren: 0.08 } } }}
+            variants={{ visible: { transition: { staggerChildren: 0.09 } } }}
           >
             {[
-              { icon: UserCircle, title: "Perfil profissional", text: "Sua bio, fotos, vídeo e redes num link único e elegante." },
-              { icon: CalendarDays, title: "Agenda de eventos", text: "Mostre seus próximos shows com data, local e ingressos." },
-              { icon: FileText, title: "Contratações", text: "Receba propostas direto pelo perfil, sem se perder no WhatsApp." },
-              { icon: BarChart3, title: "Analytics", text: "Veja visitas, cliques e de onde vem o seu público." },
-              { icon: Wallet, title: "Financeiro", text: "Acompanhe quanto seus eventos vão render e o que já recebeu." },
-            ].map((item, i) => (
+              { icon: UserCircle, title: "Perfil profissional", text: "Sua bio, fotos, vídeo e redes num link único e elegante que impressiona.", grad: "from-blue-500 to-cyan-400", glow: "rgba(59,130,246,0.25)" },
+              { icon: CalendarDays, title: "Agenda de eventos", text: "Mostre seus próximos shows com data, local e link de ingressos.", grad: "from-purple-500 to-fuchsia-400", glow: "rgba(168,85,247,0.25)" },
+              { icon: FileText, title: "Contratações", text: "Receba propostas direto pelo perfil — sem se perder no WhatsApp.", grad: "from-pink-500 to-rose-400", glow: "rgba(236,72,153,0.25)" },
+              { icon: BarChart3, title: "Analytics", text: "Veja visitas, cliques e de onde vem o seu público em tempo real.", grad: "from-cyan-500 to-sky-400", glow: "rgba(6,182,212,0.25)" },
+              { icon: Wallet, title: "Financeiro", text: "Acompanhe quanto seus eventos vão render e o que já recebeu.", grad: "from-emerald-500 to-green-400", glow: "rgba(16,185,129,0.25)" },
+            ].map((item) => (
               <motion.div
                 key={item.title}
                 variants={fadeUp}
-                className="p-6 rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm hover:border-white/30 hover:bg-white/10 transition-all duration-300"
-                whileHover={{ y: -4 }}
+                whileHover={{ y: -6 }}
+                className="group relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.07] to-white/[0.02] p-7 transition-all duration-300 hover:border-white/25"
+                style={{ boxShadow: "0 0 0 rgba(0,0,0,0)" }}
               >
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-white/10 flex items-center justify-center">
-                    <item.icon size={20} className="text-blue-300" />
+                {/* glow no hover */}
+                <div
+                  className="absolute -inset-px opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl pointer-events-none"
+                  style={{ background: `radial-gradient(400px circle at 50% 0%, ${item.glow}, transparent 70%)` }}
+                />
+                <div className="relative">
+                  <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${item.grad} flex items-center justify-center mb-5 shadow-lg`}>
+                    <item.icon size={26} className="text-white" strokeWidth={2} />
                   </div>
-                  <span className="text-xs font-mono text-white/40">{String(i + 1).padStart(2, "0")}</span>
+                  <h3 className="text-xl font-black tracking-tight mb-2">{item.title}</h3>
+                  <p className="text-sm sm:text-base text-white/60 font-light leading-relaxed">{item.text}</p>
                 </div>
-                <h3 className="text-lg font-bold mb-1">{item.title}</h3>
-                <p className="text-sm text-white/55 font-light leading-relaxed">{item.text}</p>
               </motion.div>
             ))}
+
+            {/* Card-CTA fechando a grade de benefícios */}
+            <motion.div
+              variants={fadeUp}
+              className="relative overflow-hidden rounded-2xl border border-white/15 bg-gradient-to-br from-blue-500/15 via-purple-500/15 to-pink-500/10 p-7 flex flex-col justify-center"
+            >
+              <h3 className="text-xl font-black tracking-tight mb-2">E muito mais.</h3>
+              <p className="text-sm text-white/60 font-light leading-relaxed mb-5">
+                Temas, fontes, galeria, players de música e seu link próprio.
+              </p>
+              <Link href="/sign-up">
+                <Button className="bg-white text-black hover:bg-white/90 rounded-lg uppercase tracking-widest text-xs font-bold w-full">
+                  Criar Perfil Grátis
+                  <ArrowRight size={16} className="ml-2" />
+                </Button>
+              </Link>
+            </motion.div>
           </motion.div>
         </div>
       </section>
