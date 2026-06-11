@@ -159,6 +159,14 @@ function ClerkQueryClientCacheInvalidator() {
   return null;
 }
 
+function DemoRedirect() {
+  // URL limpa /demo → abre o perfil de demonstração
+  useEffect(() => {
+    window.location.replace(`${basePath || ""}/?user=demo`);
+  }, []);
+  return null;
+}
+
 function HomeRedirect() {
   const searchParams = new URLSearchParams(window.location.search);
   const username = searchParams.get('user');
@@ -223,6 +231,7 @@ function ClerkProviderWithRoutes() {
       <ClerkQueryClientCacheInvalidator />
       <Switch>
         <Route path="/" component={HomeRedirect} />
+        <Route path="/demo" component={DemoRedirect} />
         <Route path="/privacidade" component={PrivacyPolicy} />
         <Route path="/privacy" component={PrivacyPolicy} />
         <Route path="/termos" component={TermsOfUse} />
@@ -255,6 +264,7 @@ function App() {
             ) : (
               <Switch>
                 <Route path="/" component={HomeRedirect} />
+                <Route path="/demo" component={DemoRedirect} />
                 <Route path="/privacidade" component={PrivacyPolicy} />
                 <Route path="/privacy" component={PrivacyPolicy} />
                 <Route path="/termos" component={TermsOfUse} />
