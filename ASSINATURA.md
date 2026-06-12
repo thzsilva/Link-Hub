@@ -147,6 +147,36 @@ Outros pontos:
 | `ASAAS_ENV` | `sandbox` (padrão) ou `production`. |
 | `ENFORCE_SUBSCRIPTION` | `false` desliga o bloqueio para todos. Ausente/`true` = ligado. |
 
+### 🕗 Modo de espera: lançar SEM cobrar (enquanto a produção do Asaas não libera)
+
+> ⚠️ O **sandbox NÃO fatura dinheiro real** (pagamentos são simulados). Para cobrar
+> de verdade é preciso a **chave de produção**, que só é liberada quando o cadastro
+> Asaas está 100% aprovado (faturamento estimado, conta bancária, documentos/KYC).
+> Se o botão "Gerar chave de API" estiver bloqueado: complete tudo em
+> **Minha Conta → Informações** e, se persistir, fale com o **suporte do Asaas**.
+
+Enquanto a produção não libera, dá para **deixar a plataforma 100% no ar sem
+cobrar ninguém**:
+
+1. No **Railway → Variables**, defina `ENFORCE_SUBSCRIPTION = false`.
+   → Ninguém é bloqueado; perfis, demo e dashboard funcionam normalmente.
+   (Pode deixar a `ASAAS_API_KEY` vazia ou com a de sandbox — sem o gating, o
+   checkout não é necessário.)
+2. Use esse tempo para finalizar a verificação do Asaas.
+
+**Quando a chave de produção sair — ligar a cobrança em 3 passos:**
+1. No Railway: `ASAAS_API_KEY` = chave **de produção**, `ASAAS_ENV` = `production`,
+   `ASAAS_WEBHOOK_TOKEN` = um token secreto forte.
+2. No Asaas (produção): cadastre o **Webhook de cobranças** (não o "Validação de
+   saque"!) — URL `https://link-hub-production.up.railway.app/api/webhooks/asaas`,
+   mesmo token, eventos de pagamento/assinatura (ver checklist abaixo).
+3. No Railway: **remova** `ENFORCE_SUBSCRIPTION` (ou `= true`) → a cobrança/bloqueio
+   passa a valer. Faça um teste real de R$20 (passo 6 do checklist).
+
+> ⚠️ **Cuidado:** a tela **"Validação de saque via Webhook"** do Asaas é OUTRA coisa
+> (autoriza seus *saques*). **NÃO** coloque a nossa URL lá — deixe desabilitada.
+> Nosso webhook é o de **Cobranças/Notificações** (Integrações → Webhooks).
+
 ### ✅ Checklist: ativar em PRODUÇÃO 100% (passo a passo)
 
 Siga na ordem. Tempo estimado: ~20-30 min.
