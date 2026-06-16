@@ -270,6 +270,18 @@ export default function DashboardCustomization() {
     const p = profile as any;
     if (!p?.id || hydratedRef.current === p.id) return;
     hydratedRef.current = p.id;
+    // Campos básicos (garante que o "Salvar tudo" não resete valores caso o
+    // profile ainda não estivesse carregado no mount).
+    setUsername(p.username || "");
+    setBio(p.bio || "");
+    setVideoUrl(p.videoUrl || "");
+    setWhatsappNumber(p.whatsappNumber || "");
+    setEmail(p.email || "");
+    setInstagramHandle(p.instagramHandle || "");
+    setSelectedTheme((p.themeId as ThemeId) || "default");
+    setLayoutColumns((p.layoutColumns as LayoutColumns) || 1);
+    setCustomPrimary(p.customPrimaryColor || "");
+    setCustomSecondary(p.customSecondaryColor || "");
     setHeroDisplay(p.heroDisplay || "name");
     setHeroLayout(p.heroLayout || "overlay");
     setHeroAlign(p.heroAlign || "center");
@@ -419,6 +431,7 @@ export default function DashboardCustomization() {
   );
   const [footerText, setFooterText] = useState<string>((profile as any)?.footerText || "");
   const [isSavingFooter, setIsSavingFooter] = useState(false);
+  const [isSavingAll, setIsSavingAll] = useState(false);
   const [isUploadingSponsor, setIsUploadingSponsor] = useState(false);
   const sponsorFileRef = useRef<HTMLInputElement>(null);
 
@@ -628,6 +641,62 @@ export default function DashboardCustomization() {
     }
   };
 
+  // Salva TODAS as alterações de campos/configurações num único PUT /api/me.
+  // (Uploads de imagem já persistem na hora; aqui salvamos os campos editáveis.)
+  const handleSaveAll = async () => {
+    if (!username.trim()) {
+      toast({ title: "Nome de usuário não pode estar vazio", variant: "destructive" });
+      return;
+    }
+    setIsSavingAll(true);
+    try {
+      const cleanTitles: Record<string, string> = {};
+      for (const [k, v] of Object.entries(sectionTitles)) {
+        if (v && v.trim()) cleanTitles[k] = v.trim();
+      }
+      await customFetch("/api/me", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: username.trim(),
+          displayName: username.trim(),
+          bio: bio.trim(),
+          videoUrl: videoUrl.trim() || null,
+          whatsappNumber: whatsappNumber.trim() || null,
+          email: email.trim() || null,
+          instagramHandle: instagramHandle.trim() || null,
+          themeId: selectedTheme,
+          layoutColumns,
+          customPrimaryColor: customPrimary || null,
+          customSecondaryColor: customSecondary || null,
+          heroDisplay,
+          heroLayout,
+          heroAlign,
+          socialIconsAlign,
+          usernameFont,
+          logoUrl: logoUrl || null,
+          logoSize,
+          showUsername,
+          showHeader,
+          bannerFit,
+          bannerHeight,
+          bioImageSide,
+          sectionOrder,
+          sectionTitles: cleanTitles,
+          footerText: footerText.trim() || null,
+          sponsors,
+        }),
+      });
+      queryClient.invalidateQueries({ queryKey: ["useGetMe"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/me/subscription"] });
+      toast({ title: "✓ Todas as alterações foram salvas!" });
+    } catch (err: any) {
+      toast({ title: err?.message || "Erro ao salvar", variant: "destructive" });
+    } finally {
+      setIsSavingAll(false);
+    }
+  };
+
   const handleAvatarCropComplete = async (croppedImageUrl: string) => {
     if (!pendingAvatarFile) return;
 
@@ -758,22 +827,12 @@ export default function DashboardCustomization() {
         transition={{ duration: 0.5, delay: 0.05 }}
       >
         <h2 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-blue-300 to-purple-300 bg-clip-text text-transparent">Nome de Usuário</h2>
-        <div className="flex flex-col sm:flex-row gap-3">
-          <Input
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            placeholder="seu-username"
-            className="rounded-lg bg-white/5 border-white/20 font-mono focus:border-white/50 focus:bg-white/10 transition-colors"
-            disabled={isSavingUsername}
-          />
-          <Button
-            onClick={handleSaveUsername}
-            disabled={isSavingUsername || username === profile?.username}
-            className="rounded-lg px-6 uppercase font-bold bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 whitespace-nowrap"
-          >
-            {isSavingUsername ? "Salvando..." : "Salvar"}
-          </Button>
-        </div>
+        <Input
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          placeholder="seu-username"
+          className="rounded-lg bg-white/5 border-white/20 font-mono focus:border-white/50 focus:bg-white/10 transition-colors"
+        />
         <p className="text-xs text-muted-foreground">Seu perfil público será acessível em: <span className="font-mono text-white/70">{window.location.origin}/?user={username || "seu-username"}</span></p>
       </motion.div>
 
@@ -796,16 +855,7 @@ export default function DashboardCustomization() {
             rows={3}
             disabled={isSavingBio}
           />
-          <div className="flex justify-between items-center">
-            <p className="text-xs text-muted-foreground">{bio.length} / 150 caracteres</p>
-            <Button
-              onClick={handleSaveBio}
-              disabled={isSavingBio || bio === (profile?.bio || "")}
-              className="rounded-lg px-6 uppercase font-bold bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
-            >
-              {isSavingBio ? "Salvando..." : "Salvar"}
-            </Button>
-          </div>
+          <p className="text-xs text-muted-foreground text-right">{bio.length} / 150 caracteres</p>
 
           {/* Foto da bio (ao lado do texto no perfil) */}
           <div className="space-y-2 pt-2 border-t border-white/10">
@@ -838,7 +888,7 @@ export default function DashboardCustomization() {
               ] as const).map((opt) => (
                 <button
                   key={opt.v}
-                  onClick={() => handleBioImageSide(opt.v)}
+                  onClick={() => setBioImageSide(opt.v)}
                   className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-all ${
                     bioImageSide === opt.v
                       ? "border-white/60 bg-white/10 text-white"
@@ -1012,7 +1062,7 @@ export default function DashboardCustomization() {
             <p className="text-[11px] text-muted-foreground">Desligue para não repetir o nome (ex: quando o logo já é o nome). Salva automaticamente.</p>
           </div>
           <button
-            onClick={toggleShowUsername}
+            onClick={() => setShowUsername((v) => !v)}
             className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${showUsername ? "bg-white" : "bg-white/20"}`}
             aria-label="Mostrar @username"
           >
@@ -1027,7 +1077,7 @@ export default function DashboardCustomization() {
             <p className="text-[11px] text-muted-foreground">Barra fixa no topo com logo, links das seções e ícones (estilo press kit).</p>
           </div>
           <button
-            onClick={toggleShowHeader}
+            onClick={() => setShowHeader((v) => !v)}
             className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${showHeader ? "bg-white" : "bg-white/20"}`}
             aria-label="Habilitar header"
           >
@@ -1152,15 +1202,6 @@ export default function DashboardCustomization() {
           </div>
         </div>
 
-        <div className="flex justify-end">
-          <Button
-            onClick={handleSaveAppearance}
-            disabled={isSavingAppearance}
-            className="rounded-lg px-6 uppercase font-bold bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600"
-          >
-            {isSavingAppearance ? "Salvando..." : "Salvar Aparência"}
-          </Button>
-        </div>
       </motion.div>
 
       {/* Ordem das Seções */}
@@ -1196,16 +1237,6 @@ export default function DashboardCustomization() {
             </div>
           </SortableContext>
         </DndContext>
-
-        <div className="flex justify-end">
-          <Button
-            onClick={handleSaveSectionOrder}
-            disabled={isSavingOrder}
-            className="rounded-lg px-6 uppercase font-bold bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600"
-          >
-            {isSavingOrder ? "Salvando..." : "Salvar Seções"}
-          </Button>
-        </div>
       </motion.div>
 
       {/* Rodapé / Patrocinadores */}
@@ -1293,15 +1324,6 @@ export default function DashboardCustomization() {
           <p className="text-xs text-muted-foreground text-right">{footerText.length} / 300</p>
         </div>
 
-        <div className="flex justify-end">
-          <Button
-            onClick={handleSaveFooter}
-            disabled={isSavingFooter}
-            className="rounded-lg px-6 uppercase font-bold bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
-          >
-            {isSavingFooter ? "Salvando..." : "Salvar Rodapé"}
-          </Button>
-        </div>
       </motion.div>
 
       {/* Vídeo */}
@@ -1361,15 +1383,6 @@ export default function DashboardCustomization() {
             </motion.div>
           )}
 
-          <div className="flex justify-end">
-            <Button
-              onClick={handleSaveVideo}
-              disabled={isSavingVideo || videoUrl === ((profile as any)?.videoUrl || "")}
-              className="rounded-lg px-6 uppercase font-bold bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600"
-            >
-              {isSavingVideo ? "Salvando..." : videoUrl ? "Atualizar Vídeo" : "Remover Vídeo"}
-            </Button>
-          </div>
         </div>
       </motion.div>
 
@@ -1426,21 +1439,6 @@ export default function DashboardCustomization() {
             />
             <p className="text-xs text-white/40">Sem @ (apenas usuário)</p>
           </div>
-        </div>
-
-        <div className="flex justify-end">
-          <Button
-            onClick={handleSaveContact}
-            disabled={
-              isSavingContact ||
-              (whatsappNumber === ((profile as any)?.whatsappNumber || "") &&
-                email === ((profile as any)?.email || "") &&
-                instagramHandle === ((profile as any)?.instagramHandle || ""))
-            }
-            className="rounded-lg px-6 uppercase font-bold bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600"
-          >
-            {isSavingContact ? "Salvando..." : "Salvar Contatos"}
-          </Button>
         </div>
       </motion.div>
 
@@ -1845,35 +1843,7 @@ export default function DashboardCustomization() {
         </div>
       </motion.div>
 
-      {/* Salvar */}
-      <motion.div
-        className="flex gap-2"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
-      >
-        <motion.div
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-        >
-          <Button
-            onClick={handleSaveCustomization}
-            disabled={updateProfileMutation.isPending}
-            className="rounded-none bg-white text-black hover:bg-white/90 uppercase tracking-widest text-xs font-bold"
-          >
-            {updateProfileMutation.isPending ? (
-              <motion.span
-                animate={{ opacity: [1, 0.5, 1] }}
-                transition={{ duration: 1.5, repeat: Infinity }}
-              >
-                Salvando...
-              </motion.span>
-            ) : (
-              "Salvar Customização"
-            )}
-          </Button>
-        </motion.div>
-      </motion.div>
+      {/* (botões de salvar removidos — agora há um único botão flutuante "Salvar alterações") */}
 
       {/* Avatar Crop Modal */}
       {showAvatarCropModal && avatarCropImageSrc && (
@@ -1906,6 +1876,21 @@ export default function DashboardCustomization() {
           title="Ajustar Banner"
         />
       )}
+
+      {/* Botão único para salvar todas as alterações (flutuante) */}
+      <motion.button
+        onClick={handleSaveAll}
+        disabled={isSavingAll}
+        className="fixed bottom-5 right-5 sm:bottom-8 sm:right-8 z-50 flex items-center gap-2 px-6 py-4 rounded-2xl font-bold uppercase tracking-widest text-sm text-white shadow-2xl shadow-purple-900/40 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 disabled:opacity-70"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        whileHover={{ scale: isSavingAll ? 1 : 1.04 }}
+        whileTap={{ scale: 0.96 }}
+        transition={{ duration: 0.3 }}
+      >
+        {isSavingAll ? <Loader2 size={18} className="animate-spin" /> : <Check size={18} />}
+        {isSavingAll ? "Salvando..." : "Salvar alterações"}
+      </motion.button>
       </div>
     </div>
   );
