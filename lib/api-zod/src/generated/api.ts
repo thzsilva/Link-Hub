@@ -74,6 +74,7 @@ export const UpdateProfileBody = zod.object({
   "showUsername": zod.boolean().nullish(),
   "bannerFit": zod.string().nullish(),
   "bannerHeight": zod.string().nullish(),
+  "bannerType": zod.string().nullish(),
   "heroDisplay": zod.string().nullish(),
   "heroLayout": zod.string().nullish(),
   "heroAlign": zod.string().nullish(),

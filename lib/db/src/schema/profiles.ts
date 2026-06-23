@@ -44,6 +44,7 @@ export const profilesTable = pgTable("profiles", {
   showUsername: boolean("show_username").default(true),
   bannerFit: text("banner_fit").default("cover"),
   bannerHeight: text("banner_height").default("normal"),
+  bannerType: text("banner_type").default("image"), // 'image' | 'video' — o que aparece no topo
   heroDisplay: text("hero_display").default("name"),
   heroLayout: text("hero_layout").default("overlay"),
   heroAlign: text("hero_align").default("center"),

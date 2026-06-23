@@ -258,6 +258,7 @@ export default function DashboardCustomization() {
   const [showUsername, setShowUsername] = useState<boolean>((profile as any)?.showUsername !== false);
   const [bannerFit, setBannerFit] = useState<string>((profile as any)?.bannerFit || "cover");
   const [bannerHeight, setBannerHeight] = useState<string>((profile as any)?.bannerHeight || "normal");
+  const [bannerType, setBannerType] = useState<string>((profile as any)?.bannerType || "image");
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const logoFileRef = useRef<HTMLInputElement>(null);
 
@@ -296,6 +297,7 @@ export default function DashboardCustomization() {
     setShowHeader(!!p.showHeader);
     setBannerFit(p.bannerFit || "cover");
     setBannerHeight(p.bannerHeight || "normal");
+    setBannerType(p.bannerType || "image");
     setSectionOrder(normalizeSectionOrder(p.sectionOrder));
     setSectionTitles((p.sectionTitles || {}) as Record<string, string>);
     setSponsors(Array.isArray(p.sponsors) ? p.sponsors : []);
@@ -680,6 +682,7 @@ export default function DashboardCustomization() {
           showHeader,
           bannerFit,
           bannerHeight,
+          bannerType,
           bioImageSide,
           sectionOrder,
           sectionTitles: cleanTitles,
@@ -1550,6 +1553,33 @@ export default function DashboardCustomization() {
       >
         <h2 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-cyan-300 to-blue-300 bg-clip-text text-transparent">Banner/Imagem de Fundo</h2>
         <div className="space-y-4">
+          {/* Tipo do topo: imagem OU vídeo (evita conflito) */}
+          <div className="space-y-2">
+            <label className="text-xs uppercase tracking-widest text-muted-foreground">O que mostrar no topo</label>
+            <div className="grid grid-cols-2 gap-2">
+              {([
+                { v: "image", label: "Imagem", desc: "Usa o banner (foto)" },
+                { v: "video", label: "Vídeo", desc: "Usa o vídeo em loop" },
+              ] as const).map((opt) => (
+                <button
+                  key={opt.v}
+                  onClick={() => setBannerType(opt.v)}
+                  className={`rounded-lg border px-3 py-2.5 text-left transition-all ${
+                    bannerType === opt.v
+                      ? "border-white/60 bg-white/10 text-white"
+                      : "border-white/15 text-muted-foreground hover:border-white/30"
+                  }`}
+                >
+                  <span className="block text-sm font-medium">{opt.label}</span>
+                  <span className="block text-[10px] opacity-70">{opt.desc}</span>
+                </button>
+              ))}
+            </div>
+            <p className="text-[11px] text-muted-foreground">
+              Você pode enviar imagem e vídeo, mas só o tipo escolhido aqui aparece no perfil — sem conflito.
+            </p>
+          </div>
+
           {/* Banner Preview */}
           <div className="space-y-2">
             <label className="text-xs uppercase tracking-widest text-muted-foreground">Prévia do Banner</label>

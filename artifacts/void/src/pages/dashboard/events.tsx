@@ -395,6 +395,15 @@ export default function DashboardEvents() {
     if (events) setItems(events);
   }, [events]);
 
+  // Histórico de localização: valores únicos já usados (para sugerir/autocompletar)
+  const uniq = (vals: (string | null | undefined)[]) =>
+    Array.from(new Set(vals.map((v) => (v || "").trim()).filter(Boolean)));
+  const pastStreets = uniq((events ?? []).map((e) => e.street));
+  const pastCities = uniq((events ?? []).map((e) => e.city));
+  const pastStates = uniq((events ?? []).map((e) => e.state));
+  // Último evento que tem algum dado de localização
+  const lastLocation = (events ?? []).find((e) => e.street || e.city || e.state);
+
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
@@ -626,19 +635,35 @@ export default function DashboardEvents() {
               </div>
             </div>
 
+            {/* Atalho: preencher com a última localização usada */}
+            {lastLocation && (
+              <button
+                type="button"
+                onClick={() => setForm({ ...form, street: lastLocation.street ?? "", city: lastLocation.city ?? "", state: lastLocation.state ?? "" })}
+                className="text-[11px] uppercase tracking-widest text-white/50 hover:text-white border border-white/15 hover:border-white/40 rounded-none px-3 py-1.5 transition-colors"
+              >
+                ↺ Usar último local{lastLocation.city ? ` (${lastLocation.city})` : ""}
+              </button>
+            )}
+
+            {/* datalists de histórico para autocompletar */}
+            <datalist id="ev-streets">{pastStreets.map((s) => <option key={s} value={s} />)}</datalist>
+            <datalist id="ev-cities">{pastCities.map((s) => <option key={s} value={s} />)}</datalist>
+            <datalist id="ev-states">{pastStates.map((s) => <option key={s} value={s} />)}</datalist>
+
             <div className="space-y-1">
               <label className="text-xs uppercase tracking-widest text-muted-foreground">Rua</label>
-              <Input value={form.street} onChange={(e) => setForm({ ...form, street: e.target.value })} placeholder="Rua Augusta, 123" className="rounded-none bg-black border-border" />
+              <Input list="ev-streets" value={form.street} onChange={(e) => setForm({ ...form, street: e.target.value })} placeholder="Rua Augusta, 123" className="rounded-none bg-black border-border" />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
                 <label className="text-xs uppercase tracking-widest text-muted-foreground">Cidade</label>
-                <Input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} placeholder="São Paulo" className="rounded-none bg-black border-border" />
+                <Input list="ev-cities" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} placeholder="São Paulo" className="rounded-none bg-black border-border" />
               </div>
               <div className="space-y-1">
                 <label className="text-xs uppercase tracking-widest text-muted-foreground">Estado</label>
-                <Input value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value })} placeholder="SP" className="rounded-none bg-black border-border" />
+                <Input list="ev-states" value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value })} placeholder="SP" className="rounded-none bg-black border-border" />
               </div>
             </div>
 

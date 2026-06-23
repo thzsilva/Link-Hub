@@ -155,6 +155,7 @@ router.put("/me", async (req, res): Promise<void> => {
   if (parsed.data.showUsername !== undefined) updateData.showUsername = parsed.data.showUsername;
   if (parsed.data.bannerFit !== undefined) updateData.bannerFit = parsed.data.bannerFit;
   if (parsed.data.bannerHeight !== undefined) updateData.bannerHeight = parsed.data.bannerHeight;
+  if (parsed.data.bannerType !== undefined) updateData.bannerType = parsed.data.bannerType;
   if (parsed.data.heroDisplay !== undefined) updateData.heroDisplay = parsed.data.heroDisplay;
   if (parsed.data.heroLayout !== undefined) updateData.heroLayout = parsed.data.heroLayout;
   if (parsed.data.heroAlign !== undefined) updateData.heroAlign = parsed.data.heroAlign;

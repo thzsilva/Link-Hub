@@ -257,11 +257,16 @@ export default function PublicProfileNew() {
   const isCover = bannerFitClass === "object-cover";
   const bannerParallax = isCover ? { scale: bannerScale } : undefined;
 
-  // Banner pode ser vídeo (mp4/webm) ou imagem
+  // Banner: imagem OU vídeo, escolhido por bannerType (sem conflito).
+  // Fallback: se o tipo escolhido não tiver mídia, usa o outro que existir.
   const bannerVideoUrl = (profile as any).bannerVideoUrl || null;
-  const hasBanner = !!profile.headerImageUrl || !!bannerVideoUrl;
+  const bannerType = (profile as any).bannerType || (bannerVideoUrl ? "video" : "image");
+  const hasImage = !!profile.headerImageUrl;
+  const hasVideo = !!bannerVideoUrl;
+  const useVideo = hasVideo && (bannerType === "video" || !hasImage);
+  const hasBanner = hasImage || hasVideo;
   const renderBannerMedia = () => {
-    if (bannerVideoUrl) {
+    if (useVideo) {
       return (
         <motion.video
           src={bannerVideoUrl}
