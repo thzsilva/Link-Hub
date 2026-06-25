@@ -852,13 +852,13 @@ export default function DashboardCustomization() {
           <textarea
             value={bio}
             onChange={(e) => setBio(e.target.value)}
-            placeholder="Descreva você em poucas palavras..."
-            maxLength={150}
+            placeholder="Conte sua história, estilo, conquistas..."
+            maxLength={1000}
             className="w-full rounded-lg bg-white/5 border border-white/20 p-4 text-white text-sm resize-none focus:outline-none focus:border-white/50 focus:bg-white/10 transition-colors"
-            rows={3}
+            rows={5}
             disabled={isSavingBio}
           />
-          <p className="text-xs text-muted-foreground text-right">{bio.length} / 150 caracteres</p>
+          <p className="text-xs text-muted-foreground text-right">{bio.length} / 1000 caracteres</p>
 
           {/* Foto da bio (ao lado do texto no perfil) */}
           <div className="space-y-2 pt-2 border-t border-white/10">
